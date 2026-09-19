@@ -52,6 +52,7 @@
   --color-emerald-700: #33584c;
   --color-emerald-800: #2a463d;
   --color-emerald-900: #223831;
+  --color-emerald-950: #18251f;
 
   /* Brick danger reds (replaces rose) */
   --color-rose-50: #fbf0ee;
@@ -64,6 +65,7 @@
   --color-rose-700: #71332c;
   --color-rose-800: #542823;
   --color-rose-900: #3e1f1c;
+  --color-rose-950: #2a1513;
 
   /* Surfaces */
   --color-canvas: #f2f1f6;
