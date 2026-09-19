@@ -41,18 +41,28 @@ function normalizeApiBaseUrl(raw) {
   return raw.trim().replace(/\/+$/, '');
 }
 
+function unquoteYamlScalar(value) {
+  if (value.length < 2) return value;
+  const quote = value[0];
+  if (quote !== '"' && quote !== "'") return value;
+  if (value.at(-1) !== quote) return null;
+  return value.slice(1, -1);
+}
+
 function readApiBaseUrlFromYaml(text) {
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith('#') || line === '---') continue;
     const match = line.match(/^([A-Za-z0-9_.-]+):\s*(.*)$/);
     if (!match || match[1] !== 'apiBaseUrl') continue;
-    const value = match[2].replace(/\s+#.*$/, '').trim();
+    const value = unquoteYamlScalar(match[2].replace(/\s+#.*$/, '').trim());
     if (!value) return null;
     return value;
   }
   return null;
 }
+
+export { readApiBaseUrlFromYaml };
 
 function resolveConfigPath() {
   const cliPath = process.argv[2];
@@ -103,20 +113,41 @@ function isFile(path) {
   }
 }
 
+const IMMUTABLE_ASSET_CACHE = 'public, max-age=31536000, immutable';
+const REVALIDATED_ASSET_CACHE = 'public, max-age=300, stale-while-revalidate=600';
+
+// Vite content-addresses emitted assets as `name-[hash].ext`; hashed names are
+// safe to cache forever, stable names (e.g. regularLogoSquare.svg) are not.
+function isContentAddressed(filePath) {
+  return /[-.][0-9a-f]{8,}\.\w+$/i.test(filePath);
+}
+
 function serveFile(req, res, filePath) {
   const stream = createReadStream(filePath);
+  let opened = false;
+  stream.on('open', () => {
+    opened = true;
+    res.writeHead(200, {
+      'Content-Type': MIME_TYPES[extname(filePath)] ?? 'application/octet-stream',
+      'Cache-Control': isContentAddressed(filePath)
+        ? IMMUTABLE_ASSET_CACHE
+        : REVALIDATED_ASSET_CACHE,
+    });
+    stream.pipe(res);
+  });
   stream.on('error', (err) => {
-    if (err.code === 'ENOENT') {
-      res.writeHead(404).end('Not Found');
+    if (!opened) {
+      if (err.code === 'ENOENT') {
+        res.writeHead(404).end('Not Found');
+      } else {
+        res.writeHead(500).end('Internal Server Error');
+      }
     } else {
-      res.writeHead(500).end('Internal Server Error');
+      // Headers are already sent; abort the response instead of committing
+      // another status code.
+      res.destroy();
     }
   });
-  res.writeHead(200, {
-    'Content-Type': MIME_TYPES[extname(filePath)] ?? 'application/octet-stream',
-    'Cache-Control': 'public, max-age=31536000, immutable',
-  });
-  stream.pipe(res);
 }
 
 function serveIndex(req, res, indexFile) {
