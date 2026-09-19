@@ -4,7 +4,11 @@ export function toCsv(rows: Array<Record<string, unknown>>): string {
   const escape = (value: unknown): string => {
     if (value === null || value === undefined) return '';
     const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    // Defuse spreadsheet formula injection: values starting with =, +, -, @,
+    // tab, or CR/LF would otherwise be interpreted as formulas or directives
+    // when the export is opened in Excel, Numbers, or Google Sheets.
+    const safe = /^[=+\-@\t\r\n]/.test(text) ? `'${text}` : text;
+    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
   const lines = [headers.join(',')];
   for (const row of rows) {

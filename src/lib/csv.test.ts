@@ -20,6 +20,21 @@ describe('toCsv', () => {
     expect(csv).toContain('"say ""hi"""');
     expect(csv).toContain('"line1\nline2"');
   });
+
+  it.each([
+    ["=cmd|' /C calc!'!A0", "'=cmd|' /C calc!'!A0"],
+    ['+2+2', "'+2+2"],
+    ['-1+2', "'-1+2"],
+    ['@SUM(1)', "'@SUM(1)"],
+    ['\tsum', "'\tsum"],
+    ['\rsum', '"\'\rsum"'],
+  ])('defuses formula-prefixed value %j', (dangerous, expected) => {
+    expect(toCsv([{ payload: dangerous }])).toBe(`payload\n${expected}`);
+  });
+
+  it('does not prefix values that merely contain a dangerous character later', () => {
+    expect(toCsv([{ payload: 'a=b' }])).toBe('payload\na=b');
+  });
 });
 
 describe('timestampedFilename', () => {
