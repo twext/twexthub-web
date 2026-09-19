@@ -231,7 +231,9 @@ describe('AdminPage', () => {
     const openButtons = await screen.findAllByRole('button', { name: /Open Editor/ });
     await user.click(openButtons[0]);
 
-    const editor = screen.getByRole('textbox', { name: 'Terms of Service markdown editor' });
+    const editor = await screen.findByRole('textbox', {
+      name: 'Terms of Service markdown editor',
+    });
     await user.clear(editor);
     await user.type(editor, '# Updated Terms');
     await user.click(screen.getByRole('button', { name: /Publish Revision/ }));

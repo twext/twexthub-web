@@ -20,8 +20,14 @@ export default defineConfig(() => {
         },
       },
     },
+    // Monaco's editor.worker.js is an ESM module worker; emit worker chunks
+    // as ES modules so the bundled worker loads correctly.
+    worker: {
+      format: 'es' as const,
+    },
     build: {
-      chunkSizeWarningLimit: 600,
+      // The lazily loaded Monaco chunk is intentionally large (~3 MB min).
+      chunkSizeWarningLimit: 4000,
     },
   };
 });
