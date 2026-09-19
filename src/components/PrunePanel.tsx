@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { api, ApiError } from '../services/api';
-import { User } from '../types/api';
+import { PaginatedList, User } from '../types/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { AlertTriangle, CheckCircle2, RefreshCw, Scissors, Trash2 } from 'lucide-react';
 
@@ -38,6 +38,26 @@ function describeError(err: unknown, fallback: string): string {
 
 function isExpired(date?: string | null): boolean {
   return Boolean(date && new Date(date).getTime() < Date.now());
+}
+
+async function collectAllCredentials<T>(
+  fetcher: (params: {
+    namespace: string;
+    cursor?: string;
+    limit?: number;
+  }) => Promise<PaginatedList<T>>,
+  namespace: string,
+): Promise<T[]> {
+  const all: T[] = [];
+  let cursor: string | undefined;
+  let guard = 0;
+  do {
+    const res = await fetcher(cursor ? { namespace, cursor, limit: 50 } : { namespace, limit: 50 });
+    all.push(...(res?.data || []));
+    cursor = res?.pagination?.hasMore ? res.pagination.nextCursor || undefined : undefined;
+    guard += 1;
+  } while (cursor && guard < 1000);
+  return all;
 }
 
 export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, onPruned }) => {
@@ -87,14 +107,15 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
       for (let i = 0; i < eligible.length; i += 1) {
         const target = eligible[i];
         try {
-          const [sessionRes, tokenRes] = await Promise.all([
-            api.getSessions({ namespace: target.namespace }),
-            api.getTokens({ namespace: target.namespace }),
+          // Page through every credential page before deciding dormancy.
+          const [allSessions, allTokens] = await Promise.all([
+            collectAllCredentials((params) => api.getSessions(params), target.namespace),
+            collectAllCredentials((params) => api.getTokens(params), target.namespace),
           ]);
           // Only active (non-expired) credentials block a prune; accounts
           // holding solely expired sessions/tokens are still dormant.
-          const sessions = (sessionRes?.data ?? []).filter((s) => !isExpired(s.expiresAt)).length;
-          const tokens = (tokenRes?.data ?? []).filter((t) => !isExpired(t.expiresAt)).length;
+          const sessions = allSessions.filter((s) => !isExpired(s.expiresAt)).length;
+          const tokens = allTokens.filter((t) => !isExpired(t.expiresAt)).length;
           if (sessions === 0 && tokens === 0) {
             found.push({ user: target, sessions, tokens });
           }
