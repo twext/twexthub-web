@@ -36,6 +36,10 @@ function describeError(err: unknown, fallback: string): string {
   return fallback;
 }
 
+function isExpired(date?: string | null): boolean {
+  return Boolean(date && new Date(date).getTime() < Date.now());
+}
+
 export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, onPruned }) => {
   const { confirm, confirmDialog } = useConfirm();
   const [options, setOptions] = useState<PruneOptions>(DEFAULT_OPTIONS);
@@ -87,8 +91,10 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
             api.getSessions({ namespace: target.namespace }),
             api.getTokens({ namespace: target.namespace }),
           ]);
-          const sessions = sessionRes?.data?.length ?? 0;
-          const tokens = tokenRes?.data?.length ?? 0;
+          // Only active (non-expired) credentials block a prune; accounts
+          // holding solely expired sessions/tokens are still dormant.
+          const sessions = (sessionRes?.data ?? []).filter((s) => !isExpired(s.expiresAt)).length;
+          const tokens = (tokenRes?.data ?? []).filter((t) => !isExpired(t.expiresAt)).length;
           if (sessions === 0 && tokens === 0) {
             found.push({ user: target, sessions, tokens });
           }

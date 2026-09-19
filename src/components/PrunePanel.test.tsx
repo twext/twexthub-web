@@ -3,7 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PrunePanel } from './PrunePanel';
 import { api } from '../services/api';
-import { makeAdminUser, makeSession, makeUser, paginated } from '../test/testUtils';
+import {
+  makeAdminUser,
+  makeSession,
+  makeToken,
+  makeUser,
+  paginated,
+} from '../test/testUtils';
 
 vi.mock('../services/api');
 
@@ -27,7 +33,9 @@ describe('PrunePanel', () => {
       ]),
     );
     apiMock.getSessions.mockImplementation(async (params) =>
-      params?.namespace === 'busy' ? paginated([makeSession()]) : paginated([]),
+      params?.namespace === 'busy'
+        ? paginated([makeSession({ expiresAt: '2099-06-01T00:00:00Z' })])
+        : paginated([]),
     );
 
     render(<PrunePanel currentUserNamespace="root" onPruned={vi.fn()} />);
@@ -37,6 +45,24 @@ describe('PrunePanel', () => {
     expect(screen.getByText('@ghost').closest('label')).toHaveTextContent('Ghost');
     expect(screen.queryByText('@busy')).not.toBeInTheDocument();
     expect(screen.queryByText('@root')).not.toBeInTheDocument();
+  });
+
+  it('treats accounts holding only expired credentials as dormant', async () => {
+    const user = userEvent.setup();
+    apiMock.getUsers.mockResolvedValue(paginated([makeUser({ namespace: 'stale' })]));
+    apiMock.getSessions.mockResolvedValue(
+      paginated([makeSession({ id: 'sess-old', expiresAt: '2020-01-01T00:00:00Z' })]),
+    );
+    apiMock.getTokens.mockResolvedValue(
+      paginated([makeToken({ id: 'tok-old', expiresAt: '2020-01-01T00:00:00Z' })]),
+    );
+
+    render(<PrunePanel currentUserNamespace="me" onPruned={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: /Scan for Dormant Accounts/ }));
+
+    expect(await screen.findByText('@stale')).toBeInTheDocument();
+    expect(screen.getByText('0 sessions')).toBeInTheDocument();
+    expect(screen.getByText('0 tokens')).toBeInTheDocument();
   });
 
   it('filters published and admin accounts until options are enabled', async () => {
