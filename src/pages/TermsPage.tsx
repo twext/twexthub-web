@@ -57,10 +57,13 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
   }, []);
 
   const handleAccept = async () => {
+    // Only submit the version shown on this page; while the document is
+    // unloaded there is nothing to accept.
+    if (!terms) return;
     setAccepting(true);
     setAcceptError(null);
     try {
-      await acceptCurrentTerms();
+      await acceptCurrentTerms(terms.version);
       setJustAccepted(true);
     } catch (err: unknown) {
       setAcceptError(err instanceof ApiError ? err.message : 'Failed to submit terms acceptance');
@@ -115,7 +118,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* Interactive Acceptance Banner for Logged-In Users */}
-      {isAuthenticated && !isAccepted && (
+      {isAuthenticated && !isAccepted && terms && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl p-4 text-xs text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <strong className="block text-sm font-semibold">Terms Acceptance Required</strong>
@@ -162,7 +165,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* Bottom Acceptance Callout */}
-      {isAuthenticated && !isAccepted && (
+      {isAuthenticated && !isAccepted && terms && (
         <div className="card p-5 flex items-center justify-between">
           <span className="text-xs text-ink-2">
             Have you finished reviewing the Terms of Service?
@@ -173,7 +176,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
             className="btn btn-primary disabled:opacity-50"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>Accept Terms (v{terms?.version || 1})</span>
+            <span>Accept Terms (v{terms.version})</span>
           </button>
         </div>
       )}

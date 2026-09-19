@@ -14,7 +14,7 @@ interface AuthContextType {
   signup: (namespace: string, password: string, displayName?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  acceptCurrentTerms: () => Promise<void>;
+  acceptCurrentTerms: (version?: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -150,11 +150,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchTermsVersion();
   };
 
-  const acceptCurrentTerms = async () => {
-    if (latestTermsVersion === null) {
-      throw new Error('Terms version could not be loaded. Please try again.');
+  const acceptCurrentTerms = async (version?: number) => {
+    // Callers may pin the version they displayed (e.g. the terms page passes
+    // the version it rendered); otherwise fall back to the context's copy.
+    let versionToAccept: number;
+    if (version !== undefined) {
+      versionToAccept = version;
+    } else {
+      if (latestTermsVersion === null) {
+        throw new Error('Terms version could not be loaded. Please try again.');
+      }
+      versionToAccept = latestTermsVersion;
     }
-    const versionToAccept = latestTermsVersion;
     await api.acceptTerms(versionToAccept);
     if (user) {
       const updatedUser = { ...user, termsAcceptedVersion: versionToAccept };
