@@ -45,6 +45,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.colorScheme = 'light';
     }
 
+    // Keep the browser UI (PWA/task-switcher chrome) in sync with the app
+    // theme, including manual toggles that diverge from the OS preference.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#131019' : '#f2f1f6');
+
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
