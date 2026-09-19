@@ -29,17 +29,29 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     const loadHomeData = async () => {
       setLoading(true);
       setError(null);
+      // The fallbacks keep the page usable, but record the failure so the
+      // visitor still learns the registry is degraded.
+      let failure: unknown = null;
       try {
         const [statsData, extensionsData] = await Promise.all([
-          api.getStats().catch(() => ({ published: 0, pending: 0, authors: 0 })),
-          api
-            .getExtensions({ limit: 6 })
-            .catch(() => ({ data: [], pagination: { nextCursor: null, hasMore: false } })),
+          api.getStats().catch((err: unknown) => {
+            failure = err;
+            return { published: 0, pending: 0, authors: 0 };
+          }),
+          api.getExtensions({ limit: 6 }).catch((err: unknown) => {
+            failure = failure ?? err;
+            return { data: [], pagination: { nextCursor: null, hasMore: false } };
+          }),
         ]);
 
         if (isMounted) {
           setStats(statsData);
           setRecentExtensions(extensionsData.data || []);
+          if (failure !== null) {
+            setError(
+              failure instanceof ApiError ? failure.message : 'Failed to connect to Twext server',
+            );
+          }
         }
       } catch (err: unknown) {
         if (isMounted) {
