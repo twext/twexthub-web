@@ -10,10 +10,26 @@ declare global {
   }
 }
 
+function isLoopbackHost(hostname: string): boolean {
+  return (
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname === '::1'
+  );
+}
+
+/**
+ * Remote APIs must use HTTPS so bearer tokens never travel in cleartext and
+ * to avoid mixed-content failures on HTTPS-hosted pages. Plain HTTP is only
+ * accepted for loopback development URLs such as http://localhost:8080/api/v0.
+ */
 export function isValidApiBaseUrl(raw: string): boolean {
   try {
     const parsed = new URL(raw.trim());
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    if (parsed.protocol === 'https:') return true;
+    return parsed.protocol === 'http:' && isLoopbackHost(parsed.hostname);
   } catch {
     return false;
   }

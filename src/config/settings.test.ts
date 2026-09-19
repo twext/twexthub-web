@@ -26,9 +26,20 @@ describe('settings', () => {
   });
 
   describe('isValidApiBaseUrl', () => {
-    it('accepts http and https absolute URLs', () => {
+    it('accepts https absolute URLs', () => {
       expect(isValidApiBaseUrl('https://twexts.sdisk.us/api/v0')).toBe(true);
+    });
+
+    it('accepts loopback http URLs for development', () => {
       expect(isValidApiBaseUrl('http://localhost:8080/api/v0')).toBe(true);
+      expect(isValidApiBaseUrl('http://127.0.0.1:8080/api/v0')).toBe(true);
+      expect(isValidApiBaseUrl('http://api.localhost:8080/api/v0')).toBe(true);
+    });
+
+    it('rejects remote http URLs', () => {
+      expect(isValidApiBaseUrl('http://twexts.sdisk.us/api/v0')).toBe(false);
+      expect(isValidApiBaseUrl('http://192.168.1.10/api/v0')).toBe(false);
+      expect(isValidApiBaseUrl('http://registry.internal.example/api/v0')).toBe(false);
     });
 
     it('rejects non-http schemes and bare strings', () => {
