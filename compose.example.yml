@@ -1,0 +1,10 @@
+services:
+  web:
+    build: .
+    ports:
+      - '8080:3000'
+    environment:
+      # The TwextHub API base URL the UI talks to. Read from the container
+      # environment at startup by server.js (overrides config.yml).
+      # If unset, the UI defaults to https://twexts.sdisk.us/api/v0.
+      TWEXTHUB_API_URL: https://twexts.sdisk.us/api/v0
