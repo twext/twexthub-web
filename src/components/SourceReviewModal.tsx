@@ -61,8 +61,15 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const sizeKb = codeText ? (new Blob([codeText]).size / 1024).toFixed(1) : '0.0';
 
   const handleCopy = async () => {
+    // With the API unavailable, optional chaining would resolve without
+    // throwing and falsely show success, so verify it explicitly first.
+    if (!navigator.clipboard?.writeText) {
+      setCopied(false);
+      setCopyError('Clipboard is not available. Select the source and copy manually.');
+      return;
+    }
     try {
-      await navigator.clipboard?.writeText(codeText);
+      await navigator.clipboard.writeText(codeText);
       setCopyError(null);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
