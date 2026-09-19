@@ -20,7 +20,7 @@ beforeEach(() => {
 
 describe('LoginPage', () => {
   const namespaceInput = () => screen.getByPlaceholderText('your-namespace');
-  const passwordInput = () => screen.getByPlaceholderText(/^•+$/);
+  const passwordInput = () => screen.getByLabelText('Password');
 
   it('renders the sign-in form', () => {
     render(<LoginPage onNavigate={noop} />);

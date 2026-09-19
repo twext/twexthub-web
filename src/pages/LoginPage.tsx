@@ -63,12 +63,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label block mb-1.5">Namespace Username</label>
+            <label htmlFor="login-namespace" className="label block mb-1.5">
+              Namespace Username
+            </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-sm text-ink-3 font-mono">@</span>
               <input
+                id="login-namespace"
+                name="namespace"
                 type="text"
                 required
+                autoComplete="username"
                 value={namespace}
                 onChange={(e) => setNamespace(e.target.value)}
                 placeholder="your-namespace"
@@ -81,10 +86,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="label block mb-1.5">Password</label>
+            <label htmlFor="login-password" className="label block mb-1.5">
+              Password
+            </label>
             <input
+              id="login-password"
+              name="password"
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

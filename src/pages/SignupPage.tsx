@@ -85,15 +85,18 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label block mb-1.5">
+            <label htmlFor="signup-namespace" className="label block mb-1.5">
               Namespace <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-sm text-ink-3 font-mono">@</span>
               <input
+                id="signup-namespace"
+                name="namespace"
                 type="text"
                 required
                 pattern="^[a-zA-Z0-9_-]{2,32}$"
+                autoComplete="username"
                 value={namespace}
                 onChange={(e) => setNamespace(e.target.value.toLowerCase())}
                 placeholder="your-namespace"
@@ -107,12 +110,15 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="label block mb-1.5">
+            <label htmlFor="signup-display-name" className="label block mb-1.5">
               Display Name{' '}
               <span className="font-normal normal-case tracking-normal text-ink-3">(optional)</span>
             </label>
             <input
+              id="signup-display-name"
+              name="displayName"
               type="text"
+              autoComplete="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Kane Marshall"
@@ -121,13 +127,16 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <label className="label block mb-1.5">
+            <label htmlFor="signup-password" className="label block mb-1.5">
               Password <span className="text-rose-500">*</span>
             </label>
             <input
+              id="signup-password"
+              name="password"
               type="password"
               required
               minLength={8}
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
