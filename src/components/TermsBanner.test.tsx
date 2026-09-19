@@ -15,7 +15,14 @@ beforeEach(() => {
 
 describe('TermsBanner', () => {
   it('renders nothing for signed-out users', () => {
-    useAuthMock.mockReturnValue(makeAuthState({ user: null, token: null, isAuthenticated: false }));
+    useAuthMock.mockReturnValue(
+      makeAuthState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        hasAcceptedCurrentTerms: false,
+      }),
+    );
     const { container } = render(<TermsBanner onNavigate={noop} />);
     expect(container).toHaveTextContent('');
   });

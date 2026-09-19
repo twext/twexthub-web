@@ -34,9 +34,9 @@ export const TermsBanner: React.FC<TermsBannerProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
           <span>
-            <strong>Action Required:</strong> The Twext Terms of Service (v{latestTermsVersion ?? 1}
-            ) have been updated. You must accept the current terms to publish extensions or manage
-            sessions.
+            <strong>Action Required:</strong> The Twext Terms of Service
+            {latestTermsVersion !== null ? ` (v${latestTermsVersion})` : ''} have been updated. You
+            must accept the current terms to publish extensions or manage sessions.
           </span>
         </div>
 
@@ -58,7 +58,10 @@ export const TermsBanner: React.FC<TermsBannerProps> = ({ onNavigate }) => {
         </div>
       </div>
       {error && (
-        <div className="max-w-7xl mx-auto mt-1 text-xs text-rose-700 dark:text-rose-400 font-medium">
+        <div
+          role="alert"
+          className="max-w-7xl mx-auto mt-1 text-xs text-rose-700 dark:text-rose-400 font-medium"
+        >
           {error}
         </div>
       )}
