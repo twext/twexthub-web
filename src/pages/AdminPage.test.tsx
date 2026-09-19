@@ -251,7 +251,10 @@ describe('AdminPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Demo Extension' })).toBeInTheDocument();
 
-    const codeEditor = await screen.findByRole('textbox', { name: 'extension.js editor' });
+    const codeEditor = await screen.findByRole('textbox', {
+      name: 'extension.js source (read-only)',
+    });
+    expect(codeEditor).toHaveAttribute('readonly');
     expect(codeEditor).toHaveValue(codeJs);
     expect(apiMock.downloadVersion).toHaveBeenCalledWith('kane', 'demo', '1.0.0');
   });

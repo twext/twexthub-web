@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PendingVersion } from '../types/api';
 import { CodeEditor } from './CodeEditor';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { Check, Copy, ShieldAlert, X } from 'lucide-react';
 
 interface SourceReviewModalProps {
@@ -29,6 +30,11 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const [codeUnavailable, setCodeUnavailable] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const { dialogProps } = useModalDialog<HTMLDivElement>({
+    labelledById: 'source-review-title',
+    onClose,
+  });
+
   const ns = item.ownerNamespace || item.namespace;
 
   const loadCode = useCallback(async () => {
@@ -53,19 +59,29 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const lineCount = codeText ? codeText.split('\n').length : 0;
   const sizeKb = codeText ? (new Blob([codeText]).size / 1024).toFixed(1) : '0.0';
 
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(codeText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard?.writeText(codeText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCodeError('Failed to copy the source to the clipboard.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface">
+    <div
+      {...dialogProps}
+      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-base font-display font-semibold text-ink truncate">
+            <h2
+              id="source-review-title"
+              className="text-base font-display font-semibold text-ink truncate"
+            >
               {item.name || item.id}
             </h2>
             <span className="font-mono text-xs text-ink-3">
@@ -137,10 +153,11 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           </div>
         ) : (
           <CodeEditor
-            label="extension.js editor"
+            label="extension.js source (read-only)"
             language="javascript"
             value={codeText}
-            onChange={setCodeText}
+            onChange={() => {}}
+            readOnly
           />
         )}
       </div>
@@ -151,7 +168,9 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           extension.js • {lineCount} lines • {sizeKb} KB
         </span>
         <button
-          onClick={handleCopy}
+          onClick={() => {
+            void handleCopy();
+          }}
           disabled={isLoading}
           className="text-lilac-700 dark:text-lilac-300 hover:underline flex items-center gap-1 font-medium disabled:opacity-50"
         >

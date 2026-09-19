@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { MarkdownView } from './MarkdownView';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { X, Save, Eye, Pencil, Columns2 } from 'lucide-react';
 
 type EditorMode = 'write' | 'preview' | 'split';
@@ -26,13 +27,12 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
   const [mode, setMode] = useState<EditorMode>('split');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  // The hook owns Escape (preserving the existing close behavior), focus,
+  // and Tab trapping.
+  const { dialogProps } = useModalDialog<HTMLDivElement>({
+    labelledById: 'markdown-editor-title',
+    onClose,
+  });
 
   const handleSave = async () => {
     setSaveError(null);
@@ -65,12 +65,20 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface">
+    <div
+      {...dialogProps}
+      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-base font-display font-semibold text-ink truncate">{title}</h2>
+            <h2
+              id="markdown-editor-title"
+              className="text-base font-display font-semibold text-ink truncate"
+            >
+              {title}
+            </h2>
             <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
               revision #{version}
             </span>
