@@ -21,13 +21,19 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [loading, setLoading] = useState(true);
+  const [loadingExtensions, setLoadingExtensions] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extensionsError, setExtensionsError] = useState<string | null>(null);
 
   const loadExtensions = useCallback(
     async (cursor?: string) => {
-      if (cursor) setLoadingMore(true);
-      else setLoading(true);
+      if (cursor) {
+        setLoadingMore(true);
+      } else {
+        setLoadingExtensions(true);
+        setExtensionsError(null);
+      }
       try {
         const res = await api.searchExtensions(namespace, cursor ? { cursor } : undefined);
         const own = (res.data || []).filter(
@@ -39,11 +45,11 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         setExtensions((prev) => (cursor ? [...prev, ...own] : own));
         setPagination(res.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
-        setError(err instanceof ApiError ? err.message : 'Failed to load extensions');
-        setExtensions([]);
+        setExtensionsError(err instanceof ApiError ? err.message : 'Failed to load extensions');
+        if (!cursor) setExtensions([]);
       } finally {
         if (cursor) setLoadingMore(false);
-        else setLoading(false);
+        else setLoadingExtensions(false);
       }
     },
     [namespace],
@@ -57,14 +63,15 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       try {
         const profile = await api.getUser(namespace);
         if (isMounted) setAuthor(profile);
-        await loadExtensions();
       } catch (err: unknown) {
         if (isMounted) {
           setError(err instanceof ApiError ? err.message : 'Failed to load author profile');
         }
+        return;
       } finally {
         if (isMounted) setLoading(false);
       }
+      await loadExtensions();
     };
     load();
     return () => {
@@ -172,7 +179,21 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           </button>
         </div>
 
-        {extensions.length > 0 ? (
+        {loadingExtensions ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-40 bg-wash dark:bg-raised rounded-lg border border-line animate-pulse"
+              />
+            ))}
+          </div>
+        ) : extensionsError ? (
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{extensionsError}</span>
+          </div>
+        ) : extensions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {extensions.map((ext) => (
               <ExtensionCard
