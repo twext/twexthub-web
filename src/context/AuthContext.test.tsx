@@ -22,7 +22,7 @@ function Probe() {
       <span data-testid="role">{auth.user?.role ?? 'none'}</span>
       <button onClick={() => auth.login('kane', 'password')}>login</button>
       <button onClick={() => auth.logout()}>logout</button>
-      <button onClick={() => auth.acceptCurrentTerms()}>accept</button>
+      <button onClick={() => auth.acceptCurrentTerms().catch(() => {})}>accept</button>
     </div>
   );
 }
