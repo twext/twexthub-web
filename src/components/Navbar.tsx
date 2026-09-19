@@ -44,17 +44,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       setPendingCount(0);
       return;
     }
+    let cancelled = false;
     const checkPending = async () => {
       try {
         const stats = await api.getStats();
-        setPendingCount(stats.pending || 0);
+        if (!cancelled) setPendingCount(stats.pending || 0);
       } catch {
         // ignore
       }
     };
     checkPending();
     const interval = setInterval(checkPending, 25000);
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [isAdmin]);
 
   const handleNavSearch = (e: React.FormEvent) => {
@@ -67,7 +71,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const navItemClass = (route: string) => {
-    const isActive = currentRoute === route || currentRoute.startsWith(`${route}/`);
+    // Treat query-bearing routes (e.g. "search?q=foo") as the configured route.
+    const isActive =
+      currentRoute === route ||
+      currentRoute.startsWith(`${route}/`) ||
+      currentRoute.startsWith(`${route}?`);
     return `px-2.5 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
       isActive
         ? 'border-lilac-500 text-lilac-700 dark:text-lilac-300'
@@ -247,6 +255,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1.5 text-ink-2 hover:text-ink rounded-lg hover:bg-wash"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -256,7 +266,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-line bg-canvas px-4 pt-2 pb-4 space-y-3">
+        <div
+          id="mobile-menu"
+          className="lg:hidden border-t border-line bg-canvas px-4 pt-2 pb-4 space-y-3"
+        >
           <form onSubmit={handleNavSearch} className="relative">
             <input
               type="text"

@@ -62,7 +62,8 @@ describe('ExplorePage', () => {
     const onNavigate = vi.fn();
     const user = userEvent.setup();
     render(<ExplorePage onNavigate={onNavigate} />);
-    await user.click(await screen.findByText('Demo Extension'));
+    await screen.findByText('Demo Extension');
+    await user.click(screen.getByRole('button', { name: /view details for demo extension/i }));
     expect(onNavigate).toHaveBeenCalledWith('ext/kane/demo');
   });
 
