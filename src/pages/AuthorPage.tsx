@@ -54,8 +54,13 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         if (!cursor) setExtensions([]);
       } finally {
         if (requestId === loadExtensionsSeqRef.current) {
+          // A fresh (cursor-less) load replaces the list and pagination, so
+          // any pending load-more belongs to discarded state: clear both.
           if (cursor) setLoadingMore(false);
-          else setLoadingExtensions(false);
+          else {
+            setLoadingExtensions(false);
+            setLoadingMore(false);
+          }
         }
       }
     },

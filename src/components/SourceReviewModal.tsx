@@ -28,6 +28,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeUnavailable, setCodeUnavailable] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const { dialogProps } = useModalDialog<HTMLDivElement>({
@@ -62,10 +63,14 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const handleCopy = async () => {
     try {
       await navigator.clipboard?.writeText(codeText);
+      setCopyError(null);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      setCodeError('Failed to copy the source to the clipboard.');
+      // Clipboard failures must not masquerade as source-load errors:
+      // codeError gates approval, and the loaded source stays reviewable.
+      setCopied(false);
+      setCopyError('Could not access the clipboard. Select the source and copy manually.');
     }
   };
 
@@ -164,9 +169,16 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
 
       {/* Status bar */}
       <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
-        <span>
-          extension.js • {lineCount} lines • {sizeKb} KB
-        </span>
+        <div className="min-w-0">
+          <span>
+            extension.js • {lineCount} lines • {sizeKb} KB
+          </span>
+          {copyError && (
+            <span role="alert" className="ml-3 text-rose-600 dark:text-rose-400 font-sans">
+              {copyError}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => {
             void handleCopy();

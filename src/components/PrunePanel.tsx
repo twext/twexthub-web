@@ -54,9 +54,19 @@ async function collectAllCredentials<T>(
   do {
     const res = await fetcher(cursor ? { namespace, cursor, limit: 50 } : { namespace, limit: 50 });
     all.push(...(res?.data || []));
-    cursor = res?.pagination?.hasMore ? res.pagination.nextCursor || undefined : undefined;
+    const { hasMore, nextCursor } = res?.pagination ?? {};
+    if (!hasMore) return all;
+    // A missing or unchanged cursor means the feed cannot advance, and the
+    // guard bounds runaway feeds: both abort with an error instead of
+    // silently judging the account on partial credentials. The scan loop
+    // catches this and skips the account.
+    const next = nextCursor || undefined;
+    if (!next || next === cursor || guard >= 1000) {
+      throw new Error(`Credential pagination for @${namespace} did not advance.`);
+    }
+    cursor = next;
     guard += 1;
-  } while (cursor && guard < 1000);
+  } while (cursor);
   return all;
 }
 
