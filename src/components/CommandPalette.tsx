@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { Extension } from '../types/api';
 import {
   Bookmark,
@@ -192,14 +193,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
     activeRef.current?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  // The palette stays mounted, so enable the dialog behavior only while open;
+  // the hook owns Escape, Tab trapping, initial focus, and focus restoration.
+  const { dialogProps } = useModalDialog<HTMLDivElement>({
+    ariaLabel: 'Command palette',
+    onClose,
+    enabled: open,
+  });
 
   if (!open) return null;
 
@@ -232,12 +232,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
-        className="card w-full max-w-xl p-0 overflow-hidden"
-      >
+      <div {...dialogProps} className="card w-full max-w-xl p-0 overflow-hidden focus:outline-none">
         <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
           <Search className="w-4 h-4 text-ink-3 shrink-0" />
           <input

@@ -5,24 +5,35 @@ const FOCUSABLE_SELECTOR =
 
 interface UseModalDialogOptions {
   /** id of the element (usually the h2) naming the dialog. */
-  labelledById: string;
+  labelledById?: string;
+  /** Accessible name for dialogs without a labelling element. */
+  ariaLabel?: string;
   /** Optional Escape handler; omit if the modal manages Escape itself. */
   onClose?: () => void;
+  /**
+   * Whether the dialog is currently shown. Focus capture, trapping, Escape,
+   * and focus restoration run only while enabled. Defaults to true for modals
+   * that mount only while open; pass the open flag for persistent components.
+   */
+  enabled?: boolean;
 }
 
 /**
- * Wires up modal dialog semantics for a full-screen overlay: dialog role,
- * accessible name, initial focus, Tab trapping, and focus restoration to the
- * trigger that opened it.
+ * Wires up modal dialog semantics: dialog role, accessible name, initial
+ * focus, Tab trapping, Escape handling, and focus restoration to the trigger
+ * that opened it.
  */
 export function useModalDialog<T extends HTMLElement>({
   labelledById,
+  ariaLabel,
   onClose,
+  enabled = true,
 }: UseModalDialogOptions) {
   const dialogRef = useRef<T | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
     if (dialog) {
@@ -32,9 +43,10 @@ export function useModalDialog<T extends HTMLElement>({
     return () => {
       previouslyFocusedRef.current?.focus?.();
     };
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && onClose) {
         e.stopPropagation();
@@ -64,12 +76,16 @@ export function useModalDialog<T extends HTMLElement>({
     };
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [onClose]);
+  }, [enabled, onClose]);
 
   const dialogProps = {
     role: 'dialog' as const,
     'aria-modal': true,
-    'aria-labelledby': labelledById,
+    ...(labelledById
+      ? { 'aria-labelledby': labelledById }
+      : ariaLabel
+        ? { 'aria-label': ariaLabel }
+        : {}),
     ref: dialogRef,
     tabIndex: -1,
   };
