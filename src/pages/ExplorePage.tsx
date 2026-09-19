@@ -229,6 +229,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
               <button
                 type="button"
                 onClick={handleClearSearch}
+                aria-label="Clear search"
                 className="absolute right-2.5 top-2.5 text-ink-3 hover:text-ink"
               >
                 <X className="w-3.5 h-3.5" />
@@ -302,7 +303,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
               return (
                 <div
                   key={`${ext.namespace}/${ext.id}`}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onNavigate(`ext/${ext.namespace}/${ext.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onNavigate(`ext/${ext.namespace}/${ext.id}`);
+                    }
+                  }}
                   className="p-4 hover:bg-wash transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="space-y-1">
