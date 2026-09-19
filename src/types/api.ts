@@ -30,6 +30,8 @@ export interface Session {
   createdAt: string;
   expiresAt: string;
   lastUsedAt?: string;
+  /** Server-provided marker for the session serving the current request. */
+  isCurrent?: boolean;
 }
 
 export type TokenScope = 'publish' | 'yank';

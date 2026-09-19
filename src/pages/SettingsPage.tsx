@@ -85,9 +85,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   const [savingToken, setSavingToken] = useState(false);
 
   // The bearer token is an opaque secret unrelated to the `Session.id` (a DB row id),
-  // so the current session can't be identified from the token directly. The current
-  // session is the one that just authenticated this page's own requests, so it is the
-  // most recently used (`lastUsedAt`) of the account's active sessions.
+  // so the current session can't be identified from the token directly. When the API
+  // marks the current session we trust that; otherwise fall back to the heuristic that
+  // the current session is the one that just authenticated this page's own requests,
+  // i.e. the most recently used (`lastUsedAt`) of the account's active sessions.
   const latestSession = useMemo(() => {
     const score = (s: Session) => {
       const used = s.lastUsedAt ? new Date(s.lastUsedAt).getTime() : 0;
@@ -100,8 +101,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
     );
   }, [sessions]);
 
-  const isCurrentSession = (sess: Session) =>
-    Boolean(latestSession) && latestSession!.id === sess.id;
+  const isCurrentSession = (sess: Session) => {
+    if (typeof sess.isCurrent === 'boolean') return sess.isCurrent;
+    return Boolean(latestSession) && latestSession!.id === sess.id;
+  };
 
   const loadSessions = useCallback(
     async (cursor?: string) => {
@@ -358,10 +361,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleCopySecret = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedToken(true);
-    setTimeout(() => setCopiedToken(false), 2000);
+  const handleCopySecret = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedToken(true);
+      setTimeout(() => setCopiedToken(false), 2000);
+    } catch {
+      toastError('Failed to copy the token to the clipboard.');
+    }
   };
 
   if (isLoading) {
@@ -442,7 +449,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span className="text-amber-700 dark:text-amber-300">Terms Pending</span>
                     <button
-                      onClick={acceptCurrentTerms}
+                      onClick={() => {
+                        void acceptCurrentTerms();
+                      }}
                       className="text-lilac-700 dark:text-lilac-300 underline font-medium ml-1"
                     >
                       Accept
@@ -455,8 +464,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
             <form onSubmit={handleSaveProfile} className="space-y-4 pt-2 border-t border-line">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="label block mb-1">Display Name</label>
+                  <label htmlFor="settings-display-name" className="label block mb-1">
+                    Display Name
+                  </label>
                   <input
+                    id="settings-display-name"
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
@@ -466,11 +478,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                 </div>
 
                 <div>
-                  <label className="label block mb-1">
+                  <label htmlFor="settings-new-password" className="label block mb-1">
                     New Password{' '}
                     <span className="text-ink-3 normal-case">(leave blank to keep)</span>
                   </label>
                   <input
+                    id="settings-new-password"
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -482,11 +495,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
                 {newPassword.trim() && (
                   <div className="sm:col-span-2">
-                    <label className="label block mb-1">
+                    <label htmlFor="settings-current-password" className="label block mb-1">
                       Current Password{' '}
                       <span className="text-ink-3 normal-case">(required to change it)</span>
                     </label>
                     <input
+                      id="settings-current-password"
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
@@ -682,8 +696,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
             <form onSubmit={handleCreateToken} className="space-y-3 pt-1">
               <div>
-                <label className="label block mb-1">Token Name / Identifier</label>
+                <label htmlFor="settings-token-name" className="label block mb-1">
+                  Token Name / Identifier
+                </label>
                 <input
+                  id="settings-token-name"
                   type="text"
                   required
                   value={newTokenName}
@@ -693,8 +710,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                 />
               </div>
 
-              <div>
-                <label className="label block mb-1.5">Permissions (Scopes)</label>
+              <fieldset>
+                <legend className="label block mb-1.5">Permissions (Scopes)</legend>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer text-xs text-ink-2">
                     <input
@@ -721,11 +738,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     </span>
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               <div>
-                <label className="label block mb-1">Expiration</label>
+                <label htmlFor="settings-token-expiry" className="label block mb-1">
+                  Expiration
+                </label>
                 <select
+                  id="settings-token-expiry"
                   value={tokenExpiry}
                   onChange={(e) => setTokenExpiry(e.target.value)}
                   className="input w-full sm:w-56"
@@ -765,8 +785,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     return (
                       <div key={tok.id} className="p-3 space-y-3 text-xs bg-surface dark:bg-raised">
                         <div>
-                          <label className="label block mb-1">Token Name</label>
+                          <label htmlFor="settings-edit-token-name" className="label block mb-1">
+                            Token Name
+                          </label>
                           <input
+                            id="settings-edit-token-name"
                             type="text"
                             value={editTokenName}
                             onChange={(e) => setEditTokenName(e.target.value)}
