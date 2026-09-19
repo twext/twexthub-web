@@ -41,12 +41,14 @@ node server.js
 
 ## Run with Docker
 
-Prebuilt images are published to `ghcr.io/twext/twext-web-ui`. Builds on `main` are tagged `latest`; version tags get semver tags. The image builds `dist/` in a multi-stage build and runs `server.js` as the `node` user on port 3000.
+Prebuilt images are published to `ghcr.io/twext/twexthub-web`. Builds on `main` are tagged `latest`; version tags get semver tags. The image builds `dist/` in a multi-stage build and runs `server.js` as the `node` user on port 3000.
 
 ```sh
+docker pull ghcr.io/twext/twexthub-web:latest
+
 docker run --rm -p 8080:3000 \
   -e TWEXTHUB_API_URL=https://registry.example.com/api/v0 \
-  ghcr.io/twext/twext-web-ui:latest
+  ghcr.io/twext/twexthub-web:latest
 ```
 
 **Build from source:**

@@ -74,7 +74,7 @@ ${apiBaseUrl}/@${namespace}/${id}/versions/${version}/download
 
 ### Prerequisites
 
-- Node.js >24
+- Node.js 24 or newer
 
 ### Local development
 
