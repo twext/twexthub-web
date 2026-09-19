@@ -64,3 +64,5 @@ jobs:
         run: npm ci
       - name: Run unit tests
         run: npm test
+      - name: Build production bundle
+        run: npm run build
