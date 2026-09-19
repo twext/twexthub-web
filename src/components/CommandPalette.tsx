@@ -243,11 +243,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
           <input
             ref={inputRef}
             type="text"
+            role="combobox"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search extensions or jump to a page..."
             aria-label="Command palette search"
+            aria-expanded
+            aria-controls="command-palette-results"
+            aria-activedescendant={
+              items.length > 0 ? `command-palette-option-${activeIndex}` : undefined
+            }
             autoComplete="off"
             spellCheck={false}
             className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
@@ -258,7 +264,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
           </kbd>
         </div>
 
-        <div className="max-h-[55vh] overflow-y-auto py-1.5">
+        <div
+          id="command-palette-results"
+          role="listbox"
+          aria-label="Command palette results"
+          className="max-h-[55vh] overflow-y-auto py-1.5"
+        >
           {items.length === 0 ? (
             <p className="px-3.5 py-6 text-center text-xs text-ink-3">
               {query.trim().length >= 2 && !loading
@@ -279,6 +290,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
                     </div>
                   )}
                   <div
+                    id={`command-palette-option-${index}`}
                     ref={isActive ? activeRef : undefined}
                     role="option"
                     aria-selected={isActive}

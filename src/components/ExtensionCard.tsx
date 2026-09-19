@@ -28,18 +28,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
   const status = extension.status || 'published';
 
   return (
-    <div
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      className="card group p-5 flex flex-col justify-between text-left cursor-pointer select-none hover:border-lilac-400 dark:hover:border-lilac-700 transition-colors leading-tight"
-    >
+    <div className="card group relative p-5 flex flex-col justify-between text-left leading-tight">
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -64,7 +53,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
         </p>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-sm text-ink-3">
+      <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-sm text-ink-3 relative z-10">
         <div className="flex items-center gap-1.5">
           <UserIcon className="w-3.5 h-3.5 text-ink-3" />
           <span className="font-medium text-ink-2">{authorDisplayName}</span>
@@ -77,7 +66,6 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
               e.stopPropagation();
               toggle(extension);
             }}
-            onKeyDown={(e) => e.stopPropagation()}
             aria-pressed={saved}
             aria-label={saved ? `Remove ${extension.name} from saved` : `Save ${extension.name}`}
             title={saved ? 'Remove from saved' : 'Save extension'}
@@ -90,12 +78,26 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
             <Bookmark className="w-4 h-4" fill={saved ? 'currentColor' : 'none'} />
           </button>
 
-          <span className="inline-flex items-center gap-1 text-lilac-700 dark:text-lilac-300 font-medium text-sm group-hover:underline underline-offset-4">
+          <button
+            type="button"
+            onClick={onClick}
+            aria-label={`View details for ${extension.name}`}
+            className="inline-flex items-center gap-1 text-lilac-700 dark:text-lilac-300 font-medium text-sm group-hover:underline underline-offset-4"
+          >
             View details
             <ArrowUpRight className="w-3.5 h-3.5" />
-          </span>
+          </button>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`View details for ${extension.name}`}
+        className="absolute inset-0 z-0 cursor-pointer"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
     </div>
   );
 };
