@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { AutomationToken, PaginatedList, Session, User } from '../types/api';
 import { useConfirm } from '../hooks/useConfirm';
@@ -36,6 +36,7 @@ interface AuditReport {
 const IDLE_DAYS = 90;
 const EXPIRING_SOON_DAYS = 30;
 const MAX_ITEMS_SHOWN = 25;
+const SCAN_CONCURRENCY = 6;
 
 async function collectAll<T>(
   fetcher: (params?: { cursor?: string; limit?: number }) => Promise<PaginatedList<T>>,
@@ -131,6 +132,14 @@ export const AuditPanel: React.FC = () => {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const scan = useCallback(async () => {
     setScanning(true);
@@ -150,10 +159,9 @@ export const AuditPanel: React.FC = () => {
       const pendingTerms: AuditReport['pendingTerms'] = [];
       const dormantUsers: AuditReport['dormantUsers'] = [];
 
-      setProgress({ done: 0, total: users.length });
+      if (mountedRef.current) setProgress({ done: 0, total: users.length });
 
-      for (let i = 0; i < users.length; i += 1) {
-        const user = users[i];
+      const processUser = async (user: User) => {
         const accepted = user.termsAcceptedVersion ?? null;
         if (latestTerms > 0 && (accepted === null || accepted < latestTerms)) {
           pendingTerms.push({ namespace: user.namespace, accepted, latest: latestTerms });
@@ -197,24 +205,43 @@ export const AuditPanel: React.FC = () => {
         } catch {
           // Skip accounts whose activity could not be inspected.
         }
+      };
 
-        setProgress({ done: i + 1, total: users.length });
+      // Bounded worker pool: at most SCAN_CONCURRENCY accounts in flight, with
+      // parallel getSessions/getTokens requests per account.
+      let done = 0;
+      let nextIndex = 0;
+      const worker = async () => {
+        while (nextIndex < users.length) {
+          const user = users[nextIndex];
+          nextIndex += 1;
+          await processUser(user);
+          done += 1;
+          if (mountedRef.current) setProgress({ done, total: users.length });
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(SCAN_CONCURRENCY, users.length) }, () => worker()),
+      );
+
+      if (mountedRef.current) {
+        setReport({
+          scannedUsers: users.length,
+          scannedAt: new Date().toISOString(),
+          expiredSessions,
+          idleSessions,
+          expiredTokens,
+          expiringTokens,
+          pendingTerms,
+          dormantUsers,
+        });
       }
-
-      setReport({
-        scannedUsers: users.length,
-        scannedAt: new Date().toISOString(),
-        expiredSessions,
-        idleSessions,
-        expiredTokens,
-        expiringTokens,
-        pendingTerms,
-        dormantUsers,
-      });
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : 'Failed to run the registry audit');
+      if (mountedRef.current) {
+        setError(err instanceof ApiError ? err.message : 'Failed to run the registry audit');
+      }
     } finally {
-      setScanning(false);
+      if (mountedRef.current) setScanning(false);
     }
   }, []);
 
@@ -229,21 +256,29 @@ export const AuditPanel: React.FC = () => {
     if (!confirmed) return;
 
     setBusyAction('sessions');
-    let revoked = 0;
+    const revokedIds = new Set<string>();
     for (const item of report.expiredSessions) {
       try {
         await api.revokeSession(item.id);
-        revoked += 1;
+        revokedIds.add(item.id);
       } catch {
         // ignore individual failures
       }
     }
-    setReport((prev) => ({
-      ...(prev as AuditReport),
-      expiredSessions: prev ? prev.expiredSessions.slice(revoked) : [],
-    }));
-    setBusyAction(null);
-    toast.success(`Revoked ${revoked} expired session(s).`);
+    if (mountedRef.current) {
+      setReport((prev) =>
+        prev
+          ? {
+              ...prev,
+              expiredSessions: prev.expiredSessions.filter(
+                (session) => !revokedIds.has(session.id),
+              ),
+            }
+          : prev,
+      );
+      setBusyAction(null);
+    }
+    toast.success(`Revoked ${revokedIds.size} expired session(s).`);
   };
 
   const deleteExpiredTokens = async () => {
@@ -257,21 +292,27 @@ export const AuditPanel: React.FC = () => {
     if (!confirmed) return;
 
     setBusyAction('tokens');
-    let deleted = 0;
+    const deletedIds = new Set<string>();
     for (const item of report.expiredTokens) {
       try {
         await api.deleteToken(item.id);
-        deleted += 1;
+        deletedIds.add(item.id);
       } catch {
         // ignore individual failures
       }
     }
-    setReport((prev) => ({
-      ...(prev as AuditReport),
-      expiredTokens: prev ? prev.expiredTokens.slice(deleted) : [],
-    }));
-    setBusyAction(null);
-    toast.success(`Deleted ${deleted} expired token(s).`);
+    if (mountedRef.current) {
+      setReport((prev) =>
+        prev
+          ? {
+              ...prev,
+              expiredTokens: prev.expiredTokens.filter((token) => !deletedIds.has(token.id)),
+            }
+          : prev,
+      );
+      setBusyAction(null);
+    }
+    toast.success(`Deleted ${deletedIds.size} expired token(s).`);
   };
 
   const scanPercent = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
