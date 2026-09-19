@@ -3,13 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PrunePanel } from './PrunePanel';
 import { api } from '../services/api';
-import {
-  makeAdminUser,
-  makeSession,
-  makeToken,
-  makeUser,
-  paginated,
-} from '../test/testUtils';
+import { makeAdminUser, makeSession, makeToken, makeUser, paginated } from '../test/testUtils';
 
 vi.mock('../services/api');
 
