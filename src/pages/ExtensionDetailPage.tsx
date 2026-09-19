@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -53,6 +53,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [versionDetailError, setVersionDetailError] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const versionRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,30 +108,42 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       ? `${api.getBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
       : null;
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2000);
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch {
+      setActionError('Failed to copy to the clipboard.');
+    }
   };
 
   const handleToggleVersion = async (version: string) => {
     if (expandedVersion === version) {
       setExpandedVersion(null);
+      versionRequestRef.current = null;
       return;
     }
     setExpandedVersion(version);
     setVersionDetail(null);
     setVersionDetailError(null);
     setLoadingVersion(true);
+    versionRequestRef.current = version;
+    const requestedVersion = version;
     try {
       const detail = await api.getVersion(namespace, id, version);
+      // A newer toggle may have superseded this request; discard stale results.
+      if (versionRequestRef.current !== requestedVersion) return;
       setVersionDetail(detail);
     } catch (err: unknown) {
+      if (versionRequestRef.current !== requestedVersion) return;
       setVersionDetailError(
         err instanceof ApiError ? err.message : 'Failed to load version metadata',
       );
     } finally {
-      setLoadingVersion(false);
+      if (versionRequestRef.current === requestedVersion) {
+        setLoadingVersion(false);
+      }
     }
   };
 
