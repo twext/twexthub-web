@@ -8,7 +8,8 @@ import { Editor, loader } from '@monaco-editor/react';
 // nothing is fetched from jsdelivr.
 import * as monaco from './monaco';
 import EditorWorker from './monacoEditorWorker.js?worker';
-import { defineMonacoThemes, MONOKAI_THEME } from './monacoThemes';
+import { useTheme } from '../context/ThemeContext';
+import { DARK_THEME, defineMonacoThemes, LIGHT_THEME } from './monacoThemes';
 
 loader.config({ monaco });
 
@@ -40,6 +41,7 @@ export const MonacoSourceEditor: React.FC<MonacoSourceEditorProps> = ({
   language,
   readOnly = false,
 }) => {
+  const { theme } = useTheme();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const stateRef = useRef<Map<string, monaco.editor.ICodeEditorViewState | null>>(new Map());
   const languageRef = useRef(language);
@@ -77,7 +79,7 @@ export const MonacoSourceEditor: React.FC<MonacoSourceEditorProps> = ({
     <Editor
       height="100%"
       language={language}
-      theme={MONOKAI_THEME}
+      theme={theme === 'dark' ? DARK_THEME : LIGHT_THEME}
       defaultValue={value}
       onChange={(next) => onChangeRef.current(next ?? '')}
       beforeMount={(monacoInstance) => {
@@ -86,7 +88,6 @@ export const MonacoSourceEditor: React.FC<MonacoSourceEditorProps> = ({
       onMount={(editor, monacoInstance) => {
         editorRef.current = editor;
         defineMonacoThemes(monacoInstance);
-        monacoInstance.editor.setTheme(MONOKAI_THEME);
       }}
       options={{
         readOnly,

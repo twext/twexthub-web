@@ -14,7 +14,7 @@ interface CodeEditorProps {
 }
 
 const loadingFallback = (
-  <div className="h-full min-h-[12rem] flex items-center justify-center text-xs text-ink-3 font-mono bg-[#272822] border border-zinc-800 rounded-lg">
+  <div className="h-full min-h-[12rem] flex items-center justify-center text-xs text-ink-3 font-mono bg-surface border border-line rounded-lg">
     Loading editor...
   </div>
 );
