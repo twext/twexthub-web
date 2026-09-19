@@ -28,10 +28,23 @@ const MIME_TYPES = {
   '.woff2': 'font/woff2',
 };
 
+function isLoopbackHost(hostname) {
+  return (
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname === '::1'
+  );
+}
+
+// Remote APIs must use HTTPS so injected credentials never travel in
+// cleartext; plain HTTP is accepted only for loopback development URLs.
 function isValidApiBaseUrl(raw) {
   try {
     const parsed = new URL(raw.trim());
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    if (parsed.protocol === 'https:') return true;
+    return parsed.protocol === 'http:' && isLoopbackHost(parsed.hostname);
   } catch {
     return false;
   }
