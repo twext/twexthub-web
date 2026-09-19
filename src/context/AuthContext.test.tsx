@@ -60,10 +60,18 @@ describe('AuthContext', () => {
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
   });
 
-  it('defaults terms version to 1 when the API is unreachable', async () => {
+  it('keeps the terms version unknown when the API is unreachable', async () => {
     apiMock.getTerms.mockRejectedValue(new ApiError('Down', 0));
     renderProbe();
-    await waitFor(() => expect(screen.getByTestId('terms')).toHaveTextContent('1'));
+    await waitFor(() => expect(screen.getByTestId('terms')).toHaveTextContent('null'));
+  });
+
+  it('does not submit terms acceptance while the version is unknown', async () => {
+    apiMock.getTerms.mockRejectedValue(new ApiError('Down', 0));
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('terms')).toHaveTextContent('null'));
+    await userEvent.click(screen.getByRole('button', { name: 'accept' }));
+    expect(apiMock.acceptTerms).not.toHaveBeenCalled();
   });
 
   it('login sets the user and token and refreshes terms', async () => {

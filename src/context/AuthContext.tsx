@@ -43,7 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const terms = await api.getTerms();
       setLatestTermsVersion(terms.version);
     } catch {
-      setLatestTermsVersion(1);
+      // Keep the version unknown rather than guessing v1; acceptance stays
+      // unavailable until the current version loads.
+      setLatestTermsVersion(null);
     }
   }, []);
 
@@ -78,6 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const freshUser = await api.getMe();
+      // The token may have changed (login/logout) while the request was in
+      // flight; discard the stale response instead of clobbering the new state.
+      if (api.getToken() !== currentToken) return;
       setUser((prev) => (prev && isSameUser(prev, freshUser) ? prev : freshUser));
       setToken(currentToken);
     } catch (err: unknown) {
@@ -146,7 +151,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const acceptCurrentTerms = async () => {
-    const versionToAccept = latestTermsVersion ?? 1;
+    if (latestTermsVersion === null) {
+      throw new Error('Terms version could not be loaded. Please try again.');
+    }
+    const versionToAccept = latestTermsVersion;
     await api.acceptTerms(versionToAccept);
     if (user) {
       const updatedUser = { ...user, termsAcceptedVersion: versionToAccept };
