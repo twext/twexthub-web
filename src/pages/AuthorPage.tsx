@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Extension, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
@@ -26,8 +26,11 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   const [error, setError] = useState<string | null>(null);
   const [extensionsError, setExtensionsError] = useState<string | null>(null);
 
+  // Superseded requests (stale namespace, rapid refresh) must not commit state.
+  const loadExtensionsSeqRef = useRef(0);
   const loadExtensions = useCallback(
     async (cursor?: string) => {
+      const requestId = ++loadExtensionsSeqRef.current;
       if (cursor) {
         setLoadingMore(true);
       } else {
@@ -36,6 +39,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       }
       try {
         const res = await api.searchExtensions(namespace, cursor ? { cursor } : undefined);
+        if (requestId !== loadExtensionsSeqRef.current) return;
         const own = (res.data || []).filter(
           (ext) =>
             ext.namespace === namespace ||
@@ -45,11 +49,14 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         setExtensions((prev) => (cursor ? [...prev, ...own] : own));
         setPagination(res.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
+        if (requestId !== loadExtensionsSeqRef.current) return;
         setExtensionsError(err instanceof ApiError ? err.message : 'Failed to load extensions');
         if (!cursor) setExtensions([]);
       } finally {
-        if (cursor) setLoadingMore(false);
-        else setLoadingExtensions(false);
+        if (requestId === loadExtensionsSeqRef.current) {
+          if (cursor) setLoadingMore(false);
+          else setLoadingExtensions(false);
+        }
       }
     },
     [namespace],
@@ -71,7 +78,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       } finally {
         if (isMounted) setLoading(false);
       }
-      await loadExtensions();
+      if (isMounted) await loadExtensions();
     };
     load();
     return () => {
