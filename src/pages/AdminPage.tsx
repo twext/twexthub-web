@@ -1048,6 +1048,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <button
                 onClick={() => setRejectModalItem(null)}
                 className="text-ink-3 hover:text-ink"
+                aria-label="Close rejection dialog"
               >
                 ✕
               </button>
@@ -1063,8 +1064,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             </p>
 
             <div className="space-y-1.5">
-              <label className="label block">Rejection Reason / Guidance:</label>
+              <label htmlFor="reject-reason" className="label block">
+                Rejection Reason / Guidance:
+              </label>
               <textarea
+                id="reject-reason"
                 rows={4}
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
