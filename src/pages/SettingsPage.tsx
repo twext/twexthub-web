@@ -450,7 +450,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     <span className="text-amber-700 dark:text-amber-300">Terms Pending</span>
                     <button
                       onClick={() => {
-                        void acceptCurrentTerms();
+                        acceptCurrentTerms().catch(() => {
+                          toastError('Failed to accept the current terms. Please try again.');
+                        });
                       }}
                       className="text-lilac-700 dark:text-lilac-300 underline font-medium ml-1"
                     >
