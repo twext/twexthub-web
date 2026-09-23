@@ -19,6 +19,7 @@ import {
   Shield,
   Bookmark,
   Command,
+  Bell,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -38,6 +39,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchNavQuery, setSearchNavQuery] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+    let cancelled = false;
+    const checkUnread = async () => {
+      try {
+        const res = await api.getNotifications({ limit: 1 });
+        if (!cancelled) setUnreadCount(res.unreadCount || 0);
+      } catch {
+        // ignore
+      }
+    };
+    checkUnread();
+    const interval = setInterval(checkUnread, 25000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -121,10 +145,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isAdmin && (
                 <button
                   onClick={() => onNavigate('admin')}
-                  className={`px-2.5 py-1 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1 text-sm font-semibold border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
                     currentRoute === 'admin'
-                      ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800'
-                      : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-900/40'
+                      ? 'border-amber-500 text-amber-800 dark:text-amber-200'
+                      : 'border-transparent text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 hover:border-amber-400'
                   }`}
                   title="Twext Registry Administration"
                 >
@@ -158,7 +182,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onOpenCommandPalette}
                 title="Open command palette"
                 aria-label="Open command palette"
-                className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-ink-3 hover:text-ink bg-surface dark:bg-surface hover:bg-wash border border-line rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-ink-3 hover:text-ink border-b-2 -mb-px border-transparent hover:border-line transition-colors"
               >
                 <Command className="w-3.5 h-3.5" />
                 <kbd className="font-mono text-[10px]">K</kbd>
@@ -170,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle theme"
-              className="p-1.5 text-ink-2 hover:text-ink bg-surface dark:bg-surface hover:bg-wash border border-line rounded-lg transition-colors"
+              className="flex items-center px-2 py-1.5 text-ink-2 hover:text-ink border-b-2 -mb-px border-transparent hover:border-line transition-colors"
             >
               {theme === 'dark' ? (
                 <Sun className="w-3.5 h-3.5 text-amber-400" />
@@ -185,14 +209,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onNavigate('dashboard')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                    currentRoute === 'dashboard'
-                      ? 'border-lilac-400 text-lilac-700 dark:text-lilac-300 bg-lilac-50 dark:bg-lilac-950'
-                      : 'border-line text-ink-2 hover:bg-wash'
-                  }`}
+                  className={`flex items-center gap-1.5 ${navItemClass('dashboard')}`}
                 >
                   <UserIcon className="w-3.5 h-3.5 text-lilac-500" />
                   <span>{user?.displayName || user?.namespace}</span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('notifications')}
+                  title="Notifications"
+                  aria-label="Notifications"
+                  className={`relative flex items-center justify-center px-2 py-1.5 border-b-2 -mb-px transition-colors ${
+                    currentRoute === 'notifications'
+                      ? 'border-lilac-500 text-lilac-700 dark:text-lilac-300'
+                      : 'border-transparent text-ink-2 hover:text-ink hover:border-line'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-lilac-600 text-white text-[9px] font-mono font-bold px-1 py-0.2 rounded-full leading-tight">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -210,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('home');
                   }}
                   title="Sign out of Twext"
-                  className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-wash transition-colors"
+                  className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 border-b-2 -mb-px border-transparent hover:border-rose-400/70 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -219,7 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => onNavigate('login')}
-                  className="px-2.5 py-1.5 text-sm font-medium text-ink-2 hover:text-ink rounded-lg hover:bg-wash transition-colors flex items-center gap-1"
+                  className="px-2.5 py-1.5 text-sm font-medium text-ink-2 hover:text-ink border-b-2 -mb-px border-transparent hover:border-line transition-colors flex items-center gap-1"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>Log in</span>
@@ -242,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle theme"
-              className="p-1.5 text-ink-2 dark:text-ink-2 rounded-lg hover:bg-wash transition-colors"
+              className="p-1.5 text-ink-2 dark:text-ink-2 border-b-2 -mb-px border-transparent hover:border-line transition-colors"
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -253,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 text-ink-2 hover:text-ink rounded-lg hover:bg-wash"
+              className="p-1.5 text-ink-2 hover:text-ink border-b-2 -mb-px border-transparent hover:border-line transition-colors"
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
@@ -381,6 +419,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <span className="text-ink">@{user?.namespace}</span>
                   <UserIcon className="w-3.5 h-3.5 text-lilac-500" />
+                </button>
+                <button
+                  onClick={() => {
+                    onNavigate('notifications');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-ink-2 hover:bg-wash rounded-lg flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5" />
+                    Notifications
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300">
+                      {unreadCount > 99 ? '99+' : unreadCount} unread
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => {

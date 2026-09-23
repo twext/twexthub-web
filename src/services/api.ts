@@ -2,9 +2,12 @@ import { DEFAULT_API_BASE_URL, isValidApiBaseUrl, normalizeApiBaseUrl } from '..
 import {
   AuthSessionResponse,
   AutomationToken,
+  BroadcastResponse,
   Extension,
   InstanceStats,
+  MarkReadResponse,
   Meta,
+  NotificationList,
   PaginatedList,
   PendingVersion,
   PrivacyDoc,
@@ -290,6 +293,30 @@ class ApiService {
     }
   }
 
+  // --- Notifications ---
+
+  async getNotifications(params?: {
+    cursor?: string;
+    limit?: number;
+    unread?: boolean;
+  }): Promise<NotificationList> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.unread) query.set('unread', 'true');
+    const qs = query.toString();
+    return this.request<NotificationList>(`/notifications${qs ? `?${qs}` : ''}`);
+  }
+
+  async markNotificationsRead(
+    payload: { ids: string[] } | { all: true },
+  ): Promise<MarkReadResponse> {
+    return this.request<MarkReadResponse>('/notifications/read', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async updateUser(namespace: string, data: UpdateUserPayload): Promise<User> {
     const updated = await this.request<User>(`/users/${encodeURIComponent(namespace)}`, {
       method: 'PATCH',
@@ -453,6 +480,13 @@ class ApiService {
     return this.request<PrivacyDoc>('/admin/privacy', {
       method: 'PATCH',
       body: JSON.stringify({ body }),
+    });
+  }
+
+  async broadcastNotification(message: string): Promise<BroadcastResponse> {
+    return this.request<BroadcastResponse>('/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
     });
   }
 }

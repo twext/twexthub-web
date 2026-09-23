@@ -62,7 +62,17 @@ describe('AdminPage', () => {
     expect(screen.getByRole('button', { name: /Extension Catalog/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /User Accounts/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Platform Policies/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Broadcasts/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Maintenance/ })).toBeInTheDocument();
+  });
+
+  it('opens the broadcasts tab with the announce tool', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+    await user.click(screen.getByRole('button', { name: /Broadcasts/ }));
+    expect(screen.getByText('Broadcast to All Accounts')).toBeInTheDocument();
+    expect(screen.getByLabelText('Broadcast message')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send Broadcast' })).toBeInTheDocument();
   });
 
   it('opens the maintenance tab with the prune tool', async () => {

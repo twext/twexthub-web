@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { useModalDialog } from '../hooks/useModalDialog';
 import { Extension } from '../types/api';
 import {
+  Bell,
   Bookmark,
   Compass,
   FileText,
@@ -143,6 +144,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         group: 'Navigate',
         icon: Settings,
         run: () => onNavigate('settings'),
+      });
+      items.splice(5, 0, {
+        id: 'nav-notifications',
+        label: 'Notifications',
+        group: 'Navigate',
+        icon: Bell,
+        run: () => onNavigate('notifications'),
       });
       items.push({
         id: 'action-logout',

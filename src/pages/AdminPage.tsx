@@ -9,6 +9,7 @@ import { MarkdownView } from '../components/MarkdownView';
 import { PrunePanel } from '../components/PrunePanel';
 import { AuditPanel } from '../components/AuditPanel';
 import { ExportPanel } from '../components/ExportPanel';
+import { BroadcastPanel } from '../components/BroadcastPanel';
 import { useConfirm } from '../hooks/useConfirm';
 import {
   PendingVersion,
@@ -36,6 +37,7 @@ import {
   Activity,
   PenLine,
   Wrench,
+  Megaphone,
   Settings as SettingsIcon,
 } from 'lucide-react';
 
@@ -43,7 +45,7 @@ interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
-type AdminTab = 'moderation' | 'catalog' | 'users' | 'policies' | 'maintenance';
+type AdminTab = 'moderation' | 'catalog' | 'users' | 'policies' | 'broadcast' | 'maintenance';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
@@ -542,6 +544,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </button>
 
         <button
+          onClick={() => setActiveTab('broadcast')}
+          className={`pb-3 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'broadcast'
+              ? 'border-lilac-500 dark:border-lilac-300 text-lilac-700 dark:text-lilac-300'
+              : 'border-transparent text-ink-3 hover:text-ink'
+          }`}
+        >
+          <Megaphone className="w-4 h-4" />
+          <span>Broadcasts</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('maintenance')}
           className={`pb-3 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
             activeTab === 'maintenance'
@@ -1021,7 +1035,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         />
       )}
 
-      {/* Tab 5: Maintenance */}
+      {/* Tab 5: Broadcasts */}
+      {activeTab === 'broadcast' && (
+        <div className="space-y-4">
+          <BroadcastPanel />
+        </div>
+      )}
+
+      {/* Tab 6: Maintenance */}
       {activeTab === 'maintenance' && (
         <div className="space-y-4">
           <AuditPanel />

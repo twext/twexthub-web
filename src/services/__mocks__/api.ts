@@ -30,6 +30,8 @@ export const api = {
   getPrivacy: vi.fn(),
   getUsers: vi.fn(),
   getUser: vi.fn(),
+  getNotifications: vi.fn(),
+  markNotificationsRead: vi.fn(),
   login: vi.fn(),
   signup: vi.fn(),
   logout: vi.fn(),
@@ -52,4 +54,5 @@ export const api = {
   updateUserRole: vi.fn(),
   updateTerms: vi.fn(),
   updatePrivacyPolicy: vi.fn(),
+  broadcastNotification: vi.fn(),
 };

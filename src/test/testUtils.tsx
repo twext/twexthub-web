@@ -8,6 +8,7 @@ import type {
   AutomationToken,
   Extension,
   InstanceStats,
+  Notification,
   PaginatedList,
   PendingVersion,
   Session,
@@ -70,6 +71,16 @@ export const makeToken = (overrides: Partial<AutomationToken> = {}): AutomationT
   id: 'tok-1',
   name: 'ci-deploy',
   scopes: ['publish'],
+  createdAt: '2026-03-01T00:00:00Z',
+  ...overrides,
+});
+
+export const makeNotification = (overrides: Partial<Notification> = {}): Notification => ({
+  id: 'notif-1',
+  kind: 'broadcast',
+  message: 'Scheduled maintenance tonight at 02:00 UTC.',
+  payload: {},
+  read: false,
   createdAt: '2026-03-01T00:00:00Z',
   ...overrides,
 });

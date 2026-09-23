@@ -136,6 +136,46 @@ export interface ReviewVersionPayload {
   reason?: string;
 }
 
+export type NotificationKind =
+  | 'review.approved'
+  | 'review.rejected'
+  | 'terms.bumped'
+  | 'tokens.revoked'
+  | 'role.changed'
+  | 'broadcast';
+
+export interface NotificationPayload {
+  namespace?: string;
+  id?: string;
+  version?: string | number;
+  previousVersion?: number;
+  reason?: string;
+  role?: UserRole;
+  actor?: string;
+  [key: string]: unknown;
+}
+
+export interface Notification {
+  id: string;
+  kind: NotificationKind;
+  message: string;
+  payload: NotificationPayload;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationList extends PaginatedList<Notification> {
+  unreadCount: number;
+}
+
+export interface MarkReadResponse {
+  updated: number;
+}
+
+export interface BroadcastResponse {
+  created: number;
+}
+
 export interface UpdateUserPayload {
   displayName?: string;
   password?: string;

@@ -15,6 +15,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { AuthorPage } from './pages/AuthorPage';
 import { SavedPage } from './pages/SavedPage';
 import { TermsPage } from './pages/TermsPage';
@@ -117,6 +118,8 @@ export const App: React.FC = () => {
       case 'settings':
       case 'sessions-tokens':
         return <SettingsPage key={configRefreshKey} onNavigate={navigate} />;
+      case 'notifications':
+        return <NotificationsPage key={configRefreshKey} onNavigate={navigate} />;
       case 'saved':
         return <SavedPage key={configRefreshKey} onNavigate={navigate} />;
       case 'admin':

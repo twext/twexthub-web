@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
 import { DEFAULT_API_BASE_URL } from '../config/settings';
-import { paginated, makeUser } from '../test/testUtils';
+import { paginated, makeNotification, makeUser } from '../test/testUtils';
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
@@ -228,5 +228,66 @@ describe('ApiService', () => {
         body: JSON.stringify({ name: 'ci', scopes: ['publish'], expiresInDays: 30 }),
       }),
     );
+  });
+
+  it('getNotifications serializes cursor, limit, and unread params', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [makeNotification({ id: '5' })],
+        unreadCount: 3,
+        pagination: { nextCursor: 'c2', hasMore: true },
+      }),
+    );
+    const res = await api.getNotifications({ cursor: 'c1', limit: 10, unread: true });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `${baseUrl}/notifications?cursor=c1&limit=10&unread=true`,
+    );
+    expect(res.unreadCount).toBe(3);
+    expect(res.data[0].id).toBe('5');
+  });
+
+  it('getNotifications can request the full mailbox', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: [], unreadCount: 0, pagination: { nextCursor: null, hasMore: false } }),
+    );
+    await api.getNotifications({ limit: 25 });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications?limit=25`);
+  });
+
+  it('markNotificationsRead POSTs the ids to read', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ updated: 2 }));
+    await api.markNotificationsRead({ ids: ['12', '13'] });
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${baseUrl}/notifications/read`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ ids: ['12', '13'] }),
+      }),
+    );
+  });
+
+  it('markNotificationsRead can mark the whole mailbox', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ updated: 5 }));
+    await api.markNotificationsRead({ all: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${baseUrl}/notifications/read`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ all: true }),
+      }),
+    );
+  });
+
+  it('broadcastNotification POSTs the admin message', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ created: 42 }));
+    const res = await api.broadcastNotification('Maintenance tonight.');
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${baseUrl}/admin/notifications`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ message: 'Maintenance tonight.' }),
+      }),
+    );
+    expect(res.created).toBe(42);
   });
 });
