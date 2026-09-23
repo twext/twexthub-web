@@ -218,7 +218,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={() => onNavigate('notifications')}
                   title="Notifications"
-                  aria-label="Notifications"
+                  aria-label={
+                    unreadCount > 0
+                      ? `Notifications (${unreadCount} unread)`
+                      : 'Notifications'
+                  }
                   className={`relative flex items-center justify-center px-2 py-1.5 border-b-2 -mb-px transition-colors ${
                     currentRoute === 'notifications'
                       ? 'border-lilac-500 text-lilac-700 dark:text-lilac-300'

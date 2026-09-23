@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api, ApiError } from '../services/api';
@@ -86,9 +86,11 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
+  const requestIdRef = useRef(0);
 
   const loadNotifications = useCallback(
     async (cursor?: string) => {
+      const requestId = ++requestIdRef.current;
       if (cursor) setLoadingMore(true);
       else setLoading(true);
       try {
@@ -97,16 +99,20 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ onNavigate
           limit: PAGE_SIZE,
           unread: unreadOnly || undefined,
         });
+        if (requestId !== requestIdRef.current) return;
         const page = res?.data || [];
         setNotifications((prev) => (cursor ? [...prev, ...page] : page));
         setPagination(res?.pagination || { nextCursor: null, hasMore: false });
         setUnreadCount(res?.unreadCount ?? 0);
       } catch (err: unknown) {
+        if (requestId !== requestIdRef.current) return;
         const msg = err instanceof ApiError ? err.message : 'Failed to fetch notifications';
         toastError(msg);
       } finally {
-        if (cursor) setLoadingMore(false);
-        else setLoading(false);
+        if (requestId === requestIdRef.current) {
+          if (cursor) setLoadingMore(false);
+          else setLoading(false);
+        }
       }
     },
     [toastError, unreadOnly],
