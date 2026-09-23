@@ -45,6 +45,7 @@ export const makePendingVersion = (overrides: Partial<PendingVersion> = {}): Pen
   id: 'demo',
   version: '1.0.0',
   status: 'pending',
+  visibility: 'public',
   name: 'Demo Extension',
   license: 'Apache-2.0',
   description: 'A version awaiting review.',

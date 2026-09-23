@@ -14,7 +14,7 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  getBaseUrl: vi.fn(() => 'http://localhost:3000/api/v0'),
+  getBaseUrl: vi.fn(() => 'http://localhost:3000/api/v1'),
   setBaseUrl: vi.fn(),
   resetBaseUrl: vi.fn(),
   getToken: vi.fn(() => null),
@@ -47,6 +47,7 @@ export const api = {
   yankVersion: vi.fn(),
   getVersion: vi.fn(),
   downloadVersion: vi.fn(),
+  updateExtensionVisibility: vi.fn(),
   listVersionsForReview: vi.fn(),
   reviewVersion: vi.fn(),
   updateUserRole: vi.fn(),

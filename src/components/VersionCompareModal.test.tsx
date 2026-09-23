@@ -15,6 +15,7 @@ beforeEach(() => {
     id: 'demo',
     version,
     status: 'published',
+    visibility: 'public',
     name: 'Demo',
     license: 'MIT',
     description: '',

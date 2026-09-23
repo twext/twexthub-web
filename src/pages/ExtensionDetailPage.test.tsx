@@ -11,7 +11,7 @@ vi.mock('../context/AuthContext');
 
 const apiMock = vi.mocked(api);
 const useAuthMock = vi.mocked(useAuth);
-const loadUrl = 'http://localhost:3000/api/v0/@kane/demo/versions/1.2.0/download';
+const loadUrl = 'http://localhost:3000/api/v1/@kane/demo/versions/1.2.0/download';
 
 const versionedExtension = () =>
   makeExtension({

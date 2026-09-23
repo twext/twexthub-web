@@ -50,6 +50,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [newPassword, setNewPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
+  const [isPrivate, setIsPrivate] = useState(user?.isPrivate ?? false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Sessions & tokens state
@@ -161,6 +162,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName || '');
+      setIsPrivate(user.isPrivate ?? false);
     }
   }, [user]);
 
@@ -175,9 +177,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
         displayName?: string;
         password?: string;
         currentPassword?: string;
+        private?: boolean;
       } = {};
       if (displayName !== user.displayName) {
         updateData.displayName = displayName;
+      }
+      if (isPrivate !== (user.isPrivate ?? false)) {
+        updateData.private = isPrivate;
       }
       if (newPassword.trim()) {
         if (newPassword.length < 8) {
@@ -512,6 +518,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-start justify-between gap-4 rounded-lg border border-line bg-wash dark:bg-raised p-3">
+                <div className="space-y-0.5">
+                  <span className="label">Private profile</span>
+                  <p className="text-[11px] text-ink-3 leading-relaxed">
+                    Hides your account from listings and keeps your extensions visible only to you
+                    and admins.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isPrivate}
+                    onChange={(e) => setIsPrivate(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <span className="w-9 h-5 bg-wash dark:bg-raised border border-line rounded-full peer peer-checked:bg-lilac-500 peer-checked:border-lilac-500 transition-colors relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-3.5 after:h-3.5 after:bg-white after:rounded-full after:transition-transform peer-checked:after:translate-x-4" />
+                </label>
               </div>
 
               <div className="flex justify-end">

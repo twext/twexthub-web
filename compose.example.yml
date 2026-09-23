@@ -6,5 +6,5 @@ services:
     environment:
       # The TwextHub API base URL the UI talks to. Read from the container
       # environment at startup by server.js (overrides config.yml).
-      # If unset, the UI defaults to https://twexts.sdisk.us/api/v0.
-      TWEXTHUB_API_URL: https://twexts.sdisk.us/api/v0
+      # If unset, the UI defaults to https://twexts.sdisk.us/api/v1.
+      TWEXTHUB_API_URL: https://twexts.sdisk.us/api/v1

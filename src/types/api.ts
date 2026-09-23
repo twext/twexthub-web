@@ -11,11 +11,16 @@ export interface ProblemDetails {
 
 export type UserRole = 'admin' | 'normal';
 
+export type Visibility = 'public' | 'unlisted' | 'private';
+
+export type Sources = Record<string, string>;
+
 export interface User {
   namespace: string;
   displayName: string;
   role?: UserRole;
   hasPublished: boolean;
+  isPrivate?: boolean;
   createdAt: string;
   termsAcceptedVersion?: number | null;
 }
@@ -51,9 +56,18 @@ export type ModerationStatus = 'published' | 'pending' | 'rejected' | 'yanked';
 export interface ExtensionVersion {
   version: string;
   status: ModerationStatus;
-  createdAt?: string;
+  visibility?: Visibility;
+  name?: string;
+  license?: string;
+  description?: string;
+  author?: string | null;
   changelog?: string;
+  createdAt?: string;
+  publishedAt?: string;
+  twextVersion?: string;
   downloadUrl?: string;
+  manifestSource?: string;
+  sources?: Sources;
 }
 
 export interface Extension {
@@ -69,10 +83,18 @@ export interface Extension {
         displayName?: string;
       };
   latestVersion?: string;
+  version?: string;
   status?: ModerationStatus;
+  visibility?: Visibility;
+  license?: string;
+  color1?: string | null;
+  color2?: string | null;
+  color3?: string | null;
+  readme?: string | null;
   versions?: ExtensionVersion[];
   createdAt?: string;
   updatedAt?: string;
+  publishedAt?: string;
   codeUrl?: string;
 }
 
@@ -109,12 +131,18 @@ export interface VersionInfo {
   id: string;
   version: string;
   status: ModerationStatus | 'staging';
+  visibility: Visibility;
   name: string;
   license: string;
   description: string;
   author?: string | null;
+  twextVersion?: string;
   createdAt: string;
   publishedAt?: string;
+  /** Returned only to the owner or an admin. */
+  manifestSource?: string;
+  /** Returned only to the owner or an admin. */
+  sources?: Sources;
   dist?: {
     downloadUrl: string;
   };
@@ -141,4 +169,5 @@ export interface UpdateUserPayload {
   password?: string;
   currentPassword?: string;
   role?: UserRole;
+  private?: boolean;
 }

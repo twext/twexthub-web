@@ -3,8 +3,9 @@ import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { useRecentExtensions, useSavedExtensions } from '../hooks/useCollections';
-import { Extension, VersionInfo } from '../types/api';
+import { Extension, VersionInfo, Visibility } from '../types/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { MarkdownView } from '../components/MarkdownView';
 import { VersionCompareModal } from '../components/VersionCompareModal';
 import {
   User as UserIcon,
@@ -23,6 +24,9 @@ import {
   Info,
   Bookmark,
   GitCompare,
+  Eye,
+  EyeOff,
+  Link2,
 } from 'lucide-react';
 
 interface ExtensionDetailPageProps {
@@ -53,6 +57,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [versionDetailError, setVersionDetailError] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
   const versionRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -244,6 +249,60 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const isOwner = Boolean(isAuthenticated && user && user.namespace === extension.namespace);
   const canManage = isOwner || isAdmin;
 
+  const visibility: Visibility =
+    extension.visibility ?? extension.versions?.[0]?.visibility ?? 'public';
+
+  const handleChangeVisibility = async (next: Visibility) => {
+    if (!extension || next === visibility) return;
+    setVisibilitySaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await api.updateExtensionVisibility(extension.namespace, extension.id, next);
+      setExtension((prev) =>
+        prev
+          ? {
+              ...prev,
+              visibility: next,
+              versions: prev.versions?.map((v) =>
+                v.version === updated.version ? { ...v, visibility: next } : v,
+              ),
+            }
+          : prev,
+      );
+      setActionSuccess(
+        next === 'public'
+          ? 'Extension is now public and listed in the registry.'
+          : next === 'unlisted'
+            ? 'Extension is now unlisted. Direct links and downloads still work.'
+            : 'Extension is now private. Only you and admins can see it.',
+      );
+    } catch (err: unknown) {
+      setActionError(err instanceof ApiError ? err.message : 'Failed to change visibility');
+    } finally {
+      setVisibilitySaving(false);
+    }
+  };
+
+  const visibilityMeta: Record<Visibility, { label: string; hint: string; icon: React.ReactNode }> =
+    {
+      public: {
+        label: 'Public',
+        hint: 'Listed in the registry and search.',
+        icon: <Eye className="w-3 h-3" />,
+      },
+      unlisted: {
+        label: 'Unlisted',
+        hint: 'Direct links work; hidden from listings.',
+        icon: <Link2 className="w-3 h-3" />,
+      },
+      private: {
+        label: 'Private',
+        hint: 'Only you and admins can access it.',
+        icon: <EyeOff className="w-3 h-3" />,
+      },
+    };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Back button */}
@@ -309,6 +368,19 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
               <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono">
                 v{latestVersion}
               </span>
+              {visibility !== 'public' && (
+                <span
+                  className={`chip border ${
+                    visibility === 'unlisted'
+                      ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-900/60'
+                      : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60'
+                  }`}
+                  title={visibilityMeta[visibility].hint}
+                >
+                  {visibilityMeta[visibility].icon}
+                  <span className="capitalize">{visibility}</span>
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => toggle(extension)}
@@ -340,6 +412,15 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Releases */}
         <div className="lg:col-span-2">
+          {extension.readme && (
+            <div className="card p-6 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Bookmark className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                <h2 className="label">README</h2>
+              </div>
+              <MarkdownView content={extension.readme} />
+            </div>
+          )}
           <div className="card p-6 min-h-[320px] space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-ink">Version History</h2>
@@ -587,6 +668,36 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                 Yanking a version hides it from new installs; deleting the extension permanently
                 removes every version and its compiled code.
               </p>
+              <div>
+                <span className="text-[11px] font-semibold text-ink-2 uppercase tracking-wide">
+                  Visibility
+                </span>
+                <div
+                  className="mt-1.5 grid grid-cols-3 gap-1.5"
+                  role="radiogroup"
+                  aria-label="Visibility"
+                >
+                  {(Object.keys(visibilityMeta) as Visibility[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      role="radio"
+                      aria-checked={visibility === level}
+                      disabled={visibilitySaving}
+                      onClick={() => handleChangeVisibility(level)}
+                      title={visibilityMeta[level].hint}
+                      className={`inline-flex flex-col items-start gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+                        visibility === level
+                          ? 'border-lilac-400 dark:border-lilac-600 bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300'
+                          : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
+                      }`}
+                    >
+                      {visibilityMeta[level].icon}
+                      <span className="capitalize">{visibilityMeta[level].label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <button
                   onClick={handleDeleteExtension}

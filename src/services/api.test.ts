@@ -31,8 +31,8 @@ describe('ApiService', () => {
   });
 
   it('uses the base URL configured via config.yml/env', () => {
-    api.configure({ apiBaseUrl: 'https://hub.example.com/api/v0' });
-    expect(api.getBaseUrl()).toBe('https://hub.example.com/api/v0');
+    api.configure({ apiBaseUrl: 'https://hub.example.com/api/v1' });
+    expect(api.getBaseUrl()).toBe('https://hub.example.com/api/v1');
   });
 
   it('falls back to the enforced default when the configured URL is invalid', () => {
@@ -41,7 +41,7 @@ describe('ApiService', () => {
   });
 
   it('resets to the enforced default', () => {
-    api.setBaseUrl('https://hub.example.com/api/v0');
+    api.setBaseUrl('https://hub.example.com/api/v1');
     api.resetBaseUrl();
     expect(api.getBaseUrl()).toBe(DEFAULT_API_BASE_URL);
   });

@@ -269,7 +269,7 @@ class ApiService {
     }
   }
 
-  // GET /v0/auth/me - returns the caller's own authenticated account
+  // GET /v1/auth/me - returns the caller's own authenticated account
   async getMe(): Promise<User> {
     const me = await this.request<User>('/auth/me');
     this.setStoredUser(me);
@@ -385,6 +385,20 @@ class ApiService {
     await this.request<void>(`/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     });
+  }
+
+  async updateExtensionVisibility(
+    namespace: string,
+    id: string,
+    visibility: 'public' | 'unlisted' | 'private',
+  ): Promise<VersionInfo> {
+    return this.request<VersionInfo>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ visibility }),
+      },
+    );
   }
 
   async yankVersion(namespace: string, id: string, version: string): Promise<void> {

@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PendingVersion } from '../types/api';
 import { CodeEditor } from './CodeEditor';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { Check, Copy, ShieldAlert, X } from 'lucide-react';
+import { Check, Copy, FileCode2, FileJson, ShieldAlert, X } from 'lucide-react';
 
 interface SourceReviewModalProps {
   item: PendingVersion;
@@ -18,6 +18,20 @@ function errorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+const MANIFEST_PATH = 'twext.yaml';
+
+function langForFile(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() ?? '';
+  if (path === MANIFEST_PATH || ext === 'yaml' || ext === 'yml') return 'yaml';
+  if (ext === 'json' || ext === 'jsonc') return 'json';
+  if (ext === 'js' || ext === 'mjs' || ext === 'cjs') return 'javascript';
+  if (ext === 'ts' || ext === 'mts' || ext === 'cts') return 'typescript';
+  if (ext === 'md') return 'markdown';
+  if (ext === 'css') return 'css';
+  if (ext === 'html' || ext === 'htm') return 'html';
+  return 'plaintext';
+}
+
 export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   item,
   onClose,
@@ -30,6 +44,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const [codeUnavailable, setCodeUnavailable] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string>(MANIFEST_PATH);
 
   const { dialogProps } = useModalDialog<HTMLDivElement>({
     labelledById: 'source-review-title',
@@ -37,6 +52,23 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   });
 
   const ns = item.ownerNamespace || item.namespace;
+
+  const hasSources = typeof item.manifestSource === 'string' && !!item.sources;
+
+  const files = useMemo(() => {
+    if (!hasSources) return [] as { path: string; content: string; language: string }[];
+    const manifest = [
+      { path: MANIFEST_PATH, content: item.manifestSource ?? '', language: 'yaml' },
+    ];
+    const rest = Object.entries(item.sources ?? {}).map(([path, content]) => ({
+      path,
+      content,
+      language: langForFile(path),
+    }));
+    return [...manifest, ...rest];
+  }, [hasSources, item.manifestSource, item.sources]);
+
+  const activeFile = files.find((f) => f.path === selectedFile) ?? files[0];
 
   const loadCode = useCallback(async () => {
     setIsLoading(true);
@@ -54,11 +86,20 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   }, [ns, item.id, item.version]);
 
   useEffect(() => {
+    if (hasSources) {
+      setSelectedFile(MANIFEST_PATH);
+      setIsLoading(false);
+      setCodeError(null);
+      return;
+    }
     void loadCode();
-  }, [loadCode]);
+  }, [hasSources, loadCode]);
 
-  const lineCount = codeText ? codeText.split('\n').length : 0;
-  const sizeKb = codeText ? (new Blob([codeText]).size / 1024).toFixed(1) : '0.0';
+  const displayLabel = hasSources ? selectedFile : 'extension.js';
+  const displayLang = hasSources ? langForFile(displayLabel) : 'javascript';
+  const displayText = hasSources ? (activeFile?.content ?? '') : codeText;
+  const lineCount = displayText ? displayText.split('\n').length : 0;
+  const sizeKb = displayText ? (new Blob([displayText]).size / 1024).toFixed(1) : '0.0';
 
   const handleCopy = async () => {
     // With the API unavailable, optional chaining would resolve without
@@ -69,7 +110,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
       return;
     }
     try {
-      await navigator.clipboard.writeText(codeText);
+      await navigator.clipboard.writeText(displayText);
       setCopyError(null);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -104,7 +145,9 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-ink-3">
-            Source review — inspect the compiled JavaScript before approving.
+            {hasSources
+              ? 'Source review — inspect the submitted manifest and source files before approving.'
+              : 'Source review — inspect the compiled JavaScript before approving.'}
           </p>
         </div>
         <button
@@ -140,6 +183,43 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           <div className="space-y-3">
             <div className="h-6 w-40 bg-wash dark:bg-raised rounded animate-pulse" />
             <div className="h-72 bg-wash dark:bg-raised border border-line rounded-lg animate-pulse" />
+          </div>
+        ) : hasSources ? (
+          <div className="flex-1 min-h-0 flex overflow-hidden rounded-lg border border-line">
+            {/* File tree */}
+            <div className="w-56 shrink-0 overflow-y-auto bg-wash dark:bg-raised border-r border-line py-2">
+              <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+                Source files ({files.length})
+              </div>
+              {files.map((f) => {
+                const Icon = f.path === MANIFEST_PATH ? FileJson : FileCode2;
+                const isActive = f.path === activeFile?.path;
+                return (
+                  <button
+                    key={f.path}
+                    onClick={() => setSelectedFile(f.path)}
+                    className={`w-full text-left px-3 py-1.5 flex items-center gap-2 text-[11px] font-mono transition-colors ${
+                      isActive
+                        ? 'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300'
+                        : 'text-ink-2 hover:bg-line dark:hover:bg-raised'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{f.path}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Selected file */}
+            <div className="flex-1 min-w-0 min-h-0">
+              <CodeEditor
+                label={`${displayLabel} (read-only)`}
+                language={displayLang}
+                value={displayText}
+                onChange={() => {}}
+                readOnly
+              />
+            </div>
           </div>
         ) : codeError ? (
           <div className="space-y-3">
@@ -178,7 +258,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
       <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
         <div className="min-w-0">
           <span>
-            extension.js • {lineCount} lines • {sizeKb} KB
+            {displayLabel} • {lineCount} lines • {sizeKb} KB
           </span>
           {copyError && (
             <span role="alert" className="ml-3 text-rose-600 dark:text-rose-400 font-sans">

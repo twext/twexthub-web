@@ -1,5 +1,4 @@
 import React, { lazy, Suspense } from 'react';
-import { HighlightLanguage } from '../lib/highlight';
 
 const MonacoSourceEditor = lazy(() =>
   import('./MonacoSourceEditor').then((m) => ({ default: m.MonacoSourceEditor })),
@@ -9,7 +8,8 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   label: string;
-  language?: HighlightLanguage;
+  // Monaco accepts arbitrary language ids; unregistered ones render as plain text.
+  language?: string;
   readOnly?: boolean;
 }
 

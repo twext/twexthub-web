@@ -2,7 +2,7 @@ import { createReadStream, statSync, existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
 
-const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v0';
+const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v1';
 const WEB_ROOT = resolve(process.env.WEB_ROOT ?? 'dist');
 
 const rawPort = Number(process.env.TWEXTHUB_PORT ?? 3000);
