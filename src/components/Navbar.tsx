@@ -100,8 +100,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  // Every header destination is signalled the same way: an underlined label that
-  // takes the accent colour when it matches the current route.
+  // Every header destination is signalled the same way: a filled label that takes
+  // the accent fill when it matches the current route. Nothing in the header
+  // signals the current page with an underline, so no item carries a border that
+  // could read as one.
   const navItemClass = (route: string, accent: 'lilac' | 'amber' = 'lilac') => {
     // Treat query-bearing routes (e.g. "search?q=foo") as the configured route.
     const isActive =
@@ -110,10 +112,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       currentRoute.startsWith(`${route}?`);
     const active =
       accent === 'amber'
-        ? 'border-amber-500 text-amber-700 dark:text-amber-300'
-        : 'border-lilac-500 text-lilac-700 dark:text-lilac-300';
-    return `px-2.5 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-      isActive ? active : 'border-transparent text-ink-2 hover:text-ink hover:border-line'
+        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+        : 'bg-lilac-500/15 text-lilac-700 dark:text-lilac-300';
+    return `px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors ${
+      isActive ? active : 'text-ink-2 hover:bg-ink-3/10 hover:text-ink'
     }`;
   };
 

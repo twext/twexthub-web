@@ -83,12 +83,11 @@ describe('Navbar notifications', () => {
 });
 
 describe('Navbar navigation styling', () => {
-  /** Every header destination is signalled with an underline, never a filled pill. */
-  const underline = (element: HTMLElement) => {
-    expect(element.className).toMatch(/border-b-2/);
-    expect(element.className).toMatch(/-mb-px/);
-    expect(element.className).not.toMatch(/rounded-lg/);
-    expect(element.className).not.toMatch(/bg-(amber|lilac)-/);
+  /** Every header destination is signalled with a fill, never an underline. */
+  const filled = (element: HTMLElement) => {
+    expect(element.className).toMatch(/rounded-md/);
+    expect(element.className).not.toMatch(/border-b-2/);
+    expect(element.className).not.toMatch(/-mb-px/);
   };
 
   const navTargets = (route: string) => {
@@ -107,7 +106,7 @@ describe('Navbar navigation styling', () => {
     };
   };
 
-  it('underlines Explore, Saved and Settings in the lilac accent', () => {
+  it('fills Explore, Saved and Settings in the lilac accent', () => {
     const active = [
       ['search', 'explore'],
       ['saved', 'saved'],
@@ -115,24 +114,25 @@ describe('Navbar navigation styling', () => {
     ] as const;
 
     for (const [route, key] of active) {
-      // Only the destination matching the current route is underlined.
+      // Only the destination matching the current route is filled.
       const target = navTargets(route)[key];
-      underline(target);
-      expect(target.className).toMatch(/border-lilac-500/);
+      filled(target);
+      expect(target.className).toMatch(/bg-lilac-500\/15/);
     }
   });
 
-  it('underlines Admin in the amber accent rather than filling it', () => {
+  it('fills Admin in the amber accent rather than the lilac one', () => {
     const { admin } = navTargets('admin');
-    underline(admin);
-    expect(admin.className).toMatch(/border-amber-500/);
+    filled(admin);
+    expect(admin.className).toMatch(/bg-amber-500\/15/);
+    expect(admin.className).not.toMatch(/bg-lilac-500\/15/);
   });
 
-  it('leaves inactive destinations transparent', () => {
+  it('gives inactive destinations no fill of their own', () => {
     const targets = navTargets('home');
     for (const target of Object.values(targets)) {
-      underline(target);
-      expect(target.className).toMatch(/border-transparent/);
+      filled(target);
+      expect(target.className).not.toMatch(/bg-(amber|lilac)-500\/15/);
     }
   });
 });
@@ -223,29 +223,35 @@ describe('Navbar profile menu', () => {
     expect(screen.queryByRole('dialog', { name: 'Your profile' })).toBeNull();
   });
 
-  it('navigates to the dashboard from the menu and closes', async () => {
+  it('sends the user to their own public profile from the menu and closes', async () => {
     const user = userEvent.setup();
     const onNavigate = vi.fn();
     useAuthMock.mockReturnValue(signedIn());
     renderWithTheme(<Navbar currentRoute="home" onNavigate={onNavigate} />);
 
     await user.click(screen.getByTestId('profile-trigger'));
-    await user.click(screen.getByRole('button', { name: 'Dashboard' }));
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Your profile' })).getByRole('button', {
+        name: /Kane Marshall/,
+      }),
+    );
 
-    expect(onNavigate).toHaveBeenCalledWith('dashboard');
+    expect(onNavigate).toHaveBeenCalledWith('author/kane');
     expect(screen.queryByRole('dialog', { name: 'Your profile' })).toBeNull();
   });
 
-  it('sends the user to their own public profile', async () => {
+  it('leaves the dashboard out of the menu', async () => {
     const user = userEvent.setup();
-    const onNavigate = vi.fn();
     useAuthMock.mockReturnValue(signedIn());
-    renderWithTheme(<Navbar currentRoute="home" onNavigate={onNavigate} />);
+    renderWithTheme(<Navbar currentRoute="home" onNavigate={noop} />);
 
     await user.click(screen.getByTestId('profile-trigger'));
-    await user.click(screen.getByRole('button', { name: /View public profile/ }));
 
-    expect(onNavigate).toHaveBeenCalledWith('author/kane');
+    expect(
+      within(screen.getByRole('dialog', { name: 'Your profile' })).queryByRole('button', {
+        name: 'Dashboard',
+      }),
+    ).toBeNull();
   });
 
   it('reaches the settings form from the menu', async () => {
