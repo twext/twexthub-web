@@ -181,22 +181,30 @@ describe('ImageUploadField', () => {
     expect(screen.queryByTestId('avatar-remove')).toBeNull();
   });
 
-  it('shows a remove control for an external image and keeps it after removal', async () => {
+  it('offers removal for an upload and calls the server', async () => {
     const user = userEvent.setup();
     apiMock.deleteProfileImage.mockResolvedValue({
       ...USER,
-      avatarUrl: 'https://cdn.example/external.png',
+      avatarUrl: 'https://cdn.example/fallback.png',
     });
-    renderField({ currentUrl: 'https://cdn.example/external.png' });
+    renderField({ currentUrl: 'https://api.example/api/v1/users/kane/avatar' });
 
     await user.click(screen.getByTestId('avatar-remove'));
 
-    await waitFor(() =>
-      expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
-        'src',
-        'https://cdn.example/external.png',
-      ),
+    await waitFor(() => expect(apiMock.deleteProfileImage).toHaveBeenCalledWith('kane', 'avatar'));
+  });
+
+  it('offers no removal for a link, which is cleared in the field instead', () => {
+    // Removing a link is a PATCH, not a DELETE of an upload, and offering the
+    // button here would promise a change the endpoint cannot make.
+    renderField({ currentUrl: 'https://cdn.example/external.png' });
+
+    expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
+      'src',
+      'https://cdn.example/external.png',
     );
+    expect(screen.queryByTestId('avatar-remove')).toBeNull();
+    expect(apiMock.deleteProfileImage).not.toHaveBeenCalled();
   });
 
   it('keeps the link option collapsed until requested, then edits the parent value', async () => {

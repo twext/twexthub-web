@@ -27,9 +27,11 @@ interface ImageUploadFieldProps {
 /**
  * Picks a local image and uploads it, rather than asking for a URL.
  *
- * The link input stays available but collapsed: uploading is the obvious path,
- * and referencing a hosted image is a real option, so it stays reachable without
- * being the first thing the form asks for.
+ * The link input stays available but collapsed. An upload is what the instance
+ * serves and is the obvious path; a link points at someone else's host, which
+ * can go away or be blocked, so it is the secondary option. The two are kept
+ * side by side on the server, and the link takes over only once the upload is
+ * removed, so switching between them costs one click either way.
  */
 export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   namespace,
@@ -104,6 +106,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     }
   }, [namespace, kind, onUrlValueChange, onRemoved]);
 
+  // The server reports an upload as this account's own canonical path and a link
+  // as whatever the account pointed at, so the two are told apart by the path
+  // this instance serves. Only an upload can be removed from here: a link is
+  // cleared in the field below it and saved, which is also the only way to tell
+  // the instance to stop reporting it.
+  const isUpload = Boolean(currentUrl && currentUrl.includes(`/users/${namespace}/${kind}`));
   const hasImage = Boolean(currentUrl || localPreview);
   const displayed = localPreview ?? currentUrl ?? fallbackUrl ?? null;
   const shape = round ? 'rounded-full' : 'rounded-lg';
@@ -161,7 +169,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               {hasImage ? 'Replace image' : 'Choose image'}
             </label>
 
-            {hasImage && (
+            {isUpload && (
               <button
                 type="button"
                 onClick={() => void remove()}
@@ -207,7 +215,10 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 data-testid={`${kind}-url`}
               />
               <p className="text-[11px] text-ink-3">
-                A link is referenced rather than uploaded, and saving it replaces an uploaded image.
+                A link is referenced rather than uploaded, so it depends on another host staying up.
+                {isUpload
+                  ? ' The uploaded image is used while it exists; this is the fallback if it is removed.'
+                  : ''}
               </p>
             </div>
           )}
