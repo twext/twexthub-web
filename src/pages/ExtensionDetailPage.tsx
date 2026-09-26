@@ -3,11 +3,17 @@ import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { useRecentExtensions, useSavedExtensions } from '../hooks/useCollections';
-import { Extension, VersionInfo } from '../types/api';
+import { Extension, ExtensionVersion, ModerationStatus, VersionInfo } from '../types/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VersionCompareModal } from '../components/VersionCompareModal';
+import { WebhookPanel } from '../components/WebhookPanel';
+import { BadgePanel } from '../components/BadgePanel';
+import { DistTagPanel } from '../components/DistTagPanel';
+import { OwnersPanel } from '../components/OwnersPanel';
+import { DeprecateVersionModal } from '../components/DeprecateVersionModal';
 import {
   User as UserIcon,
+  Users,
   Copy,
   Check,
   Calendar,
@@ -23,6 +29,9 @@ import {
   Info,
   Bookmark,
   GitCompare,
+  Webhook as WebhookIcon,
+  Image as ImageIcon,
+  Tag,
 } from 'lucide-react';
 
 interface ExtensionDetailPageProps {
@@ -53,6 +62,11 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [versionDetailError, setVersionDetailError] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [webhooksOpen, setWebhooksOpen] = useState(false);
+  const [badgesOpen, setBadgesOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [ownersOpen, setOwnersOpen] = useState(false);
+  const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
   const versionRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -103,6 +117,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
 
   const publishedVersion =
     extension?.versions?.find((v) => v.status === 'published')?.version || extension?.latestVersion;
+  const publishedVersionList = (extension?.versions || [])
+    .filter((v) => v.status === 'published' || v.status === 'deprecated')
+    .map((v) => v.version);
   const loadUrl =
     moderationStatus === 'published' && publishedVersion
       ? `${api.getBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
@@ -182,6 +199,67 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     } finally {
       setYankingVersion(null);
     }
+  };
+
+  const handleUndeprecateVersion = async (ver: ExtensionVersion) => {
+    if (!extension) return;
+    const confirmed = await confirm({
+      title: 'Clear deprecation',
+      message: `Clear the deprecation notice on v${ver.version}? It goes back to being an ordinary published version.`,
+      confirmLabel: 'Clear deprecation',
+    });
+    if (!confirmed) return;
+
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await api.deprecateVersion(
+        extension.namespace,
+        extension.id,
+        ver.version,
+        null,
+      );
+      setExtension((prev) =>
+        prev
+          ? {
+              ...prev,
+              versions: prev.versions?.map((v) =>
+                v.version === ver.version
+                  ? { ...v, status: updated.status, deprecation: updated.deprecation }
+                  : v,
+              ),
+            }
+          : prev,
+      );
+      if (expandedVersion === ver.version) {
+        setVersionDetail(updated);
+      }
+      setActionSuccess(`Deprecation cleared for version ${ver.version}.`);
+    } catch (err: unknown) {
+      const msg = err instanceof ApiError ? err.message : 'Failed to clear deprecation';
+      setActionError(msg);
+    }
+  };
+
+  const handleDeprecationSaved = (
+    version: string,
+    status: ModerationStatus,
+    message: string | null,
+  ) => {
+    setExtension((prev) =>
+      prev
+        ? {
+            ...prev,
+            versions: prev.versions?.map((v) =>
+              v.version === version
+                ? { ...v, status: status as VersionInfo['status'], deprecation: message }
+                : v,
+            ),
+          }
+        : prev,
+    );
+    setDeprecateTarget(null);
+    setActionSuccess(`Version ${version} is now marked deprecated.`);
   };
 
   const handleDeleteExtension = async () => {
@@ -332,6 +410,14 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                 Updated {new Date(extension.updatedAt).toLocaleDateString()}
               </span>
             )}
+            <button
+              type="button"
+              onClick={() => setBadgesOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              Embed badges
+            </button>
           </div>
         </div>
       </div>
@@ -370,6 +456,12 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                         {ver.changelog && (
                           <p className="text-xs text-ink-2 mt-1">{ver.changelog}</p>
                         )}
+                        {ver.status === 'deprecated' && ver.deprecation && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 flex items-start gap-1">
+                            <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                            <span>{ver.deprecation}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
@@ -398,6 +490,25 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                             {yankingVersion === ver.version ? 'Yanking...' : 'Yank'}
                           </button>
                         )}
+                        {canManage &&
+                          (ver.status === 'published' || ver.status === 'deprecated') && (
+                            <button
+                              onClick={() =>
+                                ver.status === 'deprecated'
+                                  ? handleUndeprecateVersion(ver)
+                                  : setDeprecateTarget(ver)
+                              }
+                              title={
+                                ver.status === 'deprecated'
+                                  ? `Clear the deprecation on v${ver.version}`
+                                  : `Mark v${ver.version} as deprecated`
+                              }
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                            >
+                              <AlertTriangle className="w-3 h-3" />
+                              {ver.status === 'deprecated' ? 'Undeprecate' : 'Deprecate'}
+                            </button>
+                          )}
                       </div>
                     </div>
 
@@ -587,7 +698,28 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                 Yanking a version hides it from new installs; deleting the extension permanently
                 removes every version and its compiled code.
               </p>
-              <div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setTagsOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  Dist-tags
+                </button>
+                <button
+                  onClick={() => setOwnersOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Owners
+                </button>
+                <button
+                  onClick={() => setWebhooksOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <WebhookIcon className="w-3.5 h-3.5" />
+                  Manage webhooks
+                </button>
                 <button
                   onClick={handleDeleteExtension}
                   disabled={deleting}
@@ -608,6 +740,53 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           id={extension.id}
           versions={extension.versions}
           onClose={() => setCompareOpen(false)}
+        />
+      )}
+
+      {webhooksOpen && (
+        <WebhookPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          onClose={() => setWebhooksOpen(false)}
+        />
+      )}
+
+      {badgesOpen && (
+        <BadgePanel
+          namespace={extension.namespace}
+          id={extension.id}
+          onClose={() => setBadgesOpen(false)}
+        />
+      )}
+
+      {ownersOpen && (
+        <OwnersPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          canManage={canManage}
+          onClose={() => setOwnersOpen(false)}
+        />
+      )}
+
+      {tagsOpen && (
+        <DistTagPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          publishedVersions={publishedVersionList}
+          onClose={() => setTagsOpen(false)}
+        />
+      )}
+
+      {deprecateTarget && (
+        <DeprecateVersionModal
+          namespace={extension.namespace}
+          id={extension.id}
+          version={deprecateTarget.version}
+          currentMessage={deprecateTarget.deprecation}
+          onClose={() => setDeprecateTarget(null)}
+          onSaved={(status, message) =>
+            handleDeprecationSaved(deprecateTarget.version, status, message)
+          }
         />
       )}
 

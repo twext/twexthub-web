@@ -1,14 +1,22 @@
 import { DEFAULT_API_BASE_URL, isValidApiBaseUrl, normalizeApiBaseUrl } from '../config/settings';
 import {
+  AuditEntry,
   AuthSessionResponse,
   AutomationToken,
+  CreateWebhookPayload,
+  DistTags,
   Extension,
+  ExtensionSummary,
+  ExtensionOwner,
   InstanceStats,
+  MarkNotificationsReadResult,
   Meta,
+  NotificationList,
   PaginatedList,
   PendingVersion,
   PrivacyDoc,
   ProblemDetails,
+  Quota,
   ReviewVersionPayload,
   Session,
   TermsDoc,
@@ -16,6 +24,8 @@ import {
   User,
   UserRole,
   VersionInfo,
+  Webhook,
+  WebhookCreated,
 } from '../types/api';
 
 const STORAGE_KEY_TOKEN = 'twexthub_auth_token';
@@ -212,6 +222,103 @@ class ApiService {
     return this.request<Extension>(`/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}`);
   }
 
+  async getTrendingExtensions(): Promise<PaginatedList<ExtensionSummary>> {
+    return this.request<PaginatedList<ExtensionSummary>>('/extensions/trending');
+  }
+
+  // --- Dist-tags, Owners & Webhooks (owner/admin) ---
+
+  /** Tag name to version. `latest` is reserved and implicit. */
+  async getDistTags(namespace: string, id: string): Promise<DistTags> {
+    return this.request<DistTags>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags`,
+    );
+  }
+
+  /** Points a dist-tag at an already-published version. */
+  async setDistTag(namespace: string, id: string, tag: string, version: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ version }),
+      },
+    );
+  }
+
+  async deleteDistTag(namespace: string, id: string, tag: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  async getExtensionOwners(namespace: string, id: string): Promise<ExtensionOwner[]> {
+    const res = await this.request<{ data: ExtensionOwner[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners`,
+    );
+    return res.data;
+  }
+
+  async addExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'PUT' },
+    );
+  }
+
+  async removeExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  async getWebhooks(namespace: string, id: string): Promise<Webhook[]> {
+    const res = await this.request<{ data: Webhook[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
+    );
+    return res.data;
+  }
+
+  /** The returned secret is shown once and cannot be recovered. */
+  async createWebhook(
+    namespace: string,
+    id: string,
+    payload: CreateWebhookPayload,
+  ): Promise<WebhookCreated> {
+    return this.request<WebhookCreated>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
+  }
+
+  async deleteWebhook(namespace: string, id: string, webhookId: number): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks/${webhookId}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  /** A non-null message marks the version deprecated; `null` clears it. */
+  async deprecateVersion(
+    namespace: string,
+    id: string,
+    version: string,
+    message: string | null,
+  ): Promise<VersionInfo> {
+    return this.request<VersionInfo>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/deprecate`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ message }),
+      },
+    );
+  }
+
   async getTerms(): Promise<TermsDoc> {
     return this.request<TermsDoc>('/terms');
   }
@@ -300,6 +407,47 @@ class ApiService {
       this.setStoredUser({ ...current, ...updated });
     }
     return updated;
+  }
+
+  // --- Profile image uploads ---
+
+  /**
+   * Uploads an avatar or banner. The body is the file itself rather than a
+   * multipart form, so the Content-Type has to be set explicitly: `request`
+   * only defaults it for string bodies, and the API sniffs the bytes anyway.
+   *
+   * The response is the whole updated user, which keeps the auth store and the
+   * top-bar profile in step with the new canonical image URL.
+   */
+  async uploadProfileImage(
+    namespace: string,
+    kind: 'avatar' | 'banner',
+    file: Blob,
+    contentType = file.type,
+  ): Promise<User> {
+    const updated = await this.request<User>(`/users/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': contentType || 'application/octet-stream' },
+    });
+    this.syncStoredUser(updated);
+    return updated;
+  }
+
+  async deleteProfileImage(namespace: string, kind: 'avatar' | 'banner'): Promise<User> {
+    const updated = await this.request<User>(`/users/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'DELETE',
+    });
+    this.syncStoredUser(updated);
+    return updated;
+  }
+
+  /** Keeps the locally stored user in step with a server-authoritative copy. */
+  private syncStoredUser(updated: User) {
+    const current = this.getStoredUser();
+    if (current && current.namespace === updated.namespace) {
+      this.setStoredUser({ ...current, ...updated });
+    }
   }
 
   async deleteUser(namespace: string): Promise<void> {
@@ -454,6 +602,85 @@ class ApiService {
       method: 'PATCH',
       body: JSON.stringify({ body }),
     });
+  }
+
+  /** Append-only trail of privileged actions, newest first. */
+  async getAuditLog(params?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<PaginatedList<AuditEntry>> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<PaginatedList<AuditEntry>>(`/admin/audit${qs ? `?${qs}` : ''}`);
+  }
+
+  async getUserQuota(namespace: string): Promise<Quota> {
+    return this.request<Quota>(`/admin/users/${encodeURIComponent(namespace)}/quota`);
+  }
+
+  /** `null` resets the account to the instance default. */
+  async setUserQuota(namespace: string, maxBlobBytes: number | null): Promise<Quota> {
+    return this.request<Quota>(`/admin/users/${encodeURIComponent(namespace)}/quota`, {
+      method: 'PATCH',
+      body: JSON.stringify({ maxBlobBytes }),
+    });
+  }
+
+  /** Fans out to every existing account at insert time. Cannot be recalled. */
+  async broadcastNotification(message: string): Promise<number> {
+    const res = await this.request<{ created: number }>('/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+    return res.created;
+  }
+
+  /**
+   * Prometheus text exposition. Fetched through the authenticated client
+   * because a plain link or `fetch` cannot attach the bearer token, which is
+   * what makes a direct navigation return 401.
+   */
+  async getAdminMetrics(): Promise<string> {
+    return this.request<string>('/admin/metrics', {
+      headers: {
+        Accept: 'text/plain, */*',
+      },
+    });
+  }
+
+  /** Atom feed of newly published versions. */
+  getAtomFeedUrl(): string {
+    return `${this.getBaseUrl()}/feed.atom`;
+  }
+
+  // --- Notifications ---
+
+  /** `unreadCount` covers the whole mailbox, so one call can drive a badge. */
+  async getNotifications(params?: {
+    cursor?: string;
+    limit?: number;
+    unreadOnly?: boolean;
+  }): Promise<NotificationList> {
+    const query = new URLSearchParams();
+    if (params?.unreadOnly) query.set('unread', 'true');
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<NotificationList>(`/notifications${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Send either `ids` or `all: true`, never both. Idempotent.
+   * Ids are sent as the strings the list endpoint returns; the API coerces them.
+   */
+  async markNotificationsRead(payload: { ids: string[] } | { all: true }): Promise<number> {
+    const res = await this.request<MarkNotificationsReadResult>('/notifications/read', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.updated;
   }
 }
 

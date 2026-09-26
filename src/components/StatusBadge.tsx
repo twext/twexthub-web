@@ -1,6 +1,6 @@
 import React from 'react';
 import { ModerationStatus } from '../types/api';
-import { AlertCircle, CheckCircle2, Clock, Ban } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Ban } from 'lucide-react';
 
 interface StatusBadgeProps {
   status?: ModerationStatus;
@@ -28,6 +28,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status = 'published', 
       cls: 'bg-wash dark:bg-raised text-ink-2 dark:text-ink-2 border-line',
       label: 'Rejected',
       icon: <AlertCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+    },
+    deprecated: {
+      cls: 'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+      label: 'Deprecated',
+      icon: <AlertTriangle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+    },
+    staging: {
+      cls: 'bg-wash dark:bg-raised text-ink-2 dark:text-ink-2 border-line',
+      label: 'Staging',
+      icon: <Clock className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
     },
   };
 

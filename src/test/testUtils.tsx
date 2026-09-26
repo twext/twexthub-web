@@ -56,6 +56,7 @@ export const makeStats = (overrides: Partial<InstanceStats> = {}): InstanceStats
   published: 3,
   pending: 1,
   authors: 2,
+  downloads: 1234,
   ...overrides,
 });
 
@@ -105,6 +106,8 @@ export interface AuthOverrides {
   isAdmin?: boolean;
   isLoading?: boolean;
   latestTermsVersion?: number | null;
+  hasTerms?: boolean;
+  termsResolved?: boolean;
   hasAcceptedCurrentTerms?: boolean;
 }
 
@@ -127,6 +130,8 @@ export function makeAuthState(overrides: AuthOverrides = {}) {
     isAdmin: overrides.isAdmin ?? (user ? user.role === 'admin' : false),
     isLoading: overrides.isLoading ?? false,
     latestTermsVersion: overrides.latestTermsVersion ?? 2,
+    hasTerms: overrides.hasTerms ?? true,
+    termsResolved: overrides.termsResolved ?? true,
     hasAcceptedCurrentTerms: overrides.hasAcceptedCurrentTerms ?? true,
     login,
     signup,

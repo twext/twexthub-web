@@ -8,6 +8,10 @@ import { MarkdownEditorModal } from '../components/MarkdownEditorModal';
 import { MarkdownView } from '../components/MarkdownView';
 import { PrunePanel } from '../components/PrunePanel';
 import { AuditPanel } from '../components/AuditPanel';
+import { AuditLogPanel } from '../components/AuditLogPanel';
+import { QuotaModal } from '../components/QuotaModal';
+import { BroadcastPanel } from '../components/BroadcastPanel';
+import { MetricsModal } from '../components/MetricsModal';
 import { ExportPanel } from '../components/ExportPanel';
 import { useConfirm } from '../hooks/useConfirm';
 import {
@@ -36,6 +40,7 @@ import {
   Activity,
   PenLine,
   Wrench,
+  HardDrive,
   Settings as SettingsIcon,
 } from 'lucide-react';
 
@@ -43,7 +48,7 @@ interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
-type AdminTab = 'moderation' | 'catalog' | 'users' | 'policies' | 'maintenance';
+type AdminTab = 'moderation' | 'catalog' | 'users' | 'policies' | 'audit' | 'maintenance';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
@@ -88,6 +93,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [userSearch, setUserSearch] = useState('');
   const [updatingUserNamespace, setUpdatingUserNamespace] = useState<string | null>(null);
   const [activityUser, setActivityUser] = useState<User | null>(null);
+  const [quotaUser, setQuotaUser] = useState<User | null>(null);
+  const [metricsOpen, setMetricsOpen] = useState(false);
 
   // Policy docs state
   const [termsDoc, setTermsDoc] = useState<TermsDoc | null>(null);
@@ -455,7 +462,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* System Metric Indicators */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line rounded-lg overflow-hidden mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-line border border-line rounded-lg overflow-hidden mt-6">
           <div className="bg-surface p-3.5">
             <div className="label text-ink-3">Pending</div>
             <div className="mt-1 font-mono text-lg font-semibold text-ink">
@@ -474,6 +481,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             <div className="label text-ink-3">Authors</div>
             <div className="mt-1 font-mono text-lg font-semibold text-ink">
               {stats?.authors ?? usersList.length}
+            </div>
+          </div>
+
+          <div className="bg-surface p-3.5">
+            <div className="label text-ink-3">Downloads</div>
+            <div className="mt-1 font-mono text-lg font-semibold text-ink">
+              {(stats?.downloads ?? 0).toLocaleString()}
             </div>
           </div>
 
@@ -539,6 +553,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         >
           <Sliders className="w-4 h-4" />
           <span>Platform Policies</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('audit')}
+          className={`pb-3 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'audit'
+              ? 'border-lilac-500 dark:border-lilac-300 text-lilac-700 dark:text-lilac-300'
+              : 'border-transparent text-ink-3 hover:text-ink'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>Action Log</span>
         </button>
 
         <button
@@ -880,6 +906,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                           </button>
                         )}
                         <button
+                          onClick={() => setQuotaUser(u)}
+                          className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
+                          title={`Storage quota for @${u.namespace}`}
+                          aria-label={`Storage quota for @${u.namespace}`}
+                        >
+                          <HardDrive className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => handleToggleUserRole(u)}
                           disabled={isUpdating}
                           className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
@@ -1022,10 +1056,53 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       )}
 
       {/* Tab 5: Maintenance */}
+      {activeTab === 'audit' && <AuditLogPanel onNavigate={onNavigate} />}
+
+      {metricsOpen && <MetricsModal onClose={() => setMetricsOpen(false)} />}
+
+      {quotaUser && (
+        <QuotaModal
+          namespace={quotaUser.namespace}
+          onClose={() => setQuotaUser(null)}
+          onSaved={() => toastSuccess(`Updated the storage quota for @${quotaUser.namespace}.`)}
+        />
+      )}
+
       {activeTab === 'maintenance' && (
         <div className="space-y-4">
+          <BroadcastPanel />
           <AuditPanel />
           <ExportPanel />
+          <div className="card p-5 space-y-2">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="text-sm font-semibold text-ink">Machine-readable endpoints</h2>
+              <button onClick={() => setMetricsOpen(true)} className="btn btn-secondary btn-sm">
+                <Activity className="w-3.5 h-3.5" />
+                <span>View metrics</span>
+              </button>
+            </div>
+            <p className="text-xs text-ink-2 leading-relaxed max-w-2xl">
+              Prometheus metrics for scraping and an Atom feed of newly published versions for feed
+              readers.
+            </p>
+            <p className="text-xs text-ink-3 leading-relaxed max-w-2xl">
+              <span className="font-mono">/admin/metrics</span> is admin-only and is loaded here
+              with your session. Opening it in a new tab returns{' '}
+              <span className="font-mono">401</span>, because a browser navigation cannot send the
+              bearer token.
+            </p>
+            <div className="pt-1">
+              <a
+                href={api.getAtomFeedUrl()}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1"
+              >
+                Atom feed
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
           <PrunePanel
             currentUserNamespace={user?.namespace}
             onPruned={() => {

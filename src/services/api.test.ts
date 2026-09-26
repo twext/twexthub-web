@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
 import { DEFAULT_API_BASE_URL } from '../config/settings';
-import { paginated, makeUser } from '../test/testUtils';
+import { paginated, makeExtension, makeUser } from '../test/testUtils';
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
@@ -227,6 +227,205 @@ describe('ApiService', () => {
         method: 'POST',
         body: JSON.stringify({ name: 'ci', scopes: ['publish'], expiresInDays: 30 }),
       }),
+    );
+  });
+
+  it('getTrendingExtensions reads the trending endpoint', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(paginated([makeExtension({ id: 'hot' })])));
+    const res = await api.getTrendingExtensions();
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/extensions/trending`);
+    expect(res.data?.[0]?.id).toBe('hot');
+  });
+
+  it('getDistTags unwraps the tag-to-version map', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ latest: '1.2.0', next: '2.0.0-rc.1' }));
+    await expect(api.getDistTags('kane', 'demo')).resolves.toEqual({
+      latest: '1.2.0',
+      next: '2.0.0-rc.1',
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/tags`);
+  });
+
+  it('setDistTag and deleteDistTag target the encoded tag path', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.setDistTag('kane', 'demo', 'next', '1.0.0');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/tags/next`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ version: '1.0.0' }) }),
+    );
+
+    await api.deleteDistTag('kane', 'demo', 'next');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/@kane/demo/tags/next`);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('getExtensionOwners unwraps the data array', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ data: [{ namespace: 'ada', displayName: 'Ada' }] }));
+    await expect(api.getExtensionOwners('kane', 'demo')).resolves.toEqual([
+      { namespace: 'ada', displayName: 'Ada' },
+    ]);
+  });
+
+  it('addExtensionOwner and removeExtensionOwner use PUT and DELETE on the owner path', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.addExtensionOwner('kane', 'demo', 'ada');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/owners/ada`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'PUT' }));
+
+    await api.removeExtensionOwner('kane', 'demo', 'ada');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/@kane/demo/owners/ada`);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('getWebhooks unwraps the data array', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          {
+            id: 1,
+            url: 'https://ci.example.com/hook',
+            events: ['version.published'],
+            active: true,
+          },
+        ],
+      }),
+    );
+    const hooks = await api.getWebhooks('kane', 'demo');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/webhooks`);
+    expect(hooks[0].id).toBe(1);
+  });
+
+  it('createWebhook POSTs the payload and returns the one-time secret', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(
+        {
+          id: 7,
+          url: 'https://ci.example.com/hook',
+          events: ['version.published', 'owners.changed'],
+          active: true,
+          secret: 'whsec_abc',
+        },
+        201,
+      ),
+    );
+    const created = await api.createWebhook('kane', 'demo', {
+      url: 'https://ci.example.com/hook',
+      events: ['version.published', 'owners.changed'],
+    });
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          url: 'https://ci.example.com/hook',
+          events: ['version.published', 'owners.changed'],
+        }),
+      }),
+    );
+    expect(created.secret).toBe('whsec_abc');
+  });
+
+  it('deleteWebhook targets the numeric webhook id', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.deleteWebhook('kane', 'demo', 7);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/webhooks/7`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('deprecateVersion PATCHes a message, and sends null to clear', async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(
+        jsonResponse({
+          namespace: 'kane',
+          id: 'demo',
+          version: '1.0.0',
+          status: 'deprecated',
+          name: 'Demo',
+          license: 'MIT',
+          description: '',
+          createdAt: '2026-01-01T00:00:00Z',
+          deprecation: 'Use 2.x',
+        }),
+      ),
+    );
+    const res = await api.deprecateVersion('kane', 'demo', '1.0.0', 'Use 2.x');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/versions/1.0.0/deprecate`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ message: 'Use 2.x' }) }),
+    );
+    expect(res.status).toBe('deprecated');
+
+    await api.deprecateVersion('kane', 'demo', '1.0.0', null);
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ body: JSON.stringify({ message: null }) }),
+    );
+  });
+
+  it('getAuditLog serializes cursor and limit', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(paginated([])));
+    await api.getAuditLog({ cursor: 'c1', limit: 25 });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/admin/audit?cursor=c1&limit=25`);
+  });
+
+  it('getUserQuota and setUserQuota hit the admin quota endpoint', async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(jsonResponse({ namespace: 'ada', blobBytes: 1024, maxBlobBytes: null })),
+    );
+    await api.getUserQuota('ada');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/admin/users/ada/quota`);
+
+    await api.setUserQuota('ada', 500);
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ maxBlobBytes: 500 }) }),
+    );
+
+    await api.setUserQuota('ada', null);
+    expect(fetchMock.mock.calls[2][1]).toEqual(
+      expect.objectContaining({ body: JSON.stringify({ maxBlobBytes: null }) }),
+    );
+  });
+
+  it('getNotifications surfaces the whole-mailbox unreadCount', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          {
+            id: '9',
+            kind: 'review.approved',
+            message: 'Approved',
+            payload: {},
+            read: false,
+            createdAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+        unreadCount: 4,
+        pagination: { nextCursor: null, hasMore: false },
+      }),
+    );
+    const res = await api.getNotifications({ limit: 10 });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications?limit=10`);
+    expect(res.unreadCount).toBe(4);
+    expect(res.data?.[0]?.kind).toBe('review.approved');
+  });
+
+  it('getNotifications sets unread=true and the cursor when filtering', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: [], unreadCount: 0, pagination: { nextCursor: null, hasMore: false } }),
+    );
+    await api.getNotifications({ unreadOnly: true, cursor: 'n1' });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications?unread=true&cursor=n1`);
+  });
+
+  it('markNotificationsRead returns the updated count and accepts ids or all', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ updated: 2 })));
+    await expect(api.markNotificationsRead({ ids: ['1', '2'] })).resolves.toBe(2);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications/read`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ ids: ['1', '2'] }) }),
+    );
+
+    await api.markNotificationsRead({ all: true });
+    expect(fetchMock.mock.calls[1][1]).toEqual(
+      expect.objectContaining({ body: JSON.stringify({ all: true }) }),
     );
   });
 });

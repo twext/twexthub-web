@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Extension, InstanceStats } from '../types/api';
+import { TrendingPanel } from '../components/TrendingPanel';
 import { useRecentExtensions } from '../hooks/useCollections';
 import {
   Search,
@@ -36,7 +37,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         const [statsData, extensionsData] = await Promise.all([
           api.getStats().catch((err: unknown) => {
             failure = err;
-            return { published: 0, pending: 0, authors: 0 };
+            return { published: 0, pending: 0, authors: 0, downloads: 0 };
           }),
           api.getExtensions({ limit: 6 }).catch((err: unknown) => {
             failure = failure ?? err;
@@ -133,6 +134,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <span>
                     <strong className="text-ink font-semibold">{stats.pending}</strong> pending
                     review
+                  </span>
+                  <span aria-hidden="true" className="text-line">
+                    ·
+                  </span>
+                  <span>
+                    <strong className="text-ink font-semibold">
+                      {stats.downloads.toLocaleString()}
+                    </strong>{' '}
+                    downloads
                   </span>
                 </div>
               </div>
@@ -257,6 +267,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Trending */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+        <TrendingPanel onNavigate={onNavigate} />
       </section>
 
       {/* How to Publish & Install */}

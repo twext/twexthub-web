@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Extension } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
-import { Settings } from 'lucide-react';
+import { WebhookPanel } from '../components/WebhookPanel';
+import { Settings, Webhook } from 'lucide-react';
 
 interface DashboardPageProps {
   onNavigate: (route: string) => void;
@@ -13,6 +14,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [userExtensions, setUserExtensions] = useState<Extension[]>([]);
   const [loadingExts, setLoadingExts] = useState(true);
+  const [webhooksFor, setWebhooksFor] = useState<{ namespace: string; id: string } | null>(null);
 
   const loadUserExtensions = useCallback(async () => {
     if (!user) return;
@@ -142,6 +144,61 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
+
+      {/* Webhooks are per-extension, so they are surfaced here per extension. */}
+      {userExtensions.length > 0 && (
+        <div className="space-y-4">
+          <div className="pb-2 border-b border-line">
+            <h2 className="text-xl font-display font-semibold text-ink flex items-center gap-2">
+              <Webhook className="w-5 h-5 text-lilac-700 dark:text-lilac-300" />
+              Webhooks
+            </h2>
+            <p className="text-xs text-ink-3 mt-1 max-w-2xl leading-relaxed">
+              Webhooks are registered per extension. TwextHub POSTs a signed event to your URL on
+              publish, yank, deprecate, reject, and owner changes. The signing secret is shown once
+              when the webhook is created.
+            </p>
+          </div>
+          <div className="divide-y divide-line border border-line rounded-lg">
+            {userExtensions.map((ext) => (
+              <div
+                key={`${ext.namespace}/${ext.id}`}
+                className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-ink truncate">{ext.name}</div>
+                  <div className="font-mono text-[11px] text-ink-3 truncate">
+                    @{ext.namespace}/{ext.id}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => onNavigate(`ext/${ext.namespace}/${ext.id}`)}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => setWebhooksFor({ namespace: ext.namespace, id: ext.id })}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    <Webhook className="w-3.5 h-3.5" />
+                    Manage webhooks
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {webhooksFor && (
+        <WebhookPanel
+          namespace={webhooksFor.namespace}
+          id={webhooksFor.id}
+          onClose={() => setWebhooksFor(null)}
+        />
+      )}
     </div>
   );
 };

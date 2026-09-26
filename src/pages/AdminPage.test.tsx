@@ -272,3 +272,19 @@ describe('AdminPage', () => {
     expect(screen.queryByText(/Unable to load extension.js/i)).not.toBeInTheDocument();
   });
 });
+
+describe('AdminPage system metrics', () => {
+  it('shows total downloads from the v1 Stats schema', async () => {
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+
+    expect(await screen.findByText('Downloads')).toBeInTheDocument();
+    expect(screen.getByText('1,234')).toBeInTheDocument();
+  });
+
+  it('formats large download counts', async () => {
+    apiMock.getStats.mockResolvedValue(makeStats({ downloads: 9876543 }));
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+
+    expect(await screen.findByText('9,876,543')).toBeInTheDocument();
+  });
+});
