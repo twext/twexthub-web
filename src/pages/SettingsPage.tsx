@@ -2,8 +2,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api, ApiError } from '../services/api';
+import { ImageUploadField } from '../components/ImageUploadField';
 import { useConfirm } from '../hooks/useConfirm';
-import { AutomationToken, Pagination, Session, TokenScope } from '../types/api';
+import {
+  AutomationToken,
+  Pagination,
+  Session,
+  TokenScope,
+  UpdateUserPayload,
+  User,
+} from '../types/api';
 import {
   User as UserIcon,
   Key,
@@ -18,6 +26,20 @@ import {
   Settings as SettingsIcon,
   Pencil,
 } from 'lucide-react';
+
+/** Avatar/banner/website values are referenced by the registry, so they must be fetchable. */
+// Matches the registry's GitHub check: 1-39 characters, alphanumeric with inner
+// hyphens only, so a leading or trailing hyphen is rejected before the round trip.
+const GITHUB_USERNAME = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+
+const isHttpUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
 interface SettingsPageProps {
   onNavigate: (route: string) => void;
@@ -38,6 +60,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
     isLoading,
     refreshUser,
     logout,
+    hasTerms,
     hasAcceptedCurrentTerms,
     acceptCurrentTerms,
   } = useAuth();
@@ -48,9 +71,26 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
   // Profile form state
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [website, setWebsite] = useState(user?.website || '');
+  const [github, setGithub] = useState(user?.github || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [bannerUrl, setBannerUrl] = useState(user?.bannerUrl || '');
   const [newPassword, setNewPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // An upload or removal returns the authoritative user, so resync rather than
+  // guessing: the top bar and the public profile both read these fields.
+  const handleImageUploaded = useCallback(
+    async (updated: User) => {
+      setAvatarUrl(updated.avatarUrl || '');
+      setBannerUrl(updated.bannerUrl || '');
+      await refreshUser();
+      toastSuccess('Image updated.');
+    },
+    [refreshUser, toastSuccess],
+  );
 
   // Sessions & tokens state
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -161,6 +201,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName || '');
+      setBio(user.bio || '');
+      setWebsite(user.website || '');
+      setGithub(user.github || '');
+      setAvatarUrl(user.avatarUrl || '');
+      setBannerUrl(user.bannerUrl || '');
     }
   }, [user]);
 
@@ -168,17 +213,62 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     if (!user) return;
 
+    const updateData: UpdateUserPayload = {};
+
+    // The registry validates these server-side; reject the obvious client-side
+    // mistakes first so the user gets an inline message instead of a round trip.
+    // The limits and patterns below mirror PATCH /users/{namespace} exactly, so
+    // the form never submits something the API will reject with a 422.
+    for (const [field, value] of [
+      ['Avatar image URL', avatarUrl],
+      ['Banner image URL', bannerUrl],
+      ['Website', website],
+    ] as const) {
+      const trimmedValue = value.trim();
+      if (!trimmedValue) continue;
+      if (trimmedValue.length > 400) {
+        toastError(`${field} must be 400 characters or fewer.`);
+        return;
+      }
+      if (!isHttpUrl(trimmedValue)) {
+        toastError(`${field} must be an http:// or https:// URL.`);
+        return;
+      }
+    }
+    if (displayName.length > 80) {
+      toastError('Display name must be 80 characters or fewer.');
+      return;
+    }
+    if (bio.length > 280) {
+      toastError('Bio must be 280 characters or fewer.');
+      return;
+    }
+    if (github.trim() && !GITHUB_USERNAME.test(github.trim())) {
+      toastError('GitHub must be a username, not a URL.');
+      return;
+    }
+
     setSavingProfile(true);
 
     try {
-      const updateData: {
-        displayName?: string;
-        password?: string;
-        currentPassword?: string;
-      } = {};
       if (displayName !== user.displayName) {
         updateData.displayName = displayName;
       }
+
+      // Empty means "clear this field", so send null rather than omitting it.
+      const textFields = [
+        ['bio', bio, user.bio || ''],
+        ['website', website, user.website || ''],
+        ['github', github, user.github || ''],
+        ['avatarUrl', avatarUrl, user.avatarUrl || ''],
+        ['bannerUrl', bannerUrl, user.bannerUrl || ''],
+      ] as const;
+      for (const [key, value, original] of textFields) {
+        if (value.trim() !== original) {
+          updateData[key] = value.trim() === '' ? null : value.trim();
+        }
+      }
+
       if (newPassword.trim()) {
         if (newPassword.length < 8) {
           throw new Error('New password must be at least 8 characters.');
@@ -438,42 +528,46 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
               <span className="font-mono text-ink-2">@{user.namespace}</span>
               <span>Role: {user.role || 'author'}</span>
               <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
-              <span className="flex items-center gap-1">
-                {hasAcceptedCurrentTerms ? (
-                  <>
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-emerald-700 dark:text-emerald-400">Terms Accepted</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span className="text-amber-700 dark:text-amber-300">Terms Pending</span>
-                    <button
-                      onClick={() => {
-                        acceptCurrentTerms().catch(() => {
-                          toastError('Failed to accept the current terms. Please try again.');
-                        });
-                      }}
-                      className="text-lilac-700 dark:text-lilac-300 underline font-medium ml-1"
-                    >
-                      Accept
-                    </button>
-                  </>
-                )}
-              </span>
+              {hasTerms && (
+                <span className="flex items-center gap-1">
+                  {hasAcceptedCurrentTerms ? (
+                    <>
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-emerald-700 dark:text-emerald-400">Terms Accepted</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      <span className="text-amber-700 dark:text-amber-300">Terms Pending</span>
+                      <button
+                        onClick={() => {
+                          acceptCurrentTerms().catch(() => {
+                            toastError('Failed to accept the current terms. Please try again.');
+                          });
+                        }}
+                        className="text-lilac-700 dark:text-lilac-300 underline font-medium ml-1"
+                      >
+                        Accept
+                      </button>
+                    </>
+                  )}
+                </span>
+              )}
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4 pt-2 border-t border-line">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="settings-display-name" className="label block mb-1">
-                    Display Name
+                    Display Name{' '}
+                    <span className="text-ink-3 normal-case">({displayName.length}/80)</span>
                   </label>
                   <input
                     id="settings-display-name"
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    maxLength={80}
                     placeholder="e.g. Kane Marshall"
                     className="input"
                   />
@@ -494,6 +588,80 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     autoComplete="new-password"
                   />
                 </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="settings-bio" className="label block mb-1">
+                    Bio{' '}
+                    <span className="text-ink-3 normal-case">
+                      ({bio.length}/280, leave blank to clear)
+                    </span>
+                  </label>
+                  <textarea
+                    id="settings-bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    maxLength={280}
+                    rows={3}
+                    placeholder="Tell visitors about yourself"
+                    className="input resize-y"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="settings-website" className="label block mb-1">
+                    Website
+                  </label>
+                  <input
+                    id="settings-website"
+                    type="url"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    maxLength={400}
+                    placeholder="https://example.com"
+                    className="input"
+                    autoComplete="url"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="settings-github" className="label block mb-1">
+                    GitHub username
+                  </label>
+                  <input
+                    id="settings-github"
+                    type="text"
+                    value={github}
+                    onChange={(e) => setGithub(e.target.value)}
+                    maxLength={39}
+                    placeholder="octocat"
+                    className="input"
+                    autoComplete="off"
+                  />
+                </div>
+
+                <ImageUploadField
+                  namespace={user.namespace}
+                  kind="banner"
+                  label="Banner image"
+                  currentUrl={bannerUrl.trim() || null}
+                  urlValue={bannerUrl}
+                  onUrlValueChange={setBannerUrl}
+                  onUploaded={handleImageUploaded}
+                  onRemoved={handleImageUploaded}
+                />
+
+                <ImageUploadField
+                  namespace={user.namespace}
+                  kind="avatar"
+                  label="Avatar image"
+                  currentUrl={avatarUrl.trim() || null}
+                  fallbackUrl={`${api.getBaseUrl()}/users/${user.namespace}/avatar`}
+                  urlValue={avatarUrl}
+                  onUrlValueChange={setAvatarUrl}
+                  onUploaded={handleImageUploaded}
+                  onRemoved={handleImageUploaded}
+                  round
+                />
 
                 {newPassword.trim() && (
                   <div className="sm:col-span-2">
