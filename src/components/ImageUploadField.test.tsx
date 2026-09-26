@@ -29,7 +29,7 @@ function renderField(overrides: Partial<React.ComponentProps<typeof ImageUploadF
       kind="avatar"
       label="Avatar image"
       currentUrl={null}
-      fallbackUrl="https://api.test/v1/users/kane/avatar"
+      fallbackUrl="https://api.test/v1/users/kane/avatar?v=0123456789abcdef"
       urlValue=""
       onUrlValueChange={onUrlValueChange}
       onUploaded={onUploaded}
@@ -47,13 +47,22 @@ function imageFile(name = 'me.png', type = 'image/png', size = 1024) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  apiMock.uploadProfileImage.mockResolvedValue({ ...USER, avatarUrl: '/v1/users/kane/avatar' });
-  apiMock.deleteProfileImage.mockResolvedValue({ ...USER, avatarUrl: null });
-  vi.stubGlobal('URL', {
-    ...URL,
-    createObjectURL: vi.fn(() => 'blob:preview'),
-    revokeObjectURL: vi.fn(),
+  apiMock.uploadProfileImage.mockResolvedValue({
+    ...USER,
+    avatarUrl: '/v1/users/kane/avatar?v=0123456789abcdef',
   });
+  apiMock.deleteProfileImage.mockResolvedValue({ ...USER, avatarUrl: null });
+  // Only the object URL pair is faked. Spreading the class would leave a plain
+  // object in place of the constructor, and `new URL(...)` elsewhere would stop
+  // working, so the real one is extended instead.
+  const RealURL = URL;
+  vi.stubGlobal(
+    'URL',
+    Object.assign(class extends RealURL {}, {
+      createObjectURL: vi.fn(() => 'blob:preview'),
+      revokeObjectURL: vi.fn(),
+    }),
+  );
 });
 
 describe('formatBytes', () => {
@@ -98,7 +107,7 @@ describe('ImageUploadField', () => {
     expect(onUploaded).toHaveBeenCalled();
     // The canonical URL the server reported is adopted into the form so Save
     // does not try to push a URL the user never typed.
-    expect(onUrlValueChange).toHaveBeenCalledWith('/v1/users/kane/avatar');
+    expect(onUrlValueChange).toHaveBeenCalledWith('/v1/users/kane/avatar?v=0123456789abcdef');
   });
 
   it('shows the picked image immediately, before the request resolves', async () => {
@@ -118,7 +127,7 @@ describe('ImageUploadField', () => {
     await user.upload(fileInput, imageFile());
 
     expect(await screen.findByTestId('avatar-preview')).toHaveAttribute('src', 'blob:preview');
-    release({ ...USER, avatarUrl: '/v1/users/kane/avatar' });
+    release({ ...USER, avatarUrl: '/v1/users/kane/avatar?v=0123456789abcdef' });
   });
 
   it('refuses an oversized file without calling the API', async () => {
@@ -167,13 +176,32 @@ describe('ImageUploadField', () => {
 
   it('removes an uploaded image through the API', async () => {
     const user = userEvent.setup();
-    const { onRemoved, onUrlValueChange } = renderField({ currentUrl: '/v1/users/kane/avatar' });
+    const { onRemoved, onUrlValueChange } = renderField({
+      currentUrl: '/v1/users/kane/avatar?v=0123456789abcdef',
+    });
 
     await user.click(screen.getByTestId('avatar-remove'));
 
     await waitFor(() => expect(apiMock.deleteProfileImage).toHaveBeenCalledWith('kane', 'avatar'));
     expect(onRemoved).toHaveBeenCalled();
     expect(onUrlValueChange).toHaveBeenCalledWith('');
+  });
+
+  it('offers no remove control for a link, even one on a similar path', () => {
+    renderField({ currentUrl: 'https://cdn.example/users/kane/avatar.png' });
+    expect(screen.queryByTestId('avatar-remove')).toBeNull();
+  });
+
+  it('offers no remove control for the same path without a version', () => {
+    // The instance serves that path too, but without the version it is a moving
+    // target, so it is not treated as a file that can be removed from here.
+    renderField({ currentUrl: '/v1/users/kane/avatar' });
+    expect(screen.queryByTestId('avatar-remove')).toBeNull();
+  });
+
+  it("offers no remove control for another account's upload", () => {
+    renderField({ currentUrl: '/v1/users/someone-else/avatar?v=0123456789abcdef' });
+    expect(screen.queryByTestId('avatar-remove')).toBeNull();
   });
 
   it('offers no remove control when there is no image', () => {
@@ -187,7 +215,7 @@ describe('ImageUploadField', () => {
       ...USER,
       avatarUrl: 'https://cdn.example/fallback.png',
     });
-    renderField({ currentUrl: 'https://api.example/api/v1/users/kane/avatar' });
+    renderField({ currentUrl: 'https://api.example/api/v1/users/kane/avatar?v=0123456789abcdef' });
 
     await user.click(screen.getByTestId('avatar-remove'));
 
@@ -222,7 +250,7 @@ describe('ImageUploadField', () => {
     renderField();
     expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
       'src',
-      'https://api.test/v1/users/kane/avatar',
+      'https://api.test/v1/users/kane/avatar?v=0123456789abcdef',
     );
     expect(screen.queryByTestId('avatar-empty')).toBeNull();
   });
@@ -246,9 +274,9 @@ describe('ImageUploadField', () => {
         namespace="kane"
         kind="avatar"
         label="Avatar image"
-        currentUrl="/v1/users/kane/avatar"
-        fallbackUrl="https://api.test/v1/users/kane/avatar"
-        urlValue="/v1/users/kane/avatar"
+        currentUrl="/v1/users/kane/avatar?v=0123456789abcdef"
+        fallbackUrl="https://api.test/v1/users/kane/avatar?v=0123456789abcdef"
+        urlValue="/v1/users/kane/avatar?v=0123456789abcdef"
         onUrlValueChange={vi.fn()}
         onUploaded={vi.fn()}
         onRemoved={vi.fn()}
@@ -256,7 +284,10 @@ describe('ImageUploadField', () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByTestId('avatar-preview')).toHaveAttribute('src', '/v1/users/kane/avatar'),
+      expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
+        'src',
+        '/v1/users/kane/avatar?v=0123456789abcdef',
+      ),
     );
   });
 });

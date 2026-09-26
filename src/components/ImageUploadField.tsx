@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AlertCircle, ImageUp, Link2, Loader2, Trash2, Upload, X } from 'lucide-react';
-import { ACCEPTED_IMAGE_TYPES, formatBytes, MAX_IMAGE_BYTES } from '../lib/profile-image';
+import {
+  ACCEPTED_IMAGE_TYPES,
+  formatBytes,
+  isOwnImageUrl,
+  MAX_IMAGE_BYTES,
+} from '../lib/profile-image';
 import { ApiError, api } from '../services/api';
 import { User } from '../types/api';
 
@@ -106,12 +111,13 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     }
   }, [namespace, kind, onUrlValueChange, onRemoved]);
 
-  // The server reports an upload as this account's own canonical path and a link
-  // as whatever the account pointed at, so the two are told apart by the path
-  // this instance serves. Only an upload can be removed from here: a link is
-  // cleared in the field below it and saved, which is also the only way to tell
-  // the instance to stop reporting it.
-  const isUpload = Boolean(currentUrl && currentUrl.includes(`/users/${namespace}/${kind}`));
+  // The server reports an upload as this account's own canonical path, carrying
+  // the version of the bytes, and a link as whatever the account pointed at, so
+  // the two are told apart by that version rather than by the path alone. Only
+  // an upload can be removed from here: a link is cleared in the field below it
+  // and saved, which is also the only way to tell the instance to stop
+  // reporting it.
+  const isUpload = isOwnImageUrl(currentUrl, namespace, kind);
   const hasImage = Boolean(currentUrl || localPreview);
   const displayed = localPreview ?? currentUrl ?? fallbackUrl ?? null;
   const shape = round ? 'rounded-full' : 'rounded-lg';
