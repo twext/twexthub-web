@@ -9,7 +9,7 @@ interface SignupPageProps {
 }
 
 export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
-  const { signup, acceptCurrentTerms, latestTermsVersion } = useAuth();
+  const { signup, acceptCurrentTerms, latestTermsVersion, hasTerms } = useAuth();
   const [namespace, setNamespace] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +29,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
       return;
     }
 
-    if (!agreeTerms) {
+    if (hasTerms && !agreeTerms) {
       setError('You must agree to the Terms of Service to register an account.');
       return;
     }
@@ -40,8 +40,9 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
     try {
       await signup(namespace.trim().toLowerCase(), password, displayName.trim() || undefined);
 
-      // Automatically accept current terms upon signup agreement
-      if (agreeTerms) {
+      // Automatically accept current terms upon signup agreement. Skipped when
+      // the registry has published no terms, since there is nothing to accept.
+      if (hasTerms && agreeTerms) {
         try {
           await acceptCurrentTerms();
         } catch {
@@ -144,27 +145,29 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
             />
           </div>
 
-          <div className="pt-1">
-            <label className="flex items-start gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-0.5 rounded accent-lilac-500"
-              />
-              <span className="text-sm text-ink-2 leading-tight">
-                I agree to the{' '}
-                <button
-                  type="button"
-                  onClick={() => onNavigate('terms')}
-                  className="text-lilac-700 dark:text-lilac-300 hover:underline underline-offset-4"
-                >
-                  Terms of Service (v{latestTermsVersion ?? 1})
-                </button>{' '}
-                and understand that extensions are publicly inspectable.
-              </span>
-            </label>
-          </div>
+          {hasTerms && (
+            <div className="pt-1">
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="mt-0.5 rounded accent-lilac-500"
+                />
+                <span className="text-sm text-ink-2 leading-tight">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('terms')}
+                    className="text-lilac-700 dark:text-lilac-300 hover:underline underline-offset-4"
+                  >
+                    Terms of Service (v{latestTermsVersion ?? 1})
+                  </button>{' '}
+                  and understand that extensions are publicly inspectable.
+                </span>
+              </label>
+            </div>
+          )}
 
           <button
             type="submit"
