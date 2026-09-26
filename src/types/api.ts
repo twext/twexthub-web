@@ -104,6 +104,43 @@ export interface InstanceStats {
   downloads: number;
 }
 
+export type ServerSettingType = 'string' | 'number' | 'bytes' | 'boolean' | 'url' | 'origins';
+
+/** One instance setting an admin may change from the interface. */
+export interface ServerSetting {
+  /** Dotted path in the configuration file, e.g. `limits.maxBlobBytes`. */
+  key: string;
+  label: string;
+  help?: string | null;
+  type: ServerSettingType;
+  min?: number | null;
+  max?: number | null;
+  /** True when the running process only reads this at startup. */
+  restartRequired: boolean;
+  /** `null` when the configuration file does not set it. */
+  value: string | number | boolean | string[] | null;
+}
+
+export interface ServerConfig {
+  /** False when the file cannot hold a change that would survive a restart. */
+  editable: boolean;
+  /** Why the file is read-only, when it is. */
+  reason?: string | null;
+  configPath: string;
+  settings: ServerSetting[];
+}
+
+export interface ServerConfigChange {
+  before: ServerSetting['value'];
+  after: ServerSetting['value'];
+}
+
+export interface ServerConfigUpdate {
+  changed: Record<string, ServerConfigChange>;
+  restartRequired: string[];
+  settings: ServerSetting[];
+}
+
 export interface TermsDoc {
   version: number;
   body: string;

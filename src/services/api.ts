@@ -18,6 +18,9 @@ import {
   ProblemDetails,
   Quota,
   ReviewVersionPayload,
+  ServerConfig,
+  ServerConfigUpdate,
+  ServerSetting,
   Session,
   TermsDoc,
   UpdateUserPayload,
@@ -625,6 +628,29 @@ class ApiService {
     return this.request<Quota>(`/admin/users/${encodeURIComponent(namespace)}/quota`, {
       method: 'PATCH',
       body: JSON.stringify({ maxBlobBytes }),
+    });
+  }
+
+  /**
+   * The settings an admin is allowed to change, plus whether the file can hold
+   * a change at all. `editable: false` means the file sits inside the container
+   * rather than on a volume, so the interface should explain rather than offer
+   * a form that would quietly do nothing.
+   */
+  async getServerConfig(): Promise<ServerConfig> {
+    return this.request<ServerConfig>('/admin/config');
+  }
+
+  /**
+   * Writes the given dotted settings to the configuration file and to the
+   * running instance. Throws a 409 `ApiError` when the file is not persistent.
+   */
+  async updateServerConfig(
+    settings: Record<string, ServerSetting['value']>,
+  ): Promise<ServerConfigUpdate> {
+    return this.request<ServerConfigUpdate>('/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
     });
   }
 

@@ -13,6 +13,7 @@ import { QuotaModal } from '../components/QuotaModal';
 import { BroadcastPanel } from '../components/BroadcastPanel';
 import { MetricsModal } from '../components/MetricsModal';
 import { ExportPanel } from '../components/ExportPanel';
+import { ServerConfigPanel } from '../components/ServerConfigPanel';
 import { useConfirm } from '../hooks/useConfirm';
 import {
   PendingVersion,
@@ -41,6 +42,7 @@ import {
   PenLine,
   Wrench,
   HardDrive,
+  Server,
   Settings as SettingsIcon,
 } from 'lucide-react';
 
@@ -48,7 +50,8 @@ interface AdminPageProps {
   onNavigate: (route: string) => void;
 }
 
-type AdminTab = 'moderation' | 'catalog' | 'users' | 'policies' | 'audit' | 'maintenance';
+type AdminTab =
+  'moderation' | 'catalog' | 'users' | 'policies' | 'audit' | 'maintenance' | 'server';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
@@ -577,6 +580,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         >
           <Wrench className="w-4 h-4" />
           <span>Maintenance</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('server')}
+          className={`pb-3 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'server'
+              ? 'border-lilac-500 dark:border-lilac-300 text-lilac-700 dark:text-lilac-300'
+              : 'border-transparent text-ink-3 hover:text-ink'
+          }`}
+        >
+          <Server className="w-4 h-4" />
+          <span>Server</span>
         </button>
       </div>
 
@@ -1110,6 +1125,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               fetchStats();
             }}
           />
+        </div>
+      )}
+
+      {activeTab === 'server' && (
+        <div className="space-y-4">
+          <ServerConfigPanel />
         </div>
       )}
 

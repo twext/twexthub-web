@@ -41,6 +41,8 @@ export const api = {
   getUserQuota: vi.fn(),
   setUserQuota: vi.fn(),
   broadcastNotification: vi.fn(async () => 0),
+  getServerConfig: vi.fn(),
+  updateServerConfig: vi.fn(),
   getAdminMetrics: vi.fn(async () => ''),
   getAtomFeedUrl: vi.fn(() => 'http://localhost:3000/api/v1/feed.atom'),
   getNotifications: vi.fn(),
