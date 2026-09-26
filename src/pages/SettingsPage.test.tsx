@@ -35,11 +35,19 @@ beforeEach(() => {
 });
 
 describe('SettingsPage', () => {
-  it('renders the account tab by default', () => {
+  it('renders the account section by default', () => {
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    expect(screen.getByRole('heading', { level: 1, name: /User Settings/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Account' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Account' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByPlaceholderText('e.g. Kane Marshall')).toBeInTheDocument();
+  });
+
+  it('puts each section under a heading of its own, and only the current one in the document', () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    // The heading and the sidebar entry are described in one place, so the
+    // panel and its navigation can never disagree about what a section is.
+    expect(screen.getByRole('heading', { level: 2, name: 'Account' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Sessions' })).toBeNull();
   });
 
   it('redirects a signed-out visitor to login', async () => {
@@ -219,7 +227,7 @@ describe('SettingsPage', () => {
   it('creates a token with an expiration', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
+    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
     await screen.findByText('Active Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci');
     await user.selectOptions(screen.getByRole('combobox'), '30');
@@ -237,7 +245,7 @@ describe('SettingsPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
+    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
     await screen.findByText('Active Tokens (1)');
 
     await user.click(screen.getByTitle('Edit Token'));
@@ -261,7 +269,7 @@ describe('SettingsPage', () => {
     apiMock.getSessions.mockResolvedValueOnce(paginated([makeSession({ id: 'sess-2' })]));
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Sessions' }));
+    await user.click(screen.getByRole('button', { name: 'Sessions' }));
     await screen.findByText('Active Web Sessions');
 
     await user.click(screen.getByRole('button', { name: 'Load more sessions' }));
@@ -269,7 +277,7 @@ describe('SettingsPage', () => {
     expect(apiMock.getSessions).toHaveBeenLastCalledWith({ cursor: 'cursor-2' });
   });
 
-  it('revokes an active session from the sessions tab', async () => {
+  it('revokes an active session from the sessions section', async () => {
     apiMock.getSessions.mockResolvedValue(
       paginated([
         makeSession({ id: 'sess-1', lastUsedAt: '2026-03-01T00:00:00Z' }),
@@ -278,7 +286,7 @@ describe('SettingsPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Sessions' }));
+    await user.click(screen.getByRole('button', { name: 'Sessions' }));
     await screen.findByText('Active Web Sessions');
     await user.click(
       screen
@@ -292,7 +300,7 @@ describe('SettingsPage', () => {
   it('creates a token and reveals the one-time secret', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
+    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
     await screen.findByText('Active Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci-dev');
     await user.click(screen.getByRole('button', { name: /Create Automation Token/ }));
@@ -304,7 +312,7 @@ describe('SettingsPage', () => {
   it('deletes an automation token after confirmation', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
+    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
     await screen.findByText('Active Tokens (1)');
     await user.click(screen.getByRole('button', { name: 'Revoke Token' }));
     await user.click(screen.getByRole('button', { name: 'Delete token' }));
