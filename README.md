@@ -45,7 +45,7 @@ TwextHub is maintained by the [Twext Team](https://github.com/twext).
 
 ## Usage
 
-The public registry default is `https://twexts.sdisk.us/api/v0`. The UI points at it unless an operator overrides the API base URL (see [Installation](#installation)).
+The public registry default is `https://twexts.sdisk.us/api/v1`. The UI points at it unless an operator overrides the API base URL (see [Installation](#installation)).
 
 ### Publish
 
@@ -101,13 +101,13 @@ The API base URL is resolved in this order:
 
 1. Runtime `window.TWEXTHUB_CONFIG.apiBaseUrl`, injected by `server.js` into `index.html`.
 2. Build-time env `VITE_TWEXTHUB_API_URL` (baked into the bundle).
-3. Default: `https://twexts.sdisk.us/api/v0`.
+3. Default: `https://twexts.sdisk.us/api/v1`.
 
 So a static deploy pins the URL at build time, while a `server.js` deploy can switch it at startup:
 
 ```sh
 npm run build
-TWEXTHUB_API_URL=https://registry.example.com/api/v0 node server.js
+TWEXTHUB_API_URL=https://registry.example.com/api/v1 node server.js
 ```
 
 `server.js` also reads `apiBaseUrl` from a `config.yml` / `config.yaml` in the working directory, or from the file given as its first CLI argument. It serves `dist/`, injects the resolved URL into the served HTML, and falls back to `index.html` for unknown paths, so client-side routes keep working.
@@ -116,7 +116,7 @@ TWEXTHUB_API_URL=https://registry.example.com/api/v0 node server.js
 
 ```sh
 docker build -t twexthub-web .
-docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v0 twexthub-web
+docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v1 twexthub-web
 ```
 
 `compose.example.yml` shows the same setup under Docker Compose. The image builds `dist/` in a multi-stage build and runs `server.js` as the `node` user, listening on port 3000.

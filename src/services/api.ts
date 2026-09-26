@@ -269,7 +269,7 @@ class ApiService {
     }
   }
 
-  // GET /v0/auth/me - returns the caller's own authenticated account
+  // GET /v1/auth/me - returns the caller's own authenticated account
   async getMe(): Promise<User> {
     const me = await this.request<User>('/auth/me');
     this.setStoredUser(me);

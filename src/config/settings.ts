@@ -1,4 +1,4 @@
-export const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v0';
+export const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v1';
 
 export interface AppConfig {
   apiBaseUrl: string;
@@ -23,7 +23,7 @@ function isLoopbackHost(hostname: string): boolean {
 /**
  * Remote APIs must use HTTPS so bearer tokens never travel in cleartext and
  * to avoid mixed-content failures on HTTPS-hosted pages. Plain HTTP is only
- * accepted for loopback development URLs such as http://localhost:8080/api/v0.
+ * accepted for loopback development URLs such as http://localhost:8080/api/v1.
  */
 export function isValidApiBaseUrl(raw: string): boolean {
   try {

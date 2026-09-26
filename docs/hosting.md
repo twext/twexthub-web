@@ -21,7 +21,7 @@ The web UI is a static app that talks to a TwextHub registry over its [API](http
 
 ## What you need
 
-- A TwextHub API instance to talk to, or the public registry at `https://twexts.sdisk.us/api/v0`. The UI does not bundle or proxy the registry; it points at one.
+- A TwextHub API instance to talk to, or the public registry at `https://twexts.sdisk.us/api/v1`. The UI does not bundle or proxy the registry; it points at one.
 - To run `server.js`: Node.js 24 or newer. The server is dependency-free ESM, so no install step beyond building the app.
 - To run the Docker image: nothing on the host besides Docker.
 
@@ -47,7 +47,7 @@ Prebuilt images are published to `ghcr.io/twext/twexthub-web`. Builds on `main` 
 docker pull ghcr.io/twext/twexthub-web:latest
 
 docker run --rm -p 8080:3000 \
-  -e TWEXTHUB_API_URL=https://registry.example.com/api/v0 \
+  -e TWEXTHUB_API_URL=https://registry.example.com/api/v1 \
   ghcr.io/twext/twexthub-web:latest
 ```
 
@@ -55,7 +55,7 @@ docker run --rm -p 8080:3000 \
 
 ```sh
 docker build -t twexthub-web .
-docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v0 twexthub-web
+docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v1 twexthub-web
 ```
 
 **Compose:**
@@ -86,7 +86,7 @@ The page calls `${apiBaseUrl}/…` directly from the browser. The API instance m
 The build output in `dist/` is plain static files, so the app also runs on GitHub Pages, a CDN, or any file host. The difference from `server.js` is that the API URL is then baked in at build time and cannot be changed at runtime:
 
 ```sh
-VITE_TWEXTHUB_API_URL=https://registry.example.com/api/v0 npm run build
+VITE_TWEXTHUB_API_URL=https://registry.example.com/api/v1 npm run build
 ```
 
 Deploy the contents of `dist/`. Without `VITE_TWEXTHUB_API_URL`, the build points at the default public registry. Because links are hash-based, hosting under a subpath works without configuration.

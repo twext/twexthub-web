@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Fetch /v0/auth/me every so often and log the user out if their token is invalid or missing.
+  // Fetch /v1/auth/me every so often and log the user out if their token is invalid or missing.
   // Reads the token/user from the api layer (not React state) and bails out of `setUser` when the
   // payload is unchanged, so the callback stays referentially stable and `getMe` is not re-triggered
   // in a loop that would make profile pages re-fetch and re-show skeletons on every render.
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     init();
   }, [fetchTermsVersion, verifyAuth]);
 
-  // Periodic auth verification: Check /v0/auth/me periodically (every 20 seconds)
+  // Periodic auth verification: Check /v1/auth/me periodically (every 20 seconds)
   useEffect(() => {
     if (!token) return;
 

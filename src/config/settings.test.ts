@@ -15,8 +15,8 @@ describe('settings', () => {
 
   describe('normalizeApiBaseUrl', () => {
     it('trims whitespace and trailing slashes', () => {
-      expect(normalizeApiBaseUrl('  https://hub.example/api/v0/  ')).toBe(
-        'https://hub.example/api/v0',
+      expect(normalizeApiBaseUrl('  https://hub.example/api/v1/  ')).toBe(
+        'https://hub.example/api/v1',
       );
     });
 
@@ -27,24 +27,24 @@ describe('settings', () => {
 
   describe('isValidApiBaseUrl', () => {
     it('accepts https absolute URLs', () => {
-      expect(isValidApiBaseUrl('https://twexts.sdisk.us/api/v0')).toBe(true);
+      expect(isValidApiBaseUrl('https://twexts.sdisk.us/api/v1')).toBe(true);
     });
 
     it('accepts loopback http URLs for development', () => {
-      expect(isValidApiBaseUrl('http://localhost:8080/api/v0')).toBe(true);
-      expect(isValidApiBaseUrl('http://127.0.0.1:8080/api/v0')).toBe(true);
-      expect(isValidApiBaseUrl('http://api.localhost:8080/api/v0')).toBe(true);
+      expect(isValidApiBaseUrl('http://localhost:8080/api/v1')).toBe(true);
+      expect(isValidApiBaseUrl('http://127.0.0.1:8080/api/v1')).toBe(true);
+      expect(isValidApiBaseUrl('http://api.localhost:8080/api/v1')).toBe(true);
     });
 
     it('rejects remote http URLs', () => {
-      expect(isValidApiBaseUrl('http://twexts.sdisk.us/api/v0')).toBe(false);
-      expect(isValidApiBaseUrl('http://192.168.1.10/api/v0')).toBe(false);
-      expect(isValidApiBaseUrl('http://registry.internal.example/api/v0')).toBe(false);
+      expect(isValidApiBaseUrl('http://twexts.sdisk.us/api/v1')).toBe(false);
+      expect(isValidApiBaseUrl('http://192.168.1.10/api/v1')).toBe(false);
+      expect(isValidApiBaseUrl('http://registry.internal.example/api/v1')).toBe(false);
     });
 
     it('rejects non-http schemes and bare strings', () => {
-      expect(isValidApiBaseUrl('ftp://files.example/api/v0')).toBe(false);
-      expect(isValidApiBaseUrl('twexts.sdisk.us/api/v0')).toBe(false);
+      expect(isValidApiBaseUrl('ftp://files.example/api/v1')).toBe(false);
+      expect(isValidApiBaseUrl('twexts.sdisk.us/api/v1')).toBe(false);
       expect(isValidApiBaseUrl('')).toBe(false);
     });
   });
@@ -55,16 +55,16 @@ describe('settings', () => {
     });
 
     it('prefers the build-time env var over the default', () => {
-      vi.stubEnv('VITE_TWEXTHUB_API_URL', 'https://built.example/api/v0');
-      expect(resolveApiBaseUrl()).toBe('https://built.example/api/v0');
+      vi.stubEnv('VITE_TWEXTHUB_API_URL', 'https://built.example/api/v1');
+      expect(resolveApiBaseUrl()).toBe('https://built.example/api/v1');
     });
 
     it('prefers the injected server config over the build-time env var', () => {
-      vi.stubEnv('VITE_TWEXTHUB_API_URL', 'https://built.example/api/v0');
+      vi.stubEnv('VITE_TWEXTHUB_API_URL', 'https://built.example/api/v1');
       (window as { TWEXTHUB_CONFIG?: { apiBaseUrl?: string } }).TWEXTHUB_CONFIG = {
-        apiBaseUrl: 'https://server.example/api/v0',
+        apiBaseUrl: 'https://server.example/api/v1',
       };
-      expect(resolveApiBaseUrl()).toBe('https://server.example/api/v0');
+      expect(resolveApiBaseUrl()).toBe('https://server.example/api/v1');
     });
 
     it('ignores an invalid injected value, keeping the default', () => {
@@ -85,9 +85,9 @@ describe('settings', () => {
   describe('getAppConfig', () => {
     it('returns the enforced base URL', () => {
       (window as { TWEXTHUB_CONFIG?: { apiBaseUrl?: string } }).TWEXTHUB_CONFIG = {
-        apiBaseUrl: 'https://server.example/api/v0',
+        apiBaseUrl: 'https://server.example/api/v1',
       };
-      expect(getAppConfig()).toEqual({ apiBaseUrl: 'https://server.example/api/v0' });
+      expect(getAppConfig()).toEqual({ apiBaseUrl: 'https://server.example/api/v1' });
     });
   });
 });
