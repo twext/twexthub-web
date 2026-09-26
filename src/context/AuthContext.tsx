@@ -9,6 +9,11 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   latestTermsVersion: number | null;
+  /** Whether the registry has published a Terms of Service at all. */
+  /** True only when terms are confirmed to exist. */
+  hasTerms: boolean;
+  /** True once terms availability is known (published or 404). */
+  termsResolved: boolean;
   hasAcceptedCurrentTerms: boolean;
   login: (namespace: string, password: string) => Promise<void>;
   signup: (namespace: string, password: string, displayName?: string) => Promise<void>;
@@ -35,6 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(api.getToken());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latestTermsVersion, setLatestTermsVersion] = useState<number | null>(null);
+  const [hasTerms, setHasTerms] = useState(false);
+  const [termsResolved, setTermsResolved] = useState(false);
   const isCheckingAuthRef = useRef(false);
 
   // Check latest terms version from API
@@ -42,10 +49,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const terms = await api.getTerms();
       setLatestTermsVersion(terms.version);
-    } catch {
-      // Keep the version unknown rather than guessing v1; acceptance stays
-      // unavailable until the current version loads.
-      setLatestTermsVersion(null);
+      setHasTerms(true);
+      setTermsResolved(true);
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 404) {
+        // The registry has never published terms, so there is nothing to
+        // accept. Only an explicit 404 licenses that conclusion.
+        setLatestTermsVersion(null);
+        setHasTerms(false);
+        setTermsResolved(true);
+      } else {
+        // Availability is unknown. Keep the last known state and never let a
+        // transient failure stand in for "no terms", which would otherwise
+        // silently drop a real acceptance requirement.
+        setTermsResolved(false);
+      }
     }
   }, []);
 
@@ -170,13 +188,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const hasAcceptedCurrentTerms = Boolean(
-    user &&
-    latestTermsVersion !== null &&
-    user.termsAcceptedVersion !== null &&
-    user.termsAcceptedVersion !== undefined &&
-    user.termsAcceptedVersion >= latestTermsVersion,
-  );
+  // With no published terms there is nothing to accept, so accounts are never
+  // blocked on acceptance; the registry's terms gate is open in that state too.
+  // Until availability is resolved this stays false, so a failed fetch can
+  // never be mistaken for a satisfied requirement.
+  const hasAcceptedCurrentTerms =
+    (termsResolved && !hasTerms) ||
+    Boolean(
+      user &&
+      latestTermsVersion !== null &&
+      user.termsAcceptedVersion !== null &&
+      user.termsAcceptedVersion !== undefined &&
+      user.termsAcceptedVersion >= latestTermsVersion,
+    );
 
   const isAdmin = Boolean(user && user.role === 'admin');
 
@@ -189,6 +213,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         isLoading,
         latestTermsVersion,
+        hasTerms,
+        termsResolved,
         hasAcceptedCurrentTerms,
         login,
         signup,

@@ -84,4 +84,29 @@ describe('SignupPage', () => {
     await user.click(screen.getByRole('button', { name: /^Sign in$/ }));
     expect(onNavigate).toHaveBeenCalledWith('login');
   });
+
+  it('omits the terms consent and acceptance call when nothing is published', async () => {
+    const onNavigate = vi.fn();
+    authState = makeAuthState({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      hasTerms: false,
+      latestTermsVersion: null,
+    });
+    useAuthMock.mockReturnValue(authState);
+    const user = userEvent.setup();
+    render(<SignupPage onNavigate={onNavigate} />);
+
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.queryByText(/Terms of Service/)).toBeNull();
+
+    await user.type(namespaceInput(), 'kane');
+    await user.type(passwordInput(), 'long-enough-pass');
+    await user.click(screen.getByRole('button', { name: /Register Namespace/ }));
+
+    expect(authState.signup).toHaveBeenCalled();
+    expect(authState.acceptCurrentTerms).not.toHaveBeenCalled();
+    expect(onNavigate).toHaveBeenCalledWith('dashboard');
+  });
 });

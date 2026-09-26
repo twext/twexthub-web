@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Extension, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import {
   ArrowLeft,
   Calendar,
+  FileText,
   Package,
   AlertTriangle,
   User as UserIcon,
   RefreshCw,
+  Settings,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 interface AuthorPageProps {
@@ -17,6 +21,7 @@ interface AuthorPageProps {
 }
 
 export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate }) => {
+  const { user, latestTermsVersion } = useAuth();
   const [author, setAuthor] = useState<User | null>(null);
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
@@ -91,6 +96,13 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     };
   }, [namespace, loadExtensions]);
 
+  // `termsAcceptedVersion` arrives only for self/admin viewers, so treat its
+  // absence as "hidden from you" rather than "never accepted".
+  const termsAccepted = author?.termsAcceptedVersion ?? null;
+  const isSelf = author !== null && user?.namespace === author.namespace;
+  const termsOutdated =
+    termsAccepted !== null && latestTermsVersion !== null && termsAccepted < latestTermsVersion;
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -134,43 +146,110 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         Back to Explore
       </button>
 
-      <div className="card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-lg bg-wash dark:bg-raised border border-line flex items-center justify-center text-ink-2 font-bold text-2xl shrink-0">
-            {(author.displayName || author.namespace).charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-display font-semibold text-ink">
-                {author.displayName || author.namespace}
-              </h1>
-              <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-xs">
-                @{author.namespace}
-              </span>
-              {author.role === 'admin' && (
-                <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
-                  Admin
+      <div className="card p-0 overflow-hidden">
+        {author.bannerUrl && (
+          <img
+            src={author.bannerUrl}
+            alt={`Banner for @${author.namespace}`}
+            className="w-full h-28 sm:h-36 object-cover bg-wash dark:bg-raised"
+          />
+        )}
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <img
+              src={author.avatarUrl || `${api.getBaseUrl()}/users/${author.namespace}/avatar`}
+              alt={`Avatar for @${author.namespace}`}
+              className="w-16 h-16 rounded-lg object-cover bg-wash dark:bg-raised border border-line shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-display font-semibold text-ink">
+                  {author.displayName || author.namespace}
+                </h1>
+                <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-xs">
+                  @{author.namespace}
                 </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
-              {author.createdAt && (
+                {author.role === 'admin' && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                    Admin
+                  </span>
+                )}
+                {isSelf && (
+                  <button
+                    onClick={() => onNavigate('settings')}
+                    className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium inline-flex items-center gap-1"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    Edit profile
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
+                {author.createdAt && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Member since {new Date(author.createdAt).toLocaleDateString()}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  Member since {new Date(author.createdAt).toLocaleDateString()}
+                  <Package className="w-3 h-3" />
+                  {extensions.length}
+                  {pagination.hasMore ? '+' : ''} published extension
+                  {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
                 </span>
+                {!author.hasPublished && (
+                  <span className="flex items-center gap-1">
+                    <UserIcon className="w-3 h-3" />
+                    No published releases yet
+                  </span>
+                )}
+                {/*
+                  `termsAcceptedVersion` is serialized only for self and admin
+                  viewers, so its absence here means "not visible to you", not
+                  "never accepted".
+                */}
+                {termsAccepted !== null && (
+                  <span
+                    className="flex items-center gap-1"
+                    title={`Terms of Service version ${termsAccepted}`}
+                  >
+                    <FileText className="w-3 h-3" />
+                    {termsOutdated ? 'Terms update pending' : `Terms v${termsAccepted} accepted`}
+                    {termsOutdated && latestTermsVersion !== null && (
+                      <span className="font-mono">({latestTermsVersion} available)</span>
+                    )}
+                  </span>
+                )}
+              </div>
+              {author.bio && (
+                <p className="text-sm text-ink-2 leading-relaxed mt-3 whitespace-pre-wrap break-words">
+                  {author.bio}
+                </p>
               )}
-              <span className="flex items-center gap-1">
-                <Package className="w-3 h-3" />
-                {extensions.length}
-                {pagination.hasMore ? '+' : ''} published extension
-                {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
-              </span>
-              {!author.hasPublished && (
-                <span className="flex items-center gap-1">
-                  <UserIcon className="w-3 h-3" />
-                  No published releases yet
-                </span>
+              {(author.website || author.github) && (
+                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                  {author.website && (
+                    <a
+                      href={author.website}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1 break-all"
+                    >
+                      <LinkIcon className="w-3 h-3 shrink-0" />
+                      {author.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                  {author.github && (
+                    <a
+                      href={`https://github.com/${author.github}`}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-ink-2 hover:text-ink inline-flex items-center gap-1 font-mono"
+                    >
+                      @{author.github}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>

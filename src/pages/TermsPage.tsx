@@ -18,10 +18,20 @@ interface TermsPageProps {
 }
 
 export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
-  const { isAuthenticated, user, hasAcceptedCurrentTerms, acceptCurrentTerms } = useAuth();
+  const {
+    isAuthenticated,
+    user,
+    hasTerms,
+    termsResolved,
+    hasAcceptedCurrentTerms,
+    acceptCurrentTerms,
+  } = useAuth();
   const [terms, setTerms] = useState<TermsDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // A 404 from /terms means the registry never published a document, which is a
+  // normal empty state rather than a failure.
+  const [missing, setMissing] = useState(false);
 
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
@@ -32,6 +42,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
     const fetchTerms = async () => {
       setLoading(true);
       setError(null);
+      setMissing(false);
       try {
         const data = await api.getTerms();
         if (isMounted) {
@@ -39,9 +50,13 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
         }
       } catch (err: unknown) {
         if (isMounted) {
-          const msg =
-            err instanceof ApiError ? err.message : 'Failed to load Terms of Service from server';
-          setError(msg);
+          if (err instanceof ApiError && err.status === 404) {
+            setMissing(true);
+          } else {
+            const msg =
+              err instanceof ApiError ? err.message : 'Failed to load Terms of Service from server';
+            setError(msg);
+          }
         }
       } finally {
         if (isMounted) {
@@ -100,7 +115,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Acceptance Status Pill */}
-        {isAuthenticated && (
+        {isAuthenticated && terms && (
           <div className="self-start sm:self-auto">
             {isAccepted ? (
               <span className="chip bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60">
@@ -159,6 +174,15 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
             <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
             <p className="font-semibold">{error}</p>
           </div>
+        ) : missing || (termsResolved && !hasTerms) ? (
+          <div className="text-center py-12 text-xs text-ink-3 space-y-2">
+            <FileText className="w-8 h-8 text-ink-3 mx-auto" />
+            <p className="font-semibold text-ink-2">No Terms of Service have been published.</p>
+            <p>
+              This registry has not published any terms yet, so there is nothing to review or
+              accept.
+            </p>
+          </div>
         ) : terms ? (
           <MarkdownView content={terms.body} />
         ) : null}
@@ -181,7 +205,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {!isAuthenticated && (
+      {!isAuthenticated && hasTerms && (
         <div className="card p-4 text-xs text-ink-2 flex items-center justify-between">
           <span>Sign in to your author account to record your terms acceptance.</span>
           <button onClick={() => onNavigate('login')} className="btn btn-secondary">

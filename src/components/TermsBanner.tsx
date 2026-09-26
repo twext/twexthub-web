@@ -7,12 +7,18 @@ interface TermsBannerProps {
 }
 
 export const TermsBanner: React.FC<TermsBannerProps> = ({ onNavigate }) => {
-  const { isAuthenticated, hasAcceptedCurrentTerms, latestTermsVersion, acceptCurrentTerms } =
-    useAuth();
+  const {
+    isAuthenticated,
+    hasTerms,
+    hasAcceptedCurrentTerms,
+    latestTermsVersion,
+    acceptCurrentTerms,
+  } = useAuth();
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isAuthenticated || hasAcceptedCurrentTerms) {
+  // A registry that has never published terms has nothing outstanding to accept.
+  if (!isAuthenticated || !hasTerms || hasAcceptedCurrentTerms) {
     return null;
   }
 

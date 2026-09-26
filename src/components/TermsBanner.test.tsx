@@ -52,4 +52,12 @@ describe('TermsBanner', () => {
     await user.click(screen.getByRole('button', { name: /Accept Current Terms/ }));
     expect(authState.acceptCurrentTerms).toHaveBeenCalled();
   });
+
+  it('renders nothing when the registry has published no terms', () => {
+    useAuthMock.mockReturnValue(
+      makeAuthState({ hasTerms: false, hasAcceptedCurrentTerms: false, latestTermsVersion: null }),
+    );
+    const { container } = render(<TermsBanner onNavigate={noop} />);
+    expect(container).toHaveTextContent('');
+  });
 });
