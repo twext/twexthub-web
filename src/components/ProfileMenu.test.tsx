@@ -108,21 +108,16 @@ describe('ProfileMenu', () => {
     );
   });
 
-  it('navigates to the dashboard and closes', async () => {
-    const user = userEvent.setup();
-    const { onNavigate, onDismiss } = renderMenu();
-
-    await user.click(screen.getByRole('button', { name: 'Dashboard' }));
-
-    expect(onNavigate).toHaveBeenCalledWith('dashboard');
-    expect(onDismiss).toHaveBeenCalled();
+  it('leaves the dashboard out of the menu', () => {
+    renderMenu();
+    expect(screen.queryByRole('button', { name: 'Dashboard' })).toBeNull();
   });
 
-  it('navigates to the public profile and closes', async () => {
+  it('navigates to the public profile from the identity block and closes', async () => {
     const user = userEvent.setup();
     const { onNavigate, onDismiss } = renderMenu();
 
-    await user.click(screen.getByRole('button', { name: /View public profile/ }));
+    await user.click(screen.getByRole('button', { name: /Kane Marshall/ }));
 
     expect(onNavigate).toHaveBeenCalledWith('author/kane');
     expect(onDismiss).toHaveBeenCalled();

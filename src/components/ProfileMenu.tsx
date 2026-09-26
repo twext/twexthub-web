@@ -1,12 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { useDismissable } from '../hooks/useDismissable';
-import {
-  LayoutDashboard,
-  Link as LinkIcon,
-  LogOut,
-  Settings,
-  User as UserIcon,
-} from 'lucide-react';
+import { Link as LinkIcon, LogOut, Settings } from 'lucide-react';
 import { User } from '../types/api';
 import { api } from '../services/api';
 
@@ -63,7 +57,10 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       aria-label="Your profile"
       className="absolute right-0 top-full mt-2 w-72 card p-0 overflow-hidden z-50 text-left"
     >
-      <div className="flex items-start gap-3 p-4">
+      <button
+        onClick={() => go(`author/${user.namespace}`)}
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-wash transition-colors"
+      >
         <img
           src={user.avatarUrl || `${api.getBaseUrl()}/users/${user.namespace}/avatar`}
           alt=""
@@ -78,7 +75,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
             </span>
           )}
         </div>
-      </div>
+      </button>
 
       {user.bio && (
         <p className="px-4 pb-3 text-[11px] text-ink-2 leading-relaxed line-clamp-4 whitespace-pre-wrap break-words">
@@ -120,20 +117,6 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
       )}
 
       <div className="border-t border-line py-1">
-        <button
-          onClick={() => go('dashboard')}
-          className="w-full flex items-center gap-2 px-4 py-2 text-xs text-ink-2 hover:bg-wash transition-colors"
-        >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          <span>Dashboard</span>
-        </button>
-        <button
-          onClick={() => go(`author/${user.namespace}`)}
-          className="w-full flex items-center gap-2 px-4 py-2 text-xs text-ink-2 hover:bg-wash transition-colors"
-        >
-          <UserIcon className="w-3.5 h-3.5" />
-          <span>View public profile</span>
-        </button>
         <button
           onClick={() => go('settings')}
           className="w-full flex items-center gap-2 px-4 py-2 text-xs text-ink-2 hover:bg-wash transition-colors"
