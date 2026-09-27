@@ -76,10 +76,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       currentRoute === route ||
       currentRoute.startsWith(`${route}/`) ||
       currentRoute.startsWith(`${route}?`);
-    return `px-2.5 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+    return `inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-medium text-ink-2 dark:text-ink-2 transition-colors border-b-2 border-transparent -mb-px ${
       isActive
         ? 'border-lilac-500 text-lilac-700 dark:text-lilac-300'
-        : 'border-transparent text-ink-2 hover:text-ink hover:border-line'
+        : 'hover:border-lilac-500/70 hover:text-ink dark:hover:text-ink'
     }`;
   };
 
@@ -121,10 +121,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isAdmin && (
                 <button
                   onClick={() => onNavigate('admin')}
-                  className={`px-2.5 py-1 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[15px] font-semibold border-b-2 border-transparent -mb-px transition-colors rounded-none rounded-lg ${
                     currentRoute === 'admin'
-                      ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800'
-                      : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-900/40'
+                      ? 'border-amber-500 text-amber-800 dark:text-amber-200 bg-transparent dark:bg-transparent'
+                      : 'border-transparent text-amber-700 dark:text-amber-400 hover:border-amber-500/70 dark:hover:border-amber-400/70 hover:text-amber-800 dark:hover:text-amber-300'
                   }`}
                   title="Twext Registry Administration"
                 >
@@ -158,43 +158,42 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onOpenCommandPalette}
                 title="Open command palette"
                 aria-label="Open command palette"
-                className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-ink-3 hover:text-ink bg-surface dark:bg-surface hover:bg-wash border border-line rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-sm text-ink-2 dark:text-ink-2 hover:text-ink transition-colors border-b-2 border-transparent -mb-px rounded-none rounded-lg"
               >
-                <Command className="w-3.5 h-3.5" />
-                <kbd className="font-mono text-[10px]">K</kbd>
+                <Command className="w-3.5 h-3.5 text-ink-3" />
+                <kbd className="font-mono text-[11px]">K</kbd>
               </button>
             )}
 
-            {/* Dark Mode Toggle Button */}
-            <button
+            {/* Dark Mode Toggle Button */}              <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle theme"
-              className="p-1.5 text-ink-2 hover:text-ink bg-surface dark:bg-surface hover:bg-wash border border-line rounded-lg transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 text-sm font-medium text-ink-2 dark:text-ink-2 transition-colors border-b-2 border-transparent -mb-px rounded-none rounded-lg"
             >
               {theme === 'dark' ? (
                 <Sun className="w-3.5 h-3.5 text-amber-400" />
               ) : (
                 <Moon className="w-3.5 h-3.5 text-ink-2" />
               )}
+              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
 
             <div className="h-4 w-px bg-line" />
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => onNavigate('dashboard')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[15px] font-medium border-b-2 border-transparent -mb-px transition-colors ${
                     currentRoute === 'dashboard'
-                      ? 'border-lilac-400 text-lilac-700 dark:text-lilac-300 bg-lilac-50 dark:bg-lilac-950'
-                      : 'border-line text-ink-2 hover:bg-wash'
+                      ? 'border-lilac-500 text-lilac-700 dark:text-lilac-300 bg-transparent dark:bg-transparent'
+                      : 'border-transparent text-ink-2 hover:border-lilac-500/70 hover:text-ink'
                   }`}
                 >
                   <UserIcon className="w-3.5 h-3.5 text-lilac-500" />
                   <span>{user?.displayName || user?.namespace}</span>
                 </button>
-
                 <button
                   onClick={() => onNavigate('settings')}
                   title="Settings"
@@ -202,6 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className={navItemClass('settings')}
                 >
                   <Settings className="w-3.5 h-3.5 text-ink-3" />
+                  <span className="hidden sm:inline">Settings</span>
                 </button>
 
                 <button
@@ -210,27 +210,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('home');
                   }}
                   title="Sign out of Twext"
-                  className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-wash transition-colors"
+                  className="inline-flex items-center justify-center w-8 h-8 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors border-b-2 border-transparent -mb-px rounded-none rounded-lg"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => onNavigate('login')}
-                  className="px-2.5 py-1.5 text-sm font-medium text-ink-2 hover:text-ink rounded-lg hover:bg-wash transition-colors flex items-center gap-1"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[15px] font-medium text-ink-2 dark:text-ink-2 hover:text-ink transition-colors border-b-2 border-transparent -mb-px rounded-none rounded-lg"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Log in</span>
+                  <span className="hidden sm:inline">Log in</span>
                 </button>
 
                 <button
                   onClick={() => onNavigate('signup')}
-                  className="btn btn-primary text-sm px-3.5 py-1.5 flex items-center gap-1"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[15px] font-medium text-white bg-lilac-600 hover:bg-lilac-700 transition-colors border-b-2 border-transparent -mb-px rounded-none rounded-lg"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Sign up</span>
+                  <span className="hidden sm:inline">Sign up</span>
                 </button>
               </div>
             )}
@@ -242,7 +242,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle theme"
-              className="p-1.5 text-ink-2 dark:text-ink-2 rounded-lg hover:bg-wash transition-colors"
+              className="p-1.5 text-ink-2 dark:text-ink-2 rounded-lg transition-colors"
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -253,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 text-ink-2 hover:text-ink rounded-lg hover:bg-wash"
+              className="p-1.5 text-ink-2 dark:text-ink-2 rounded-lg transition-colors"
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
@@ -287,7 +287,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onOpenCommandPalette();
               }}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-ink-2 border border-line rounded-lg hover:bg-wash"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-ink-2 border border-line rounded-lg hover:border-lilac-500/70 hover:text-ink transition-colors"
             >
               <Command className="w-4 h-4" />
               Command Palette
@@ -300,7 +300,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigate('home');
                 setMobileMenuOpen(false);
               }}
-              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:bg-wash rounded-lg"
+              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors"
             >
               Home
             </button>
@@ -309,7 +309,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigate('search');
                 setMobileMenuOpen(false);
               }}
-              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:bg-wash rounded-lg"
+              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors"
             >
               Explore Extensions
             </button>
@@ -319,7 +319,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigate('saved');
                 setMobileMenuOpen(false);
               }}
-              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:bg-wash rounded-lg flex items-center justify-between"
+              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors flex items-center justify-between"
             >
               <span>Saved Extensions</span>
               {saved.length > 0 && (
@@ -335,7 +335,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onNavigate('admin');
                   setMobileMenuOpen(false);
                 }}
-                className="px-3 py-2 text-left text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 rounded-lg flex items-center justify-between"
+                className="px-3 py-2 text-left text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 rounded-lg flex items-center justify-between border-b-2 border-transparent hover:border-amber-500/60 transition-colors"
               >
                 <span className="flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5" />
@@ -347,26 +347,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 )}
               </button>
-            )}
-
-            <button
-              onClick={() => {
-                onNavigate('terms');
-                setMobileMenuOpen(false);
-              }}
-              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:bg-wash rounded-lg"
-            >
-              Terms of Service
-            </button>
-            <button
-              onClick={() => {
-                onNavigate('privacy');
-                setMobileMenuOpen(false);
-              }}
-              className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:bg-wash rounded-lg"
-            >
-              Privacy Policy
-            </button>
+            )}              <button
+                onClick={() => {
+                  onNavigate('terms');
+                  setMobileMenuOpen(false);
+                }}
+                className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors"
+              >
+                Terms of Service
+              </button>
+              <button
+                onClick={() => {
+                  onNavigate('privacy');
+                  setMobileMenuOpen(false);
+                }}
+                className="px-3 py-2 text-left text-sm font-medium text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors"
+              >
+                Privacy Policy
+              </button>
           </div>
 
           <div className="pt-2 border-t border-line">
@@ -377,7 +375,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('dashboard');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm font-medium text-ink bg-wash rounded-lg flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 text-sm font-medium text-ink bg-wash rounded-lg flex items-center justify-between border-b-2 border-transparent hover:border-lilac-500/70 hover:text-ink transition-colors"
                 >
                   <span className="text-ink">@{user?.namespace}</span>
                   <UserIcon className="w-3.5 h-3.5 text-lilac-500" />
@@ -387,7 +385,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('settings');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-ink-2 hover:bg-wash rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-ink-2 hover:border-b-2 hover:border-lilac-500/70 hover:text-ink rounded-none rounded-lg transition-colors"
                 >
                   Settings
                 </button>
@@ -397,7 +395,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('home');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:border-b-2 hover:border-rose-500/60 hover:text-rose-700 dark:hover:text-rose-300 rounded-none rounded-lg transition-colors"
                 >
                   Sign Out
                 </button>
@@ -409,7 +407,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('login');
                     setMobileMenuOpen(false);
                   }}
-                  className="flex-1 py-2 text-sm font-medium text-center text-ink-2 border border-line rounded-lg hover:bg-wash"
+                  className="flex-1 py-2 text-sm font-medium text-center text-ink-2 border border-line rounded-lg hover:border-lilac-500/70 hover:text-ink transition-colors"
                 >
                   Log In
                 </button>
@@ -418,7 +416,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigate('signup');
                     setMobileMenuOpen(false);
                   }}
-                  className="flex-1 py-2 text-sm font-medium text-center text-white bg-lilac-600 hover:bg-lilac-700 rounded-lg"
+                  className="flex-1 py-2 text-sm font-medium text-center text-white bg-lilac-600 hover:bg-lilac-700 rounded-lg border-b-2 border-transparent hover:border-lilac-400 transition-colors"
                 >
                   Sign Up
                 </button>
