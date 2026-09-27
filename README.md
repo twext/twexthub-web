@@ -35,7 +35,7 @@
 
 ## Overview
 
-TwextHub is the registry of Twext-compiled TurboWarp extensions. This repo is its official web frontend: a React + TypeScript single-page app bundled with Vite and styled with Tailwind CSS. It talks to the TwextHub API and uses hash-based routing, so deep links work on a static host without server rewrites.
+TwextHub is the registry of Twext-compiled TurboWarp extensions. This repo is its official web frontend: a React + TypeScript single-page app bundled with Vite and styled with Tailwind CSS. It talks to the TwextHub API and uses path-based routing, so the host must serve `index.html` as the fallback for unknown paths.
 
 Packages are namespaced to their publishing account (`@namespace/id`) and versioned with SemVer. Publishing happens with the Twext CLI, not the UI; the first version from a new publisher sits in a moderation queue until an administrator approves or rejects it.
 
@@ -56,7 +56,7 @@ twext login
 twext publish
 ```
 
-Create the account first at `#/signup`. New publishers' first submissions are reviewed by an administrator before they appear publicly.
+Create the account first at `/signup`. New publishers' first submissions are reviewed by an administrator before they appear publicly.
 
 ### Install
 
@@ -68,7 +68,7 @@ ${apiBaseUrl}/@${namespace}/${id}/versions/${version}/download
 
 ### Manage your account
 
-`#/settings` holds your profile, open sessions, and automation tokens. Sessions expire after 7 days; automation tokens never expire unless you set a lifetime when creating them. Tokens are scoped to `publish` and/or `yank`, for CI workflows (for example a `twext publish` GitHub Action) rather than interactive use.
+`/settings` holds your profile, open sessions, and automation tokens. Sessions expire after 7 days; automation tokens never expire unless you set a lifetime when creating them. Tokens are scoped to `publish` and/or `yank`, for CI workflows (for example a `twext publish` GitHub Action) rather than interactive use.
 
 ## Installation
 
