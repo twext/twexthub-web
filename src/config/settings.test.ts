@@ -36,6 +36,16 @@ describe('settings', () => {
       expect(isValidApiBaseUrl('http://api.localhost:8080/api/v1')).toBe(true);
     });
 
+    it('accepts a root-relative path for a server-side proxy', () => {
+      expect(isValidApiBaseUrl('/api/v1')).toBe(true);
+      expect(isValidApiBaseUrl('/api/v1/')).toBe(true);
+    });
+
+    it('rejects scheme-relative and space-bearing relative paths', () => {
+      expect(isValidApiBaseUrl('//evil.example/api/v1')).toBe(false);
+      expect(isValidApiBaseUrl('/api/v1 has space')).toBe(false);
+    });
+
     it('rejects remote http URLs', () => {
       expect(isValidApiBaseUrl('http://twexts.sdisk.us/api/v1')).toBe(false);
       expect(isValidApiBaseUrl('http://192.168.1.10/api/v1')).toBe(false);

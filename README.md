@@ -31,7 +31,7 @@
 - Save extensions locally (bookmarks) and recently-viewed history.
 - Accounts with 7-day logins and scoped automation tokens (`publish` / `yank`) meant for CI use.
 - Admin surface for moderating submissions, managing users and roles, editing the Terms and Privacy docs, and maintenance tasks.
-- The API base URL is configurable at build time or at runtime; the app runs on any static host.
+- The API is same-origin by default: the page calls `/api/v1`, and the bundled server forwards it to the registry you configure. On a static host a URL can be pinned at build time instead.
 
 ## Overview
 
@@ -45,7 +45,7 @@ TwextHub is maintained by the [Twext Team](https://github.com/twext).
 
 ## Usage
 
-The public registry default is `https://twexts.sdisk.us/api/v1`. The UI points at it unless an operator overrides the API base URL (see [Installation](#installation)).
+The public registry default is `https://twexts.sdisk.us/api/v1`. `server.js` forwards the page's `/api/v1` calls there unless an operator points it at another registry (see [Installation](#installation)).
 
 ### Publish
 
@@ -97,20 +97,27 @@ The dev server runs at `http://localhost:3000`.
 
 ### Pointing the UI at another backend
 
-The API base URL is resolved in this order:
+By default the browser calls its own origin — `/api/v1` — and the server relays it to the configured registry. The upstream is resolved on the server in this order:
 
-1. Runtime `window.TWEXTHUB_CONFIG.apiBaseUrl`, injected by `server.js` into `index.html`.
-2. Build-time env `VITE_TWEXTHUB_API_URL` (baked into the bundle).
-3. Default: `https://twexts.sdisk.us/api/v1`.
+1. `server.js`, at startup: `TWEXTHUB_API_URL`, or `apiBaseUrl` in a config file.
+2. Default: `https://twexts.sdisk.us/api/v1`.
 
-So a static deploy pins the URL at build time, while a `server.js` deploy can switch it at startup:
+For a `server.js` deploy, `localhost` in that value means the _server's_ loopback, never a visitor's browser. Retarget an existing build at startup without rebuilding, even to a registry running on the same host:
 
 ```sh
 npm run build
-TWEXTHUB_API_URL=https://registry.example.com/api/v1 node server.js
+TWEXTHUB_API_URL=http://localhost:8080/api/v1 node server.js
 ```
 
-`server.js` also reads `apiBaseUrl` from a `config.yml` / `config.yaml` in the working directory, or from the file given as its first CLI argument. It serves `dist/`, injects the resolved URL into the served HTML, and falls back to `index.html` for unknown paths, so client-side routes keep working.
+The dev server proxies the same way: `TWEXTHUB_API_URL=http://localhost:8080/api/v1 npm run dev`.
+
+A purely static deploy has no relay, so it pins an absolute URL at build time:
+
+```sh
+VITE_TWEXTHUB_API_URL=https://registry.example.com/api/v1 npm run build
+```
+
+`server.js` also reads `apiBaseUrl` from a `config.yml` / `config.yaml` in the working directory, or from the file given as its first CLI argument. It serves `dist/`, forwards `/api/v1` to the resolved upstream, injects the public API path into the served HTML, and falls back to `index.html` for unknown paths, so client-side routes keep working.
 
 ### Docker
 

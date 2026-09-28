@@ -6,7 +6,7 @@ vi.mock('node:http', () => {
   return { createServer, default: { createServer } };
 });
 
-import { readApiBaseUrlFromYaml } from './server.js';
+import { proxyTargetFor, readApiBaseUrlFromYaml } from './server.js';
 
 describe('readApiBaseUrlFromYaml', () => {
   it('reads unquoted values', () => {
@@ -40,5 +40,25 @@ describe('readApiBaseUrlFromYaml', () => {
 
   it('ignores other keys and comments', () => {
     expect(readApiBaseUrlFromYaml('# apiBaseUrl: https://ignored/api/v1\nfoo: bar')).toBeNull();
+  });
+});
+
+describe('proxyTargetFor', () => {
+  it('forwards the public API path onto the upstream base, keeping the query', () => {
+    expect(
+      proxyTargetFor('/api/v1/extensions', '?q=pen&page=2', 'https://registry.example/api/v1'),
+    ).toBe('https://registry.example/api/v1/extensions?q=pen&page=2');
+  });
+
+  it('maps the bare public root onto the upstream root', () => {
+    expect(proxyTargetFor('/api/v1', '', 'http://localhost:8080/api/v1')).toBe(
+      'http://localhost:8080/api/v1',
+    );
+  });
+
+  it('strips the public prefix, never the upstream one', () => {
+    expect(proxyTargetFor('/api/v1/a/b', '?x=1', 'http://localhost:8080/api/v1')).toBe(
+      'http://localhost:8080/api/v1/a/b?x=1',
+    );
   });
 });

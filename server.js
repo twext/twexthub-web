@@ -1,14 +1,23 @@
 import { createReadStream, statSync, existsSync, readFileSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { extname, join, resolve, sep } from 'node:path';
 
-const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v1';
+const DEFAULT_UPSTREAM_API_BASE_URL = 'https://twexts.sdisk.us/api/v1';
 const WEB_ROOT = resolve(process.env.WEB_ROOT ?? 'dist');
 
 const rawPort = Number(process.env.TWEXTHUB_PORT ?? 3000);
 const PORT = Number.isInteger(rawPort) && rawPort > 0 ? rawPort : 3000;
 
 const INDEX_NAME = 'index.html';
+
+/**
+ * The path the browser is allowed to know about. Every `/api/v1/...` call the
+ * page makes lands here and is forwarded to `upstreamApiBaseUrl`, so clients
+ * never learn — or reach for — the API host themselves. That keeps `localhost`
+ * in operator config meaning the *server's* loopback, not the user's.
+ */
+const PUBLIC_API_PREFIX = '/api/v1';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -86,8 +95,8 @@ function resolveConfigPath() {
   return null;
 }
 
-function resolveApiBaseUrl() {
-  let url = DEFAULT_API_BASE_URL;
+function resolveUpstreamApiBaseUrl() {
+  let url = DEFAULT_UPSTREAM_API_BASE_URL;
   const configPath = resolveConfigPath();
   if (configPath) {
     const fromFile = readApiBaseUrlFromYaml(readFileSync(configPath, 'utf8'));
@@ -108,14 +117,93 @@ function resolveApiBaseUrl() {
   return url;
 }
 
-const apiBaseUrl = resolveApiBaseUrl();
+/** The API this server forwards the public `/api/v1` prefix to. */
+const upstreamApiBaseUrl = resolveUpstreamApiBaseUrl();
 
 function injectConfig(html) {
-  const config = JSON.stringify({ apiBaseUrl }).replace(/</g, '\\u003c');
+  const config = JSON.stringify({ apiBaseUrl: PUBLIC_API_PREFIX }).replace(/</g, '\\u003c');
   return html.replace(
     /<head([^>]*)>/,
     (match) => `${match}<script>window.TWEXTHUB_CONFIG = ${config};</script>`,
   );
+}
+
+/**
+ * Map a request that landed on the public API path to its upstream URL. The
+ * public prefix is the part `server.js` owns, so `/api/v1/resource?q=1` over a
+ * base of `https://registry.example/api/v1` forwards to
+ * `https://registry.example/api/v1/resource?q=1`.
+ */
+export function proxyTargetFor(urlPath, search, baseUrl = upstreamApiBaseUrl) {
+  const rest = urlPath.slice(PUBLIC_API_PREFIX.length);
+  return `${baseUrl}${rest}${search}`;
+}
+
+function isApiPath(urlPath) {
+  return urlPath === PUBLIC_API_PREFIX || urlPath.startsWith(`${PUBLIC_API_PREFIX}/`);
+}
+
+// Headers that describe a single connection, not the resource, and must be
+// renegotiated end to end rather than copied across the hop.
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailers',
+  'transfer-encoding',
+  'upgrade',
+]);
+
+function filterHopByHop(headers) {
+  const filtered = {};
+  for (const [name, value] of Object.entries(headers)) {
+    if (!HOP_BY_HOP_HEADERS.has(name.toLowerCase())) filtered[name] = value;
+  }
+  return filtered;
+}
+
+const UPSTREAM_TIMEOUT_MS = 60_000;
+
+function proxyApi(req, res, urlPath) {
+  const search = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  let target;
+  try {
+    target = new URL(proxyTargetFor(urlPath, search));
+  } catch {
+    sendStatus(res, 502, 'Bad Gateway');
+    return;
+  }
+
+  const transport = target.protocol === 'http:' ? httpRequest : httpsRequest;
+  const proxyReq = transport(
+    target,
+    {
+      method: req.method,
+      headers: { ...req.headers, host: target.host },
+    },
+    (upstreamRes) => {
+      res.writeHead(
+        upstreamRes.statusCode ?? 502,
+        upstreamRes.statusMessage ?? undefined,
+        filterHopByHop(upstreamRes.headers),
+      );
+      upstreamRes.pipe(res);
+    },
+  );
+
+  proxyReq.setTimeout(UPSTREAM_TIMEOUT_MS, () => proxyReq.destroy(new Error('Upstream timed out')));
+  proxyReq.on('error', (err) => {
+    console.error(`[proxy] ${req.method} ${urlPath} -> ${err.code}: ${err.message}`);
+    if (!res.headersSent) {
+      sendStatus(res, 502, 'Bad Gateway');
+    } else {
+      res.destroy();
+    }
+  });
+
+  req.pipe(proxyReq);
 }
 
 function isFile(path) {
@@ -181,11 +269,6 @@ function sendStatus(res, status, message) {
 }
 
 const server = createServer((req, res) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    sendStatus(res, 405, 'Method Not Allowed');
-    return;
-  }
-
   let urlPath;
   try {
     urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
@@ -202,6 +285,18 @@ const server = createServer((req, res) => {
   const segments = urlPath.split('/').filter(Boolean);
   if (segments.some((segment) => segment.startsWith('.'))) {
     sendStatus(res, 403, 'Forbidden');
+    return;
+  }
+
+  // The API is the server's job now: forward any method, verbatim, and let
+  // the upstream speak for itself.
+  if (isApiPath(urlPath)) {
+    proxyApi(req, res, urlPath);
+    return;
+  }
+
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    sendStatus(res, 405, 'Method Not Allowed');
     return;
   }
 
@@ -228,5 +323,7 @@ const server = createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`TwextHub Web UI listening on http://localhost:${PORT}`);
-  console.log(`Serving ${WEB_ROOT} — TwextHub API base URL: ${apiBaseUrl}`);
+  console.log(
+    `Serving ${WEB_ROOT} — ${PUBLIC_API_PREFIX} proxied to TwextHub API at ${upstreamApiBaseUrl}`,
+  );
 });
