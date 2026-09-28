@@ -28,9 +28,9 @@ So a `server.js` deploy can retarget an existing build at startup (the URL is re
 
 ## Build time
 
-| Variable                | Purpose                                                                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_TWEXTHUB_API_URL` | API base URL for a static deploy with no proxy, compiled into the bundle by `vite build`. Ignored when `server.js` serves the page. |
+| Variable                | Purpose                                                                                                                                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_TWEXTHUB_API_URL` | Upstream API for a static deploy with no proxy, compiled into the bundle by `vite build`. With the dev server it only sets the proxy's upstream — the browser stays on its own origin. Ignored when `server.js` serves the page. |
 
 ## Server time
 

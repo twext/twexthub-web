@@ -109,7 +109,7 @@ npm run build
 TWEXTHUB_API_URL=http://localhost:8080/api/v1 node server.js
 ```
 
-The dev server proxies the same way: `TWEXTHUB_API_URL=http://localhost:8080/api/v1 npm run dev`.
+The dev server proxies the same way: `TWEXTHUB_API_URL=http://localhost:8080/api/v1 npm run dev`. It also injects the same-origin path into the page, so `VITE_TWEXTHUB_API_URL` only ever picks the proxy's upstream in dev — a client-facing baked URL happens only on a static host built with it.
 
 A purely static deploy has no relay, so it pins an absolute URL at build time:
 
