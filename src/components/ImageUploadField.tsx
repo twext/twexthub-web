@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { AlertCircle, ImageUp, Link2, Loader2, Trash2, Upload, X } from 'lucide-react';
 import {
   ACCEPTED_IMAGE_TYPES,
   formatBytes,
@@ -8,6 +7,7 @@ import {
 } from '../lib/profile-image';
 import { ApiError, api } from '../services/api';
 import { User } from '../types/api';
+import { Icon } from './Icon';
 
 interface ImageUploadFieldProps {
   namespace: string;
@@ -126,7 +126,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   return (
     <div className="sm:col-span-2 space-y-2">
       <span className="label block text-ink-2">
-        <ImageUp className="w-3 h-3 inline mr-1" />
+        <Icon name="add_photo_alternate" className="icon-xs inline mr-1" />
         {label}
       </span>
 
@@ -144,7 +144,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               data-testid={`${kind}-empty`}
               className={`${shape} ${dimensions} flex items-center justify-center bg-wash dark:bg-raised border border-dashed border-line text-ink-3`}
             >
-              <ImageUp className="w-4 h-4" />
+              <Icon name="add_photo_alternate" />
             </div>
           )}
         </div>
@@ -168,9 +168,9 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               data-testid={`${kind}-choose`}
             >
               {pending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Icon name="progress_activity" className="icon-sm animate-spin" />
               ) : (
-                <Upload className="w-3.5 h-3.5" />
+                <Icon name="upload" className="icon-sm" />
               )}
               {hasImage ? 'Replace image' : 'Choose image'}
             </label>
@@ -183,7 +183,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 className="btn btn-ghost text-xs inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400"
                 data-testid={`${kind}-remove`}
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Icon name="delete" className="icon-sm" />
                 Remove
               </button>
             )}
@@ -194,7 +194,11 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               className="text-[11px] text-ink-3 hover:text-ink-2 underline inline-flex items-center gap-1"
               data-testid={`${kind}-toggle-url`}
             >
-              {showUrlInput ? <X className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+              {showUrlInput ? (
+                <Icon name="close" className="icon-xs" />
+              ) : (
+                <Icon name="link" className="icon-xs" />
+              )}
               {showUrlInput ? 'Hide link option' : 'Or use an image link'}
             </button>
           </div>
@@ -235,7 +239,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               className="text-[11px] text-rose-600 dark:text-rose-400 flex items-start gap-1"
               data-testid={`${kind}-error`}
             >
-              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              <Icon name="error" className="icon-sm shrink-0 mt-px" />
               {error}
             </p>
           )}

@@ -4,7 +4,7 @@ import { SavedExtension } from '../lib/collections';
 import { useSavedExtensions } from '../hooks/useCollections';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { useConfirm } from '../hooks/useConfirm';
-import { Bookmark, Trash2 } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface SavedPageProps {
   onNavigate: (route: string) => void;
@@ -43,7 +43,7 @@ export const SavedPage: React.FC<SavedPageProps> = ({ onNavigate }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line">
         <div>
           <h1 className="text-2xl font-display font-semibold text-ink flex items-center gap-2">
-            <Bookmark className="w-5 h-5 text-lilac-500" />
+            <Icon name="bookmark" className="icon-lg text-lilac-500" />
             Saved Extensions
           </h1>
           <p className="text-sm text-ink-3 mt-1">
@@ -56,7 +56,7 @@ export const SavedPage: React.FC<SavedPageProps> = ({ onNavigate }) => {
             onClick={handleClear}
             className="btn btn-secondary btn-sm self-start sm:self-auto"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Icon name="delete" className="icon-sm" />
             <span>Clear all</span>
           </button>
         )}
@@ -74,7 +74,7 @@ export const SavedPage: React.FC<SavedPageProps> = ({ onNavigate }) => {
         </div>
       ) : (
         <div className="card p-10 text-center">
-          <Bookmark className="w-9 h-9 text-ink-3 mx-auto mb-3" />
+          <Icon name="bookmark" className="icon-2xl text-ink-3 mx-auto mb-3" />
           <h2 className="text-sm font-semibold text-ink mb-1">No saved extensions yet</h2>
           <p className="text-xs text-ink-3 max-w-sm mx-auto mb-4">
             Tap the bookmark icon on any extension card to keep it handy here.

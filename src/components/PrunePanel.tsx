@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PaginatedList, User } from '../types/api';
 import { useConfirm } from '../hooks/useConfirm';
-import { AlertTriangle, CheckCircle2, RefreshCw, Scissors, Trash2 } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface PrunePanelProps {
   currentUserNamespace?: string;
@@ -234,7 +234,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <Scissors className="w-4 h-4 text-lilac-600 dark:text-lilac-300" />
+              <Icon name="content_cut" className="text-lilac-600 dark:text-lilac-300" />
               <h3 className="text-sm font-semibold text-ink">Prune Dormant Accounts</h3>
             </div>
             <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
@@ -247,7 +247,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
             disabled={isScanning || isPruning}
             className="btn btn-primary btn-sm shrink-0 disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
+            <Icon name="refresh" className={`icon-sm ${isScanning ? 'animate-spin' : ''}`} />
             <span>{isScanning ? 'Scanning...' : 'Scan for Dormant Accounts'}</span>
           </button>
         </div>
@@ -295,7 +295,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
 
       {error && (
         <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+          <Icon name="warning" className="text-rose-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -309,9 +309,9 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
           }`}
         >
           {summary.failed.length > 0 ? (
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <Icon name="warning" className="mt-0.5 shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+            <Icon name="check_circle" className="mt-0.5 shrink-0" />
           )}
           <div className="space-y-1 min-w-0">
             <p>
@@ -378,7 +378,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
 
           {visible.length === 0 ? (
             <div className="card p-10 text-center">
-              <CheckCircle2 className="w-9 h-9 text-emerald-500 mx-auto mb-3" />
+              <Icon name="check_circle" className="icon-2xl text-emerald-500 mx-auto mb-3" />
               <h3 className="text-sm font-semibold text-ink mb-1">Nothing to prune</h3>
               <p className="text-xs text-ink-3 max-w-sm mx-auto">
                 No dormant accounts matched the current filters. Adjust the options above and scan
@@ -444,7 +444,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
                   disabled={selectedTargets.length === 0 || isPruning}
                   className="btn btn-sm btn-danger disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Icon name="delete" className="icon-sm" />
                   <span>
                     Prune {selectedTargets.length}{' '}
                     {selectedTargets.length === 1 ? 'account' : 'accounts'}

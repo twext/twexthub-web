@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../services/api';
 import { BrandLogo } from '../components/BrandLogo';
-import { UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface SignupPageProps {
   onNavigate: (route: string) => void;
@@ -79,7 +79,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-sm flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             <div className="leading-tight">{error}</div>
           </div>
         )}
@@ -105,8 +105,8 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
               />
             </div>
             <p className="text-xs text-ink-3 mt-1">
-              Lowercase letters, numbers, and hyphens (e.g. <code>my-studio</code>). Your
-              extensions will be published as <code>@{namespace || 'your-name'}/package-name</code>.
+              Lowercase letters, numbers, and hyphens (e.g. <code>my-studio</code>). Your extensions
+              will be published as <code>@{namespace || 'your-name'}/package-name</code>.
             </p>
           </div>
 
@@ -174,7 +174,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
             disabled={loading}
             className="btn btn-primary w-full py-2.5 text-sm disabled:opacity-50 mt-2"
           >
-            <UserPlus className="w-4 h-4" />
+            <Icon name="person_add" />
             <span>{loading ? 'Creating account...' : 'Create account'}</span>
           </button>
         </form>
@@ -186,7 +186,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('login')}
               className="text-lilac-700 dark:text-lilac-300 font-semibold hover:underline underline-offset-4 inline-flex items-center gap-0.5"
             >
-              Sign in <ArrowRight className="w-3 h-3" />
+              Sign in <Icon name="arrow_forward" className="icon-xs" />
             </button>
           </p>
         </div>

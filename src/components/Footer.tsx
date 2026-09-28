@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { BrandLogo } from './BrandLogo';
-import { ExternalLink } from 'lucide-react';
 import { api } from '../services/api';
 import { Meta } from '../types/api';
+import { Icon } from './Icon';
 
 interface FooterProps {
   onNavigate: (route: string) => void;
@@ -58,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   rel="noreferrer"
                   className="text-ink-2 hover:text-lilac-700 dark:hover:text-lilac-300 transition-colors inline-flex items-center gap-1"
                 >
-                  TurboWarp Editor <ExternalLink className="w-2.5 h-2.5 text-ink-3" />
+                  TurboWarp Editor <Icon name="open_in_new" className="icon-xs text-ink-3" />
                 </a>
               </li>
             </ul>
@@ -109,7 +109,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               className="inline-flex items-center gap-1 hover:text-lilac-700 dark:hover:text-lilac-300 transition-colors"
             >
               {meta.homepage.replace(/^https?:\/\//, '')}
-              <ExternalLink className="w-2.5 h-2.5" />
+              <Icon name="open_in_new" className="icon-xs" />
             </a>
           )}
         </div>

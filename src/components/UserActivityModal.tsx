@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { AutomationToken, Session } from '../types/api';
-import { Laptop, Key, Trash2, X, AlertCircle } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface UserActivityModalProps {
   namespace: string;
@@ -90,13 +90,13 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -110,7 +110,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
           <>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-ink">
-                <Laptop className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                <Icon name="laptop" className="text-lilac-500 dark:text-lilac-300" />
                 <span>Active sessions ({sessions.length})</span>
               </div>
               {sessions.length > 0 ? (
@@ -147,7 +147,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-ink">
-                <Key className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                <Icon name="key" className="text-lilac-500 dark:text-lilac-300" />
                 <span>Access tokens ({tokens.length})</span>
               </div>
               {tokens.length > 0 ? (
@@ -182,7 +182,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                         title="Revoke token"
                         className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Icon name="delete" />
                       </button>
                     </div>
                   ))}

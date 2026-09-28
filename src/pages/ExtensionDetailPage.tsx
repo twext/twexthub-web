@@ -11,28 +11,7 @@ import { BadgePanel } from '../components/BadgePanel';
 import { DistTagPanel } from '../components/DistTagPanel';
 import { OwnersPanel } from '../components/OwnersPanel';
 import { DeprecateVersionModal } from '../components/DeprecateVersionModal';
-import {
-  User as UserIcon,
-  Users,
-  Copy,
-  Check,
-  Calendar,
-  Clock,
-  ArrowLeft,
-  ExternalLink,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  Ban,
-  Trash2,
-  ShieldAlert,
-  Info,
-  Bookmark,
-  GitCompare,
-  Webhook as WebhookIcon,
-  Image as ImageIcon,
-  Tag,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface ExtensionDetailPageProps {
   namespace: string;
@@ -304,11 +283,10 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   if (error || !extension) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto" />
+        <Icon name="warning" className="icon-3xl text-rose-600 dark:text-rose-400 mx-auto" />
         <h2 className="text-xl font-display font-semibold text-ink">Extension Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
-          {error ||
-            `The extension @${namespace}/${id} could not be found on this site.`}
+          {error || `The extension @${namespace}/${id} could not be found on this site.`}
         </p>
         <div className="pt-2">
           <button onClick={() => onNavigate('search')} className="btn btn-secondary">
@@ -329,21 +307,21 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
         onClick={() => onNavigate('search')}
         className="text-xs text-ink-3 hover:text-ink flex items-center gap-1.5 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <Icon name="arrow_back" className="icon-sm" />
         Back to search results
       </button>
 
       {/* Action notifications */}
       {actionError && (
         <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
 
       {actionSuccess && (
         <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <Icon name="check_circle" className="text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>{actionSuccess}</span>
         </div>
       )}
@@ -351,7 +329,10 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       {/* Moderation Warning if Pending */}
       {isPending && (
         <div className="bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3">
-          <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <Icon
+            name="schedule"
+            className="icon-lg text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+          />
           <div>
             <strong className="font-semibold block text-sm">Pending Moderation Review</strong>
             <p className="mt-0.5 leading-relaxed">
@@ -397,16 +378,17 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                     : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
                 }`}
               >
-                <Bookmark
-                  className="w-3.5 h-3.5"
-                  fill={isSaved(extension.namespace, extension.id) ? 'currentColor' : 'none'}
+                <Icon
+                  name="bookmark"
+                  className="icon-sm"
+                  filled={isSaved(extension.namespace, extension.id)}
                 />
                 <span>{isSaved(extension.namespace, extension.id) ? 'Saved' : 'Save'}</span>
               </button>
             </div>
             {extension.updatedAt && (
               <span className="text-[11px] text-ink-3 flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+                <Icon name="calendar_today" className="icon-xs" />
                 Updated {new Date(extension.updatedAt).toLocaleDateString()}
               </span>
             )}
@@ -415,7 +397,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
               onClick={() => setBadgesOpen(true)}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
             >
-              <ImageIcon className="w-3.5 h-3.5" />
+              <Icon name="image" className="icon-sm" />
               Embed badges
             </button>
           </div>
@@ -434,7 +416,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   onClick={() => setCompareOpen(true)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
-                  <GitCompare className="w-3.5 h-3.5" />
+                  <Icon name="compare_arrows" className="icon-sm" />
                   Compare versions
                 </button>
               )}
@@ -458,7 +440,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                         )}
                         {ver.status === 'deprecated' && ver.deprecation && (
                           <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 flex items-start gap-1">
-                            <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                            <Icon name="warning" className="icon-xs shrink-0 mt-0.5" />
                             <span>{ver.deprecation}</span>
                           </p>
                         )}
@@ -477,7 +459,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                           aria-expanded={expandedVersion === ver.version}
                           className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                         >
-                          <Info className="w-3.5 h-3.5" />
+                          <Icon name="info" className="icon-sm" />
                         </button>
                         {canManage && ver.status === 'published' && (
                           <button
@@ -486,7 +468,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                             title={`Unpublish v${ver.version}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                           >
-                            <Ban className="w-3 h-3" />
+                            <Icon name="block" className="icon-xs" />
                             {yankingVersion === ver.version ? 'Unpublishing...' : 'Unpublish'}
                           </button>
                         )}
@@ -505,7 +487,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                               }
                               className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                             >
-                              <AlertTriangle className="w-3 h-3" />
+                              <Icon name="warning" className="icon-xs" />
                               {ver.status === 'deprecated' ? 'Undeprecate' : 'Deprecate'}
                             </button>
                           )}
@@ -571,9 +553,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                                       className="btn btn-secondary btn-sm shrink-0"
                                     >
                                       {copiedUrl ? (
-                                        <Check className="w-3 h-3" />
+                                        <Icon name="check" className="icon-xs" />
                                       ) : (
-                                        <Copy className="w-3 h-3" />
+                                        <Icon name="content_copy" className="icon-xs" />
                                       )}
                                       <span>Copy</span>
                                     </button>
@@ -605,7 +587,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                       title={`Unpublish v${latestVersion}`}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                     >
-                      <Ban className="w-3 h-3" />
+                      <Icon name="block" className="icon-xs" />
                       {yankingVersion === latestVersion ? 'Unpublishing...' : 'Unpublish'}
                     </button>
                   )}
@@ -621,7 +603,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           {loadUrl && (
             <div className="card p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <ExternalLink className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                <Icon name="open_in_new" className="text-lilac-500 dark:text-lilac-300" />
                 <h2 className="label">Load in TurboWarp</h2>
               </div>
               <p className="text-xs text-ink-2 leading-relaxed">
@@ -641,9 +623,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   title="Copy URL"
                 >
                   {copiedUrl ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Icon name="check" className="icon-sm text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Icon name="content_copy" className="icon-sm" />
                   )}
                 </button>
               </div>
@@ -656,7 +638,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   className="btn btn-primary w-full"
                 >
                   <span>Open directly in TurboWarp</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <Icon name="open_in_new" className="icon-sm" />
                 </a>
               </div>
             </div>
@@ -680,7 +662,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                 onClick={() => onNavigate(`author/${encodeURIComponent(authorNamespace)}`)}
                 className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium flex items-center gap-1"
               >
-                <UserIcon className="w-3.5 h-3.5" />
+                <Icon name="person" className="icon-sm" />
                 View all packages by @{authorNamespace}
               </button>
             </div>
@@ -690,7 +672,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           {canManage && (
             <div className="card p-5 space-y-3 border-rose-200 dark:border-rose-900/60">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <Icon name="gpp_maybe" className="text-rose-600 dark:text-rose-400" />
                 <h2 className="label">Manage Extension</h2>
               </div>
               <p className="text-xs text-ink-2 leading-relaxed">
@@ -703,21 +685,21 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   onClick={() => setTagsOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
-                  <Tag className="w-3.5 h-3.5" />
+                  <Icon name="sell" className="icon-sm" />
                   Dist-tags
                 </button>
                 <button
                   onClick={() => setOwnersOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
-                  <Users className="w-3.5 h-3.5" />
+                  <Icon name="group" className="icon-sm" />
                   Owners
                 </button>
                 <button
                   onClick={() => setWebhooksOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
-                  <WebhookIcon className="w-3.5 h-3.5" />
+                  <Icon name="webhook" className="icon-sm" />
                   Manage webhooks
                 </button>
                 <button
@@ -725,7 +707,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   disabled={deleting}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Icon name="delete" className="icon-sm" />
                   {deleting ? 'Deleting...' : 'Delete extension'}
                 </button>
               </div>

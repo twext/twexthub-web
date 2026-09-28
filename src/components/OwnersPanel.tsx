@@ -3,7 +3,7 @@ import { api, ApiError } from '../services/api';
 import { ExtensionOwner } from '../types/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
-import { AlertCircle, Plus, Trash2, Users, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface OwnersPanelProps {
   namespace: string;
@@ -104,7 +104,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
         <div className="flex items-center justify-between p-4 border-b border-line sticky top-0 bg-surface dark:bg-surface z-10">
           <div>
             <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-              <Users className="w-4 h-4 text-lilac-700 dark:text-lilac-300" />
+              <Icon name="group" className="text-lilac-700 dark:text-lilac-300" />
               Owners
             </h2>
             <p className="font-mono text-[11px] text-ink-3 mt-0.5">
@@ -116,7 +116,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
             aria-label="Close owners panel"
             className="p-1 text-ink-3 hover:text-ink rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
@@ -127,7 +127,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                 htmlFor="owner-candidate"
                 className="label text-ink-3 flex items-center gap-1.5"
               >
-                <Plus className="w-3 h-3" />
+                <Icon name="add" className="icon-xs" />
                 Add an owner by username
               </label>
               <div className="flex gap-2">
@@ -168,7 +168,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
 
           {loadError ? (
             <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
               <span>{loadError}</span>
             </div>
           ) : loading ? (
@@ -213,7 +213,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                           aria-label={`Remove @${owner.namespace}`}
                           className="p-1 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors disabled:opacity-50"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Icon name="delete" className="icon-sm" />
                         </button>
                       )}
                     </div>

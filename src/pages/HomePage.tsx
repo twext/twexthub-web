@@ -3,15 +3,7 @@ import { api, ApiError } from '../services/api';
 import { ExtensionSummary, InstanceStats } from '../types/api';
 import { TrendingPanel } from '../components/TrendingPanel';
 import { useRecentExtensions } from '../hooks/useCollections';
-import {
-  Search,
-  ArrowRight,
-  Package,
-  Terminal,
-  AlertCircle,
-  ExternalLink,
-  Clock,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface HomePageProps {
   onNavigate: (route: string) => void;
@@ -100,7 +92,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             <form onSubmit={handleSearchSubmit} className="mt-7 max-w-xl">
               <div className="relative">
-                <Search className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Icon
+                  name="search"
+                  className="text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                />
                 <input
                   type="text"
                   value={searchQuery}
@@ -155,7 +150,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-4 rounded-lg text-sm flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+            <Icon name="error" className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
             <div>
               <strong>Site notice:</strong> {error}
               <p className="mt-1 text-rose-700 dark:text-rose-300">
@@ -172,7 +167,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="flex items-center justify-between gap-4 mb-3">
             <h2 className="text-sm font-semibold text-ink flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-ink-3" />
+              <Icon name="schedule" className="icon-sm text-ink-3" />
               Recently viewed
             </h2>
             <button
@@ -201,16 +196,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div className="flex items-end justify-between gap-4 mb-5">
           <div>
             <h2 className="text-lg font-display font-semibold text-ink">Recently published</h2>
-            <p className="text-sm text-ink-3 mt-0.5">
-              Latest releases verified on this site.
-            </p>
+            <p className="text-sm text-ink-3 mt-0.5">Latest releases verified on this site.</p>
           </div>
           <button
             onClick={() => onNavigate('search')}
             className="text-sm font-medium text-lilac-700 dark:text-lilac-300 hover:text-lilac-700 dark:hover:text-lilac-200 flex items-center gap-1 hover:underline underline-offset-4 shrink-0"
           >
             <span>View all extensions</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Icon name="arrow_forward" className="icon-sm" />
           </button>
         </div>
 
@@ -251,8 +244,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="border border-line rounded-lg bg-surface px-5 py-6">
             <h3 className="text-base font-semibold text-ink">No extensions published yet</h3>
             <p className="mt-1 text-sm text-ink-3 leading-relaxed max-w-lg">
-              Be the first to publish a Twext TurboWarp extension on this site using the Twext
-              CLI.
+              Be the first to publish a Twext TurboWarp extension on this site using the Twext CLI.
             </p>
             <div className="mt-3.5 flex items-center gap-2">
               <button onClick={() => onNavigate('search')} className="btn btn-ghost btn-sm">
@@ -273,7 +265,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-line border border-line rounded-lg overflow-hidden">
           <div className="bg-surface p-6">
             <div className="flex items-center gap-2 text-ink font-semibold text-base">
-              <Terminal className="w-4 h-4 text-lilac-700 dark:text-lilac-300" />
+              <Icon name="terminal" className="text-lilac-700 dark:text-lilac-300" />
               <h3>Publish with the Twext CLI</h3>
             </div>
             <p className="mt-2 text-sm text-ink-2 leading-relaxed">
@@ -294,7 +286,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
           <div className="bg-surface p-6">
             <div className="flex items-center gap-2 text-ink font-semibold text-base">
-              <Package className="w-4 h-4 text-lilac-700 dark:text-lilac-300" />
+              <Icon name="inventory_2" className="text-lilac-700 dark:text-lilac-300" />
               <h3>Install in TurboWarp</h3>
             </div>
             <p className="mt-2 text-sm text-ink-2 leading-relaxed">
@@ -316,7 +308,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 rel="noreferrer"
                 className="text-sm font-medium text-lilac-700 dark:text-lilac-300 hover:underline underline-offset-4 inline-flex items-center gap-1"
               >
-                Open TurboWarp Editor <ExternalLink className="w-3 h-3" />
+                Open TurboWarp Editor <Icon name="open_in_new" className="icon-xs" />
               </a>
             </div>
           </div>

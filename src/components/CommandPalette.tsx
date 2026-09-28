@@ -4,29 +4,14 @@ import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { useModalDialog } from '../hooks/useModalDialog';
 import { ExtensionSummary } from '../types/api';
-import {
-  Bookmark,
-  Compass,
-  FileText,
-  Home,
-  Loader2,
-  Lock,
-  LogOut,
-  Moon,
-  Package,
-  Search,
-  Settings,
-  Shield,
-  Sun,
-  User as UserIcon,
-} from 'lucide-react';
+import { Icon, IconName } from './Icon';
 
 interface PaletteItem {
   id: string;
   label: string;
   hint?: string;
   group: string;
-  icon: React.ElementType;
+  icon: IconName;
   run: () => void;
 }
 
@@ -87,7 +72,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         id: 'nav-home',
         label: 'Home',
         group: 'Navigate',
-        icon: Home,
+        icon: 'home',
         run: () => onNavigate('home'),
       },
       {
@@ -95,35 +80,35 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         label: 'Explore Extensions',
         hint: 'search',
         group: 'Navigate',
-        icon: Compass,
+        icon: 'explore',
         run: () => onNavigate('search'),
       },
       {
         id: 'nav-saved',
         label: 'Saved Extensions',
         group: 'Navigate',
-        icon: Bookmark,
+        icon: 'bookmark',
         run: () => onNavigate('saved'),
       },
       {
         id: 'action-theme',
         label: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
         group: 'Actions',
-        icon: theme === 'dark' ? Sun : Moon,
+        icon: theme === 'dark' ? 'light_mode' : 'dark_mode',
         run: toggleTheme,
       },
       {
         id: 'nav-terms',
         label: 'Terms of Service',
         group: 'Navigate',
-        icon: FileText,
+        icon: 'description',
         run: () => onNavigate('terms'),
       },
       {
         id: 'nav-privacy',
         label: 'Privacy Policy',
         group: 'Navigate',
-        icon: Lock,
+        icon: 'lock',
         run: () => onNavigate('privacy'),
       },
     ];
@@ -134,21 +119,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         label: 'Dashboard',
         hint: user?.namespace ? `@${user.namespace}` : undefined,
         group: 'Navigate',
-        icon: UserIcon,
+        icon: 'person',
         run: () => onNavigate('dashboard'),
       });
       items.splice(4, 0, {
         id: 'nav-settings',
         label: 'Settings',
         group: 'Navigate',
-        icon: Settings,
+        icon: 'settings',
         run: () => onNavigate('settings'),
       });
       items.push({
         id: 'action-logout',
         label: 'Sign Out',
         group: 'Actions',
-        icon: LogOut,
+        icon: 'logout',
         run: async () => {
           await logout();
           onNavigate('home');
@@ -161,7 +146,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         id: 'nav-admin',
         label: 'Registry Administration',
         group: 'Navigate',
-        icon: Shield,
+        icon: 'shield',
         run: () => onNavigate('admin'),
       });
     }
@@ -179,7 +164,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
       label: ext.name,
       hint: `@${ext.namespace}/${ext.id}`,
       group: 'Extensions',
-      icon: Package,
+      icon: 'inventory_2',
       run: () => onNavigate(`ext/${ext.namespace}/${ext.id}`),
     }));
     return [...extensionItems, ...filteredCommands];
@@ -234,7 +219,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
     >
       <div {...dialogProps} className="card w-full max-w-xl p-0 overflow-hidden focus:outline-none">
         <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
-          <Search className="w-4 h-4 text-ink-3 shrink-0" />
+          <Icon name="search" className="text-ink-3 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -253,7 +238,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
             spellCheck={false}
             className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
           />
-          {loading && <Loader2 className="w-3.5 h-3.5 text-ink-3 animate-spin shrink-0" />}
+          {loading && (
+            <Icon name="progress_activity" className="icon-sm text-ink-3 animate-spin shrink-0" />
+          )}
           <kbd className="hidden sm:inline-block text-[10px] font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
             Esc
           </kbd>
@@ -273,7 +260,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
             </p>
           ) : (
             items.map((item, index) => {
-              const Icon = item.icon;
               const showGroup = item.group !== lastGroup;
               lastGroup = item.group;
               const isActive = index === activeIndex;
@@ -295,7 +281,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
                       isActive ? 'bg-wash dark:bg-raised text-ink' : 'text-ink-2'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-ink-3 shrink-0" />
+                    <Icon name={item.icon} className="text-ink-3 shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{item.label}</span>
                     {item.hint && (
                       <span className="text-[11px] font-mono text-ink-3 truncate">{item.hint}</span>

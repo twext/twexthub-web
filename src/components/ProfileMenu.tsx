@@ -1,8 +1,8 @@
 import React, { useCallback, useRef } from 'react';
 import { useDismissable } from '../hooks/useDismissable';
-import { Link as LinkIcon, LogOut, Settings } from 'lucide-react';
 import { User } from '../types/api';
 import { api } from '../services/api';
+import { Icon } from './Icon';
 
 interface ProfileMenuProps {
   user: User;
@@ -87,7 +87,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
               rel="noopener noreferrer nofollow"
               className="flex items-center gap-1.5 text-[11px] text-lilac-700 dark:text-lilac-300 hover:underline break-all"
             >
-              <LinkIcon className="w-3 h-3 shrink-0" />
+              <Icon name="link" className="icon-xs shrink-0" />
               {user.website.replace(/^https?:\/\//, '')}
             </a>
           )}
@@ -116,14 +116,14 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
           onClick={() => go('settings')}
           className="w-full flex items-center gap-2 px-4 py-2 text-xs text-ink-2 hover:bg-wash transition-colors"
         >
-          <Settings className="w-3.5 h-3.5" />
+          <Icon name="settings" className="icon-sm" />
           <span>Edit profile</span>
         </button>
         <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-2 px-4 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <Icon name="logout" className="icon-sm" />
           <span>Sign out</span>
         </button>
       </div>

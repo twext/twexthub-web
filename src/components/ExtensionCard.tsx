@@ -3,7 +3,7 @@ import { ModerationStatus } from '../types/api';
 import { ExtensionIdentity } from '../lib/collections';
 import { StatusBadge } from './StatusBadge';
 import { useSavedExtensions } from '../hooks/useCollections';
-import { User as UserIcon, ArrowUpRight, Bookmark } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface ExtensionCardProps {
   /** Detail payloads, list/search rows, and saved items all fit. */
@@ -60,7 +60,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
 
       <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-sm text-ink-3 relative z-10">
         <div className="flex items-center gap-1.5">
-          <UserIcon className="w-3.5 h-3.5 text-ink-3" />
+          <Icon name="person" className="icon-sm text-ink-3" />
           <span className="font-medium text-ink-2">{authorDisplayName}</span>
         </div>
 
@@ -80,7 +80,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
                 : 'text-ink-3 hover:text-ink hover:bg-wash dark:hover:bg-raised'
             }`}
           >
-            <Bookmark className="w-4 h-4" fill={saved ? 'currentColor' : 'none'} />
+            <Icon name="bookmark" filled={saved} />
           </button>
 
           <button
@@ -90,7 +90,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
             className="inline-flex items-center gap-1 text-lilac-700 dark:text-lilac-300 font-medium text-sm group-hover:underline underline-offset-4"
           >
             View details
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <Icon name="arrow_outward" className="icon-sm" />
           </button>
         </div>
       </div>

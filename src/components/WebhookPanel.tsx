@@ -2,16 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { WEBHOOK_EVENTS, Webhook, WebhookEvent } from '../types/api';
-import {
-  AlertCircle,
-  AlertTriangle,
-  Check,
-  Copy,
-  Plus,
-  Trash2,
-  Webhook as WebhookIcon,
-  X,
-} from 'lucide-react';
+import { Icon } from './Icon';
 
 const EVENT_LABELS: Record<WebhookEvent, string> = {
   'version.published': 'Version published',
@@ -171,7 +162,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <WebhookIcon className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+            <Icon name="webhook" className="text-lilac-500 dark:text-lilac-300" />
             Webhooks —{' '}
             <span className="font-mono text-ink-2">
               @{namespace}/{id}
@@ -182,13 +173,13 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -196,7 +187,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
         {secret && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 p-3 rounded-lg text-xs space-y-2">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <Icon name="warning" className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <strong className="font-semibold block">Copy this signing secret now</strong>
                 <span>
@@ -210,7 +201,11 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
                 {secret.value}
               </code>
               <button onClick={handleCopySecret} className="btn btn-secondary btn-sm shrink-0">
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? (
+                  <Icon name="check" className="icon-xs" />
+                ) : (
+                  <Icon name="content_copy" className="icon-xs" />
+                )}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
               <button
@@ -267,7 +262,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
             <p className="text-[11px] text-rose-700 dark:text-rose-400">{createError}</p>
           )}
           <button type="submit" disabled={creating} className="btn btn-primary btn-sm">
-            <Plus className="w-3.5 h-3.5" />
+            <Icon name="add" className="icon-sm" />
             <span>{creating ? 'Creating...' : 'Create webhook'}</span>
           </button>
         </form>
@@ -323,7 +318,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
                   aria-label={`Delete webhook ${hook.url}`}
                   className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50 shrink-0"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Icon name="delete" />
                 </button>
               </div>
             ))}

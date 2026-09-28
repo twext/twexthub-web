@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { ServerConfig, ServerSetting } from '../types/api';
 import { useToast } from '../context/ToastContext';
-import { AlertTriangle, FileWarning, RefreshCw, Save, Server, ShieldAlert } from 'lucide-react';
+import { Icon } from './Icon';
 
 type DraftValue = string | boolean;
 type Drafts = Record<string, DraftValue>;
@@ -153,7 +153,7 @@ export const ServerConfigPanel: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-ink-2">
-        <RefreshCw className="w-4 h-4 animate-spin" />
+        <Icon name="refresh" className="animate-spin" />
         Reading the site settings
       </div>
     );
@@ -164,7 +164,7 @@ export const ServerConfigPanel: React.FC = () => {
       <div className="space-y-3">
         <p className="text-sm text-rose-600 dark:text-rose-400">{loadError}</p>
         <button type="button" className="btn" onClick={() => void load()}>
-          <RefreshCw className="w-3.5 h-3.5" />
+          <Icon name="refresh" className="icon-sm" />
           Try again
         </button>
       </div>
@@ -174,7 +174,7 @@ export const ServerConfigPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Server className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <Icon name="dns" className="text-amber-600 dark:text-amber-400" />
         <h2 className="text-sm font-semibold text-ink">Site settings</h2>
       </div>
       <p className="text-xs text-ink-2 leading-relaxed max-w-2xl">
@@ -187,11 +187,9 @@ export const ServerConfigPanel: React.FC = () => {
           role="alert"
           className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3"
         >
-          <FileWarning className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <Icon name="draft" className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-ink">
-              This site cannot save its own settings
-            </p>
+            <p className="text-sm font-semibold text-ink">This site cannot save its own settings</p>
             <p className="text-xs text-ink-2 leading-relaxed">
               {config.reason ??
                 'The configuration file is not stored anywhere permanent, so changes would be lost when the site is rebuilt.'}
@@ -206,10 +204,10 @@ export const ServerConfigPanel: React.FC = () => {
 
       {config.editable && (
         <div className="flex gap-3 rounded-lg border border-ink-3/20 p-3">
-          <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-ink-3" />
+          <Icon name="gpp_maybe" className="shrink-0 mt-0.5 text-ink-3" />
           <p className="text-xs text-ink-2 leading-relaxed">
-            The database, address, port, and storage location are not editable here. Changing any
-            of them can take the site offline, so they are changed only in the configuration file
+            The database, address, port, and storage location are not editable here. Changing any of
+            them can take the site offline, so they are changed only in the configuration file
             itself.
           </p>
         </div>
@@ -329,7 +327,7 @@ export const ServerConfigPanel: React.FC = () => {
           disabled={!config.editable || isSaving || pending.length === 0}
           onClick={() => void save()}
         >
-          <Save className="w-3.5 h-3.5" />
+          <Icon name="save" className="icon-sm" />
           {isSaving ? 'Saving' : 'Save changes'}
         </button>
         <button
@@ -348,12 +346,12 @@ export const ServerConfigPanel: React.FC = () => {
           disabled={isSaving}
           onClick={() => void load()}
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <Icon name="refresh" className="icon-sm" />
           Reload
         </button>
         {invalid.length > 0 && (
           <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
-            <AlertTriangle className="w-3.5 h-3.5" />
+            <Icon name="warning" className="icon-sm" />
             {invalid.length} setting{invalid.length === 1 ? ' needs' : 's need'} a fix before
             saving.
           </span>

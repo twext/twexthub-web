@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { AuditEntry, Pagination } from '../types/api';
-import { Activity, AlertCircle, ChevronDown, ExternalLink, RefreshCw } from 'lucide-react';
+import { Icon } from './Icon';
 
 const ACTION_STYLES: Record<string, string> = {
   'version.publish':
@@ -103,7 +103,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <Icon name="monitoring" className="text-amber-600 dark:text-amber-400" />
             Site activity
           </h2>
           <p className="text-[11px] text-ink-3 mt-0.5 max-w-2xl">
@@ -118,13 +118,13 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
           title="Refresh"
           className="p-1.5 text-ink-3 hover:text-ink border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50 shrink-0"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <Icon name="refresh" className={`icon-sm ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {error && (
         <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -175,7 +175,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
                         className="font-mono text-[11px] text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-0.5"
                       >
                         {label}
-                        <ExternalLink className="w-3 h-3" />
+                        <Icon name="open_in_new" className="icon-xs" />
                       </button>
                     )}
                   </div>
@@ -189,7 +189,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
               disabled={loadingMore}
               className="btn btn-secondary w-full"
             >
-              <ChevronDown className="w-3.5 h-3.5" />
+              <Icon name="expand_more" className="icon-sm" />
               <span>{loadingMore ? 'Loading...' : 'Load older entries'}</span>
             </button>
           )}

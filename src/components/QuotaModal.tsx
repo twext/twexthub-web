@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Quota } from '../types/api';
-import { AlertCircle, HardDrive, RotateCcw, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes)) return '—';
@@ -99,7 +99,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
         <div className="flex items-center justify-between p-4 border-b border-line">
           <div>
             <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-              <HardDrive className="w-4 h-4 text-lilac-700 dark:text-lilac-300" />
+              <Icon name="storage" className="text-lilac-700 dark:text-lilac-300" />
               Storage quota
             </h2>
             <p className="font-mono text-[11px] text-ink-3 mt-0.5">@{namespace}</p>
@@ -109,14 +109,14 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
             aria-label="Close quota dialog"
             className="p-1 text-ink-3 hover:text-ink rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
           {loadError ? (
             <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
               <span>{loadError}</span>
             </div>
           ) : loading ? (
@@ -191,7 +191,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                   disabled={saving || quota.maxBlobBytes == null}
                   className="btn btn-secondary w-full"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <Icon name="restart_alt" className="icon-sm" />
                   <span>Use site default</span>
                 </button>
               </>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { DistTags } from '../types/api';
-import { AlertCircle, Tag, Trash2, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 const TAG_PATTERN = /^[a-zA-Z0-9-]{1,30}$/;
 const RESERVED_TAG = 'latest';
@@ -130,7 +130,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Tag className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+            <Icon name="sell" className="text-lilac-500 dark:text-lilac-300" />
             Dist-tags —{' '}
             <span className="font-mono text-ink-2">
               @{namespace}/{id}
@@ -141,13 +141,13 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -182,7 +182,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
                       aria-label={`Remove tag ${name}`}
                       className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50 shrink-0"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Icon name="delete" className="icon-sm" />
                     </button>
                   )}
                 </div>
@@ -239,7 +239,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
             disabled={saving || publishedVersions.length === 0}
             className="btn btn-primary btn-sm"
           >
-            <Tag className="w-3.5 h-3.5" />
+            <Icon name="sell" className="icon-sm" />
             <span>{saving ? 'Saving...' : 'Save tag'}</span>
           </button>
         </form>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Notification, NotificationKind } from '../types/api';
 import { useDismissable } from '../hooks/useDismissable';
-import { AlertCircle, Bell, CheckCheck, ExternalLink, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 const KIND_STYLES: Record<NotificationKind, string> = {
   'review.approved':
@@ -153,7 +153,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
     >
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
         <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-          <Bell className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+          <Icon name="notifications" className="text-lilac-500 dark:text-lilac-300" />
           Notifications
           {unreadCount > 0 && (
             <span className="chip bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono">
@@ -167,7 +167,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         )}
       </div>
@@ -187,14 +187,14 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
           disabled={marking || unreadCount === 0}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
         >
-          <CheckCheck className="w-3.5 h-3.5" />
+          <Icon name="done_all" className="icon-sm" />
           {marking ? 'Marking...' : 'Mark all read'}
         </button>
       </div>
 
       {error && (
         <div className="mx-4 mt-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -243,7 +243,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                         aria-label="Open the extension"
                         className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash transition-colors"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <Icon name="open_in_new" className="icon-sm" />
                       </button>
                     )}
                     <button
@@ -253,7 +253,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                       aria-label={`Mark notification ${notification.id} as read`}
                       className="p-1.5 text-ink-3 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-md hover:bg-wash transition-colors disabled:opacity-40"
                     >
-                      <CheckCheck className="w-3.5 h-3.5" />
+                      <Icon name="done_all" className="icon-sm" />
                     </button>
                   </div>
                 </div>

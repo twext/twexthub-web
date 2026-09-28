@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
-import { Megaphone } from 'lucide-react';
+import { Icon } from './Icon';
 
 const MAX_LENGTH = 280;
 
@@ -48,7 +48,7 @@ export const BroadcastPanel: React.FC = () => {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Megaphone className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <Icon name="campaign" className="text-amber-600 dark:text-amber-400" />
         <h2 className="text-sm font-semibold text-ink">Send an announcement</h2>
       </div>
       <p className="text-xs text-ink-2 leading-relaxed max-w-2xl">
@@ -83,7 +83,7 @@ export const BroadcastPanel: React.FC = () => {
         disabled={sending || !trimmed}
         className="btn btn-primary disabled:opacity-50"
       >
-        <Megaphone className="w-3.5 h-3.5" />
+        <Icon name="campaign" className="icon-sm" />
         <span>{sending ? 'Sending...' : 'Send to all accounts'}</span>
       </button>
       {confirmDialog}

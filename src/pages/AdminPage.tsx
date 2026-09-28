@@ -25,26 +25,7 @@ import {
   PrivacyDoc,
   UserRole,
 } from '../types/api';
-import {
-  Clock,
-  Package,
-  Users,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  Search,
-  ExternalLink,
-  Trash2,
-  Lock,
-  Eye,
-  Sliders,
-  Activity,
-  PenLine,
-  Wrench,
-  HardDrive,
-  Server,
-  Settings as SettingsIcon,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface AdminPageProps {
   onNavigate: (route: string) => void;
@@ -412,7 +393,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
         <div className="w-14 h-14 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center mb-4 border border-rose-200 dark:border-rose-900/50">
-          <Lock className="w-7 h-7" />
+          <Icon name="lock" className="icon-xl" />
         </div>
         <h1 className="text-xl font-display font-semibold text-ink mb-2">Administrators only</h1>
         <p className="text-sm text-ink-3 mb-6 leading-relaxed">
@@ -457,7 +438,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               disabled={isLoadingStats || isLoadingPending || isLoadingExtensions}
               className="btn btn-secondary btn-sm"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingStats ? 'animate-spin' : ''}`} />
+              <Icon name="refresh" className={`icon-sm ${isLoadingStats ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
           </div>
@@ -512,7 +493,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Clock className="w-4 h-4" />
+          <Icon name="schedule" />
           <span>Awaiting review</span>
           {pendingVersions.length > 0 && (
             <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-amber-500 text-white font-mono font-bold">
@@ -529,7 +510,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Package className="w-4 h-4" />
+          <Icon name="inventory_2" />
           <span>Extensions</span>
         </button>
 
@@ -541,7 +522,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Users className="w-4 h-4" />
+          <Icon name="group" />
           <span>Accounts</span>
         </button>
 
@@ -553,7 +534,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Sliders className="w-4 h-4" />
+          <Icon name="tune" />
           <span>Policies</span>
         </button>
 
@@ -565,7 +546,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Activity className="w-4 h-4" />
+          <Icon name="monitoring" />
           <span>Activity</span>
         </button>
 
@@ -577,7 +558,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Wrench className="w-4 h-4" />
+          <Icon name="build" />
           <span>Maintenance</span>
         </button>
 
@@ -589,7 +570,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-ink-3 hover:text-ink'
           }`}
         >
-          <Server className="w-4 h-4" />
+          <Icon name="dns" />
           <span>Server</span>
         </button>
       </div>
@@ -607,7 +588,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               disabled={isLoadingPending}
               className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline flex items-center gap-1 font-medium"
             >
-              <RefreshCw className={`w-3 h-3 ${isLoadingPending ? 'animate-spin' : ''}`} />
+              <Icon
+                name="refresh"
+                className={`icon-xs ${isLoadingPending ? 'animate-spin' : ''}`}
+              />
               <span>Refresh</span>
             </button>
           </div>
@@ -619,11 +603,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             </div>
           ) : pendingVersions.length === 0 ? (
             <div className="card p-12 text-center">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+              <Icon name="check_circle" className="icon-3xl text-emerald-500 mx-auto mb-3" />
               <h3 className="text-sm font-semibold text-ink mb-1">You're all caught up</h3>
               <p className="text-xs text-ink-3 max-w-sm mx-auto">
-                Nothing is waiting for review right now. New submissions will appear here as soon
-                as they arrive.
+                Nothing is waiting for review right now. New submissions will appear here as soon as
+                they arrive.
               </p>
             </div>
           ) : (
@@ -672,7 +656,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         className="btn btn-sm btn-secondary"
                         title="Inspect source code"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Icon name="visibility" className="icon-sm" />
                         <span>Inspect</span>
                       </button>
 
@@ -681,7 +665,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         disabled={isWorking}
                         className="px-2.5 py-1.5 text-xs text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/60 rounded-md font-medium flex items-center gap-1 transition-colors"
                       >
-                        <XCircle className="w-3.5 h-3.5" />
+                        <Icon name="cancel" className="icon-sm" />
                         <span>Reject</span>
                       </button>
 
@@ -690,7 +674,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         disabled={isWorking}
                         className="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <Icon name="check_circle" className="icon-sm" />
                         <span>{isWorking ? 'Approving...' : 'Approve'}</span>
                       </button>
                     </div>
@@ -732,14 +716,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setCatalogSearch(e.target.value)}
                 className="input pl-8 pr-3 py-1.5 text-xs"
               />
-              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-2.5" />
+              <Icon name="search" className="icon-sm text-ink-3 absolute left-2.5 top-2.5" />
             </form>
 
             <button
               onClick={() => fetchExtensions(catalogSearch)}
               className="text-xs text-lilac-700 dark:text-lilac-300 font-medium flex items-center gap-1"
             >
-              <RefreshCw className="w-3 h-3" />
+              <Icon name="refresh" className="icon-xs" />
               <span>Refresh</span>
             </button>
           </div>
@@ -782,7 +766,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       onClick={() => onNavigate(`ext/${ext.namespace}/${ext.id}`)}
                       className="px-2.5 py-1 text-ink-2 bg-wash dark:bg-raised hover:bg-line dark:hover:bg-wash border border-line rounded-md font-medium flex items-center gap-1 transition-colors"
                     >
-                      <ExternalLink className="w-3 h-3" />
+                      <Icon name="open_in_new" className="icon-xs" />
                       <span>View</span>
                     </button>
 
@@ -801,7 +785,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                       title="Permanently Delete Extension"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Icon name="delete" className="icon-sm" />
                     </button>
                   </div>
                 </div>
@@ -837,14 +821,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setUserSearch(e.target.value)}
                 className="input pl-8 pr-3 py-1.5 text-xs"
               />
-              <Search className="w-3.5 h-3.5 text-ink-3 absolute left-2.5 top-2.5" />
+              <Icon name="search" className="icon-sm text-ink-3 absolute left-2.5 top-2.5" />
             </div>
 
             <button
               onClick={() => fetchUsers()}
               className="text-xs text-lilac-700 dark:text-lilac-300 font-medium flex items-center gap-1"
             >
-              <RefreshCw className="w-3 h-3" />
+              <Icon name="refresh" className="icon-xs" />
               <span>Refresh</span>
             </button>
           </div>
@@ -905,7 +889,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             title="Manage your account in Settings"
                             aria-label="Manage your account in Settings"
                           >
-                            <SettingsIcon className="w-3.5 h-3.5" />
+                            <Icon name="settings" className="icon-sm" />
                           </button>
                         ) : (
                           <button
@@ -913,7 +897,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                             title={`Account activity for @${u.namespace}`}
                           >
-                            <Activity className="w-3.5 h-3.5" />
+                            <Icon name="monitoring" className="icon-sm" />
                           </button>
                         )}
                         <button
@@ -922,7 +906,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                           title={`Storage for @${u.namespace}`}
                           aria-label={`Storage for @${u.namespace}`}
                         >
-                          <HardDrive className="w-3.5 h-3.5" />
+                          <Icon name="storage" className="icon-sm" />
                         </button>
                         <button
                           onClick={() => handleToggleUserRole(u)}
@@ -933,11 +917,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                               : 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
                           }`}
                         >
-                          {isUpdating
-                            ? 'Saving...'
-                            : isTargetAdmin
-                              ? 'Remove admin'
-                              : 'Make admin'}
+                          {isUpdating ? 'Saving...' : isTargetAdmin ? 'Remove admin' : 'Make admin'}
                         </button>
 
                         {!isMe && (
@@ -947,7 +927,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
                             title={`Permanently delete @${u.namespace}`}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Icon name="delete" className="icon-sm" />
                           </button>
                         )}
                       </div>
@@ -994,7 +974,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onClick={() => setPolicyEditor('terms')}
                 className="btn btn-primary btn-sm shrink-0"
               >
-                <PenLine className="w-3.5 h-3.5" />
+                <Icon name="edit_note" className="icon-sm" />
                 <span>Open Editor</span>
               </button>
             </div>
@@ -1028,7 +1008,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onClick={() => setPolicyEditor('privacy')}
                 className="btn btn-primary btn-sm shrink-0"
               >
-                <PenLine className="w-3.5 h-3.5" />
+                <Icon name="edit_note" className="icon-sm" />
                 <span>Open Editor</span>
               </button>
             </div>
@@ -1088,7 +1068,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <h2 className="text-sm font-semibold text-ink">Feeds and stats</h2>
               <button onClick={() => setMetricsOpen(true)} className="btn btn-secondary btn-sm">
-                <Activity className="w-3.5 h-3.5" />
+                <Icon name="monitoring" className="icon-sm" />
                 <span>View stats</span>
               </button>
             </div>
@@ -1104,7 +1084,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1"
               >
                 Atom feed
-                <ExternalLink className="w-3 h-3" />
+                <Icon name="open_in_new" className="icon-xs" />
               </a>
             </div>
           </div>
@@ -1130,7 +1110,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           <div className="card max-w-md w-full p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
-                <XCircle className="w-4 h-4" />
+                <Icon name="cancel" />
                 <span>Reject this version</span>
               </div>
               <button

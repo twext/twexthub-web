@@ -12,20 +12,7 @@ import {
   UpdateUserPayload,
   User,
 } from '../types/api';
-import {
-  User as UserIcon,
-  Key,
-  Laptop,
-  Trash2,
-  Plus,
-  Copy,
-  Check,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  Settings as SettingsIcon,
-  Pencil,
-} from 'lucide-react';
+import { Icon, IconName } from '../components/Icon';
 
 /** Avatar/banner/website values are referenced by the registry, so they must be fetchable. */
 // Matches the registry's GitHub check: 1-39 characters, alphanumeric with inner
@@ -47,10 +34,10 @@ interface SettingsPageProps {
 
 type SettingsTab = 'account' | 'sessions' | 'tokens';
 
-const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
-  { id: 'account', label: 'Account', icon: UserIcon },
-  { id: 'sessions', label: 'Sessions', icon: Laptop },
-  { id: 'tokens', label: 'Access Tokens', icon: Key },
+const TABS: { id: SettingsTab; label: string; icon: IconName }[] = [
+  { id: 'account', label: 'Account', icon: 'person' },
+  { id: 'sessions', label: 'Sessions', icon: 'laptop' },
+  { id: 'tokens', label: 'Access Tokens', icon: 'key' },
 ];
 
 // Each section's heading is described once, next to the navigation entry it
@@ -506,13 +493,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
             the page, so it stays where it is and only the panel changes. */}
         <div className="space-y-4">
           <h1 className="text-2xl font-display font-semibold text-ink flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-lilac-500" />
+            <Icon name="settings" className="icon-lg text-lilac-500" />
             Settings
           </h1>
           <nav aria-label="Settings sections">
             <ul className="space-y-0.5">
               {TABS.map((tab) => {
-                const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
                   <li key={tab.id}>
@@ -525,7 +511,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                           : 'text-ink-2 hover:bg-ink-3/10 hover:text-ink'
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      <Icon name={tab.icon} className="icon-sm shrink-0" />
                       {tab.label}
                     </button>
                   </li>
@@ -547,7 +533,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
             <div className="space-y-6">
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                  <Icon name="person" className="text-lilac-500 dark:text-lilac-300" />
                   <h2 className="text-sm font-semibold text-ink">Profile</h2>
                 </div>
 
@@ -558,14 +544,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     <span className="flex items-center gap-1">
                       {hasAcceptedCurrentTerms ? (
                         <>
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <Icon
+                            name="verified_user"
+                            className="icon-sm text-emerald-600 dark:text-emerald-400"
+                          />
                           <span className="text-emerald-700 dark:text-emerald-400">
                             Terms Accepted
                           </span>
                         </>
                       ) : (
                         <>
-                          <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          <Icon
+                            name="gpp_maybe"
+                            className="icon-sm text-amber-600 dark:text-amber-400"
+                          />
                           <span className="text-amber-700 dark:text-amber-300">Terms Pending</span>
                           <button
                             onClick={() => {
@@ -748,7 +740,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
             <div className="space-y-6">
               <div className="card p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Laptop className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                  <Icon name="laptop" className="text-lilac-500 dark:text-lilac-300" />
                   <h2 className="text-sm font-semibold text-ink">Active Web Sessions</h2>
                 </div>
                 <p className="text-xs text-ink-2 leading-relaxed">
@@ -777,7 +769,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                               </span>
                               {isCurrent ? (
                                 <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 text-[10px]">
-                                  <Laptop className="w-3 h-3" />
+                                  <Icon name="laptop" className="icon-xs" />
                                   This Device
                                 </span>
                               ) : (
@@ -834,7 +826,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
               <div className="bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-5 space-y-2 text-xs text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
-                  <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <Icon name="shield" className="text-amber-600 dark:text-amber-400" />
                   <span>Security Tip</span>
                 </div>
                 <p className="leading-relaxed">
@@ -852,7 +844,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
               {createdTokenSecret && (
                 <div className="bg-lilac-50 dark:bg-lilac-900/40 border border-lilac-200 dark:border-lilac-800 p-5 rounded-xl space-y-3">
                   <div className="flex items-center gap-2 text-lilac-700 dark:text-lilac-300">
-                    <Key className="w-5 h-5" />
+                    <Icon name="key" className="icon-lg" />
                     <h2 className="text-sm font-semibold text-ink">Your New Automation Token</h2>
                   </div>
                   <p className="text-xs text-ink-2 leading-relaxed">
@@ -867,7 +859,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                       onClick={() => handleCopySecret(createdTokenSecret)}
                       className="btn btn-primary btn-sm shrink-0"
                     >
-                      {copiedToken ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copiedToken ? (
+                        <Icon name="check" className="icon-xs" />
+                      ) : (
+                        <Icon name="content_copy" className="icon-xs" />
+                      )}
                       <span>{copiedToken ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
@@ -885,7 +881,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
               <div className="card p-5 space-y-4">
                 <div className="flex items-center gap-2">
-                  <Key className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                  <Icon name="key" className="text-lilac-500 dark:text-lilac-300" />
                   <h2 className="text-sm font-semibold text-ink">Generate Automation Token</h2>
                 </div>
                 <p className="text-xs text-ink-2 leading-relaxed">
@@ -962,15 +958,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                       disabled={creatingToken}
                       className="btn btn-primary disabled:opacity-50"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Icon name="add" className="icon-sm" />
                       <span>{creatingToken ? 'Generating...' : 'Create Automation Token'}</span>
                     </button>
                   </div>
                 </form>
               </div>
 
-              <div className="card p-5 space-y-3">                  <h2 className="label">Access Tokens ({tokens.length})</h2>
-
+              <div className="card p-5 space-y-3">
+                {' '}
+                <h2 className="label">Access Tokens ({tokens.length})</h2>
                 {loadingTokens ? (
                   <div className="space-y-2">
                     <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
@@ -1077,14 +1074,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                               className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                               title="Edit Token"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Icon name="edit" className="icon-sm" />
                             </button>
                             <button
                               onClick={() => handleDeleteToken(tok.id)}
                               className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors"
                               title="Revoke Token"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Icon name="delete" />
                             </button>
                           </div>
                         </div>
@@ -1096,7 +1093,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                     No automation tokens generated yet.
                   </p>
                 )}
-
                 {tokensPagination.hasMore && (
                   <div className="pt-2 text-center">
                     <button

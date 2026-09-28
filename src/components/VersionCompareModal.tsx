@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { ExtensionVersion, VersionInfo } from '../types/api';
 import { computeLineDiff } from '../lib/diff';
-import { ArrowLeftRight, GitCompare, Loader2, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface VersionCompareModalProps {
   namespace: string;
@@ -100,7 +100,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <GitCompare className="w-4 h-4 text-lilac-600 dark:text-lilac-300" />
+            <Icon name="compare_arrows" className="text-lilac-600 dark:text-lilac-300" />
             <h2 id="version-compare-title" className="text-sm font-semibold text-ink">
               Compare versions of @{namespace}/{id}
             </h2>
@@ -110,7 +110,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
             aria-label="Close comparison"
             className="text-ink-3 hover:text-ink transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
@@ -140,7 +140,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
             aria-label="Swap versions"
             className="p-2 mb-0.5 text-ink-3 hover:text-ink rounded-lg border border-line hover:bg-wash dark:hover:bg-raised transition-colors"
           >
-            <ArrowLeftRight className="w-4 h-4" />
+            <Icon name="swap_horiz" />
           </button>
           <div className="flex-1">
             <label className="label block mb-1">Compare version</label>
@@ -167,7 +167,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-xs text-ink-3">
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Icon name="progress_activity" className="animate-spin" />
             <span>Loading versions...</span>
           </div>
         ) : diff && left && right ? (

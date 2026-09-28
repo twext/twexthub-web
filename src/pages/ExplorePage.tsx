@@ -11,20 +11,7 @@ import {
   loadExplorePrefs,
   saveExplorePrefs,
 } from '../lib/preferences';
-import {
-  Search,
-  SlidersHorizontal,
-  ChevronRight,
-  ChevronLeft,
-  LayoutGrid,
-  List as ListIcon,
-  AlertCircle,
-  X,
-  User as UserIcon,
-  ArrowRight,
-  Bookmark,
-  ArrowDownWideNarrow,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface ExplorePageProps {
   initialQuery?: string;
@@ -151,7 +138,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
               }`}
               title="Grid View"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <Icon name="grid_view" />
             </button>
             <button
               onClick={() => setViewMode('list')}
@@ -162,7 +149,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
               }`}
               title="List View"
             >
-              <ListIcon className="w-4 h-4" />
+              <Icon name="view_list" />
             </button>
           </div>
 
@@ -176,12 +163,12 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                 : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
             }`}
           >
-            <Bookmark className="w-3.5 h-3.5" fill={savedOnly ? 'currentColor' : 'none'} />
+            <Icon name="bookmark" className="icon-sm" filled={savedOnly} />
             <span className="hidden sm:inline">Saved</span>
           </button>
 
           <div className="flex items-center gap-1.5 text-sm text-ink-2">
-            <ArrowDownWideNarrow className="w-3.5 h-3.5 text-ink-3" />
+            <Icon name="sort" className="icon-sm text-ink-3" />
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as ExploreSort)}
@@ -195,7 +182,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
           </div>
 
           <div className="flex items-center gap-1.5 text-sm text-ink-2">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-ink-3" />
+            <Icon name="tune" className="icon-sm text-ink-3" />
             <span className="hidden sm:inline">Per page:</span>
             <select
               value={limit}
@@ -217,7 +204,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
       <div className="flex flex-col gap-2.5">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-ink-3 absolute left-3 top-3 pointer-events-none" />
+            <Icon name="search" className="text-ink-3 absolute left-3 top-3 pointer-events-none" />
             <input
               type="text"
               value={query}
@@ -232,7 +219,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                 aria-label="Clear search"
                 className="absolute right-2.5 top-2.5 text-ink-3 hover:text-ink"
               >
-                <X className="w-3.5 h-3.5" />
+                <Icon name="close" className="icon-sm" />
               </button>
             )}
           </div>
@@ -259,7 +246,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
       {/* Error notification */}
       {error && (
         <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-4 rounded-xl text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -325,11 +312,11 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
 
                   <div className="flex items-center gap-4 text-xs text-ink-3 shrink-0">
                     <div className="flex items-center gap-1">
-                      <UserIcon className="w-3.5 h-3.5 text-ink-3" />
+                      <Icon name="person" className="icon-sm text-ink-3" />
                       <span className="text-ink font-medium">{ext.namespace}</span>
                     </div>
                     <span className="text-lilac-700 dark:text-lilac-300 font-medium hover:underline inline-flex items-center gap-0.5">
-                      View <ArrowRight className="w-3 h-3" />
+                      View <Icon name="arrow_forward" className="icon-xs" />
                     </span>
                   </div>
                 </div>
@@ -387,7 +374,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
             disabled={cursorHistory.length === 0 || loading}
             className="btn btn-secondary btn-sm disabled:opacity-40"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Icon name="chevron_left" />
             Previous
           </button>
 
@@ -397,7 +384,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
             className="btn btn-secondary btn-sm disabled:opacity-40"
           >
             Next
-            <ChevronRight className="w-4 h-4" />
+            <Icon name="chevron_right" />
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 export interface ConfirmDialogOptions {
   title: string;
@@ -83,7 +83,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               variant === 'danger' ? 'text-rose-600 dark:text-rose-400' : 'text-ink'
             }`}
           >
-            {variant === 'danger' && <AlertTriangle className="w-4 h-4 shrink-0" />}
+            {variant === 'danger' && <Icon name="warning" className="shrink-0" />}
             <h2 id="confirm-dialog-title" className="font-display">
               {title}
             </h2>
@@ -93,7 +93,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             aria-label="Close dialog"
             className="text-ink-3 hover:text-ink transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 

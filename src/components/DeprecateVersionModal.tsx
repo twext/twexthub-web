@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
-import { AlertCircle, AlertTriangle, X } from 'lucide-react';
 import type { ModerationStatus } from '../types/api';
+import { Icon } from './Icon';
 
 interface DeprecateVersionModalProps {
   namespace: string;
@@ -65,7 +65,7 @@ export const DeprecateVersionModal: React.FC<DeprecateVersionModalProps> = ({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <Icon name="warning" className="text-amber-600 dark:text-amber-400" />
             Deprecate v{version}
           </h2>
           <button
@@ -73,7 +73,7 @@ export const DeprecateVersionModal: React.FC<DeprecateVersionModalProps> = ({
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
@@ -98,7 +98,7 @@ export const DeprecateVersionModal: React.FC<DeprecateVersionModalProps> = ({
           </div>
           {error && (
             <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
               <span>{error}</span>
             </div>
           )}

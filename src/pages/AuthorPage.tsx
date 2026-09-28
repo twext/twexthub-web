@@ -3,17 +3,7 @@ import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ExtensionSummary, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
-import {
-  ArrowLeft,
-  Calendar,
-  FileText,
-  Package,
-  AlertTriangle,
-  User as UserIcon,
-  RefreshCw,
-  Settings,
-  Link as LinkIcon,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface AuthorPageProps {
   namespace: string;
@@ -119,7 +109,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   if (error || !author) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto" />
+        <Icon name="warning" className="icon-3xl text-rose-600 dark:text-rose-400 mx-auto" />
         <h2 className="text-xl font-display font-semibold text-ink">Author Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
           {error || `No account named @${namespace} exists here.`}
@@ -139,7 +129,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         onClick={() => onNavigate('search')}
         className="text-xs text-ink-3 hover:text-ink flex items-center gap-1.5 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <Icon name="arrow_back" className="icon-sm" />
         Back to Explore
       </button>
 
@@ -176,7 +166,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
                     onClick={() => onNavigate('settings')}
                     className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium inline-flex items-center gap-1"
                   >
-                    <Settings className="w-3.5 h-3.5" />
+                    <Icon name="settings" className="icon-sm" />
                     Edit profile
                   </button>
                 )}
@@ -184,19 +174,19 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
               <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
                 {author.createdAt && (
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                    <Icon name="calendar_today" className="icon-xs" />
                     Member since {new Date(author.createdAt).toLocaleDateString()}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
-                  <Package className="w-3 h-3" />
+                  <Icon name="inventory_2" className="icon-xs" />
                   {extensions.length}
                   {pagination.hasMore ? '+' : ''} published extension
                   {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
                 </span>
                 {!author.hasPublished && (
                   <span className="flex items-center gap-1">
-                    <UserIcon className="w-3 h-3" />
+                    <Icon name="person" className="icon-xs" />
                     No published releases yet
                   </span>
                 )}
@@ -210,7 +200,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
                     className="flex items-center gap-1"
                     title={`Terms of Service version ${termsAccepted}`}
                   >
-                    <FileText className="w-3 h-3" />
+                    <Icon name="description" className="icon-xs" />
                     {termsOutdated ? 'Terms update pending' : `Terms v${termsAccepted} accepted`}
                     {termsOutdated && latestTermsVersion !== null && (
                       <span className="font-mono">({latestTermsVersion} available)</span>
@@ -232,7 +222,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
                       rel="noopener noreferrer nofollow"
                       className="text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1 break-all"
                     >
-                      <LinkIcon className="w-3 h-3 shrink-0" />
+                      <Icon name="link" className="icon-xs shrink-0" />
                       {author.website.replace(/^https?:\/\//, '')}
                     </a>
                   )}
@@ -262,7 +252,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
             onClick={() => loadExtensions()}
             className="text-xs text-lilac-700 dark:text-lilac-300 font-medium flex items-center gap-1"
           >
-            <RefreshCw className="w-3 h-3" />
+            <Icon name="refresh" className="icon-xs" />
             <span>Refresh</span>
           </button>
         </div>
@@ -278,7 +268,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           </div>
         ) : extensionsError ? (
           <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <Icon name="warning" className="shrink-0" />
             <span>{extensionsError}</span>
           </div>
         ) : extensions.length > 0 ? (

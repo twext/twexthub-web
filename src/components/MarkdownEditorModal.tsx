@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { MarkdownView } from './MarkdownView';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { X, Save, Eye, Pencil, Columns2 } from 'lucide-react';
+import { Icon } from './Icon';
 
 type EditorMode = 'write' | 'preview' | 'split';
 
@@ -92,16 +92,16 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
           className="text-ink-3 hover:text-ink transition-colors shrink-0"
           aria-label={`Close ${title} editor`}
         >
-          <X className="w-5 h-5" />
+          <Icon name="close" className="icon-lg" />
         </button>
       </div>
 
       {/* View mode toggle */}
       <div className="flex items-center justify-end px-5 py-2.5 bg-wash dark:bg-raised border-b border-line">
         <div className="flex items-center gap-0.5 border border-line rounded-lg p-0.5 bg-surface dark:bg-surface">
-          {modeButton('write', 'Write', <Pencil className="w-3 h-3" />)}
-          {modeButton('preview', 'Preview', <Eye className="w-3 h-3" />)}
-          {modeButton('split', 'Split', <Columns2 className="w-3 h-3" />)}
+          {modeButton('write', 'Write', <Icon name="edit" className="icon-xs" />)}
+          {modeButton('preview', 'Preview', <Icon name="visibility" className="icon-xs" />)}
+          {modeButton('split', 'Split', <Icon name="view_column" className="icon-xs" />)}
         </div>
       </div>
 
@@ -157,7 +157,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
           disabled={isSaving || draft === value}
           className="btn btn-primary btn-sm disabled:opacity-50"
         >
-          <Save className="w-3.5 h-3.5" />
+          <Icon name="save" className="icon-sm" />
           <span>{isSaving ? 'Publishing...' : 'Publish Revision'}</span>
         </button>
       </div>

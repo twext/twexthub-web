@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { Icon, IconName } from '../components/Icon';
 
 export type ToastVariant = 'success' | 'error' | 'info';
 
@@ -37,10 +37,10 @@ const VARIANT_STYLES: Record<ToastVariant, string> = {
   info: 'bg-surface dark:bg-raised border-line text-ink',
 };
 
-const VARIANT_ICON: Record<ToastVariant, React.ElementType> = {
-  success: CheckCircle2,
-  error: AlertCircle,
-  info: Info,
+const VARIANT_ICON: Record<ToastVariant, IconName> = {
+  success: 'check_circle',
+  error: 'error',
+  info: 'info',
 };
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,21 +99,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         aria-atomic="false"
       >
         {toasts.map((toast) => {
-          const Icon = VARIANT_ICON[toast.variant];
           return (
             <div
               key={toast.id}
               role={toast.variant === 'error' ? 'alert' : 'status'}
               className={`pointer-events-auto card p-3 pr-2 flex items-start gap-2 text-xs border shadow-lg ${VARIANT_STYLES[toast.variant]}`}
             >
-              <Icon className="w-4 h-4 mt-0.5 shrink-0" />
+              <Icon name={VARIANT_ICON[toast.variant]} className="mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0 leading-relaxed break-words">{toast.message}</div>
               <button
                 onClick={() => dismissToast(toast.id)}
                 aria-label="Dismiss notification"
                 className="shrink-0 p-0.5 opacity-60 hover:opacity-100 transition-opacity"
               >
-                <X className="w-3.5 h-3.5" />
+                <Icon name="close" className="icon-sm" />
               </button>
             </div>
           );

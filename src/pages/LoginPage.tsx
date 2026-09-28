@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../services/api';
 import { BrandLogo } from '../components/BrandLogo';
-import { LogIn, AlertCircle, ArrowRight } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface LoginPageProps {
   onNavigate: (route: string) => void;
@@ -56,7 +56,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-sm flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
             <div className="leading-tight">{error}</div>
           </div>
         )}
@@ -107,7 +107,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             disabled={loading}
             className="btn btn-primary w-full py-2.5 text-sm disabled:opacity-50"
           >
-            <LogIn className="w-4 h-4" />
+            <Icon name="login" />
             <span>{loading ? 'Signing in...' : 'Sign in'}</span>
           </button>
         </form>
@@ -119,7 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('signup')}
               className="text-lilac-700 dark:text-lilac-300 font-semibold hover:underline underline-offset-4 inline-flex items-center gap-0.5"
             >
-              Sign up <ArrowRight className="w-3 h-3" />
+              Sign up <Icon name="arrow_forward" className="icon-xs" />
             </button>
           </p>
         </div>

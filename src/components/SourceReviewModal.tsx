@@ -3,7 +3,7 @@ import { api, ApiError } from '../services/api';
 import { PendingVersion } from '../types/api';
 import { CodeEditor } from './CodeEditor';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { Check, Copy, ShieldAlert, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface SourceReviewModalProps {
   item: PendingVersion;
@@ -112,7 +112,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           className="text-ink-3 hover:text-ink transition-colors shrink-0"
           aria-label="Close source review"
         >
-          <X className="w-5 h-5" />
+          <Icon name="close" className="icon-lg" />
         </button>
       </div>
 
@@ -145,7 +145,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           <div className="space-y-3">
             {codeUnavailable ? (
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <strong>extension.js is not available.</strong> The compiled output for this
                   version could not be loaded from the registry.
@@ -153,7 +153,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
               </div>
             ) : (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-rose-600 shrink-0 mt-0.5" />
                 <div>
                   <strong>Unable to load extension.js:</strong> {codeError}
                 </div>
@@ -195,12 +195,12 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
         >
           {copied ? (
             <>
-              <Check className="w-3 h-3 text-emerald-600" />
+              <Icon name="check" className="icon-xs text-emerald-600" />
               <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
             </>
           ) : (
             <>
-              <Copy className="w-3 h-3" />
+              <Icon name="content_copy" className="icon-xs" />
               <span>Copy source</span>
             </>
           )}

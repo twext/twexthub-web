@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { ExtensionSummary } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { WebhookPanel } from '../components/WebhookPanel';
-import { Settings, Webhook } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface DashboardPageProps {
   onNavigate: (route: string) => void;
@@ -92,7 +92,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             <button onClick={() => onNavigate('settings')} className="btn btn-secondary">
-              <Settings className="w-3.5 h-3.5" />
+              <Icon name="settings" className="icon-sm" />
               Settings
             </button>
           </div>
@@ -148,13 +148,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="space-y-4">
           <div className="pb-2 border-b border-line">
             <h2 className="text-xl font-display font-semibold text-ink flex items-center gap-2">
-              <Webhook className="w-5 h-5 text-lilac-700 dark:text-lilac-300" />
+              <Icon name="webhook" className="icon-lg text-lilac-700 dark:text-lilac-300" />
               Webhooks
             </h2>
             <p className="text-xs text-ink-3 mt-1 max-w-2xl leading-relaxed">
-              Each extension gets its own webhooks. TwextHub sends a signed event to your URL when
-              a version is published, unpublished, deprecated, rejected, or changes owner. The
-              signing secret is shown once when the webhook is created.
+              Each extension gets its own webhooks. TwextHub sends a signed event to your URL when a
+              version is published, unpublished, deprecated, rejected, or changes owner. The signing
+              secret is shown once when the webhook is created.
             </p>
           </div>
           <div className="divide-y divide-line border border-line rounded-lg">
@@ -180,7 +180,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     onClick={() => setWebhooksFor({ namespace: ext.namespace, id: ext.id })}
                     className="btn btn-secondary btn-sm"
                   >
-                    <Webhook className="w-3.5 h-3.5" />
+                    <Icon name="webhook" className="icon-sm" />
                     Manage webhooks
                   </button>
                 </div>

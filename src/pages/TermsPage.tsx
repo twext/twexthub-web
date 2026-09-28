@@ -3,15 +3,7 @@ import { api, ApiError } from '../services/api';
 import { TermsDoc } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import { MarkdownView } from '../components/MarkdownView';
-import {
-  FileText,
-  ShieldCheck,
-  ShieldAlert,
-  Check,
-  Calendar,
-  AlertCircle,
-  LogIn,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface TermsPageProps {
   onNavigate: (route: string) => void;
@@ -95,7 +87,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
       <div className="pb-4 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <FileText className="w-5 h-5 text-lilac-500 dark:text-lilac-300" />
+            <Icon name="description" className="icon-lg text-lilac-500 dark:text-lilac-300" />
             <h1 className="text-2xl font-display font-semibold text-ink">Terms of Service</h1>
           </div>
           <div className="flex items-center gap-3 text-xs text-ink-3">
@@ -106,7 +98,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Icon name="calendar_today" className="icon-sm" />
                   Last Updated {new Date(terms.updatedAt).toLocaleDateString()}
                 </span>
               </>
@@ -119,12 +111,12 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
           <div className="self-start sm:self-auto">
             {isAccepted ? (
               <span className="chip bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Icon name="verified_user" className="text-emerald-600 dark:text-emerald-400" />
                 <span>Accepted by {user?.displayName || user?.namespace}</span>
               </span>
             ) : (
               <span className="chip bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60">
-                <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <Icon name="gpp_maybe" className="text-amber-600 dark:text-amber-400" />
                 <span>Action Required: Acceptance Needed</span>
               </span>
             )}
@@ -147,7 +139,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
             disabled={accepting}
             className="btn bg-amber-700 hover:bg-amber-800 dark:bg-amber-600 dark:hover:bg-amber-500 text-white shrink-0 disabled:opacity-50"
           >
-            <Check className="w-4 h-4" />
+            <Icon name="check" />
             <span>{accepting ? 'Accepting...' : 'Accept Terms of Service'}</span>
           </button>
         </div>
@@ -155,7 +147,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
 
       {acceptError && (
         <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
           <span>{acceptError}</span>
         </div>
       )}
@@ -171,12 +163,12 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
           </div>
         ) : error ? (
           <div className="text-center py-12 text-xs text-rose-600 dark:text-rose-400 space-y-2">
-            <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+            <Icon name="error" className="icon-2xl text-rose-400 mx-auto" />
             <p className="font-semibold">{error}</p>
           </div>
         ) : missing || (termsResolved && !hasTerms) ? (
           <div className="text-center py-12 text-xs text-ink-3 space-y-2">
-            <FileText className="w-8 h-8 text-ink-3 mx-auto" />
+            <Icon name="description" className="icon-2xl text-ink-3 mx-auto" />
             <p className="font-semibold text-ink-2">No Terms of Service have been published.</p>
             <p>
               This registry has not published any terms yet, so there is nothing to review or
@@ -199,7 +191,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
             disabled={accepting}
             className="btn btn-primary disabled:opacity-50"
           >
-            <Check className="w-3.5 h-3.5" />
+            <Icon name="check" className="icon-sm" />
             <span>Accept Terms (v{terms.version})</span>
           </button>
         </div>
@@ -209,7 +201,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
         <div className="card p-4 text-xs text-ink-2 flex items-center justify-between">
           <span>Sign in to your author account to record your terms acceptance.</span>
           <button onClick={() => onNavigate('login')} className="btn btn-secondary">
-            <LogIn className="w-3.5 h-3.5" />
+            <Icon name="login" className="icon-sm" />
             Sign in
           </button>
         </div>

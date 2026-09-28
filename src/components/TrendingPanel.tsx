@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { ExtensionSummary } from '../types/api';
-import { Flame, TrendingUp } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface TrendingPanelProps {
   onNavigate: (route: string) => void;
@@ -46,11 +46,11 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({ onNavigate, limit 
           id="trending-heading"
           className="text-sm font-semibold text-ink flex items-center gap-2"
         >
-          <Flame className="w-4 h-4 text-amber-500" />
+          <Icon name="local_fire_department" className="text-amber-500" />
           Trending This Week
         </h2>
         <span className="text-[10px] text-ink-3 font-mono inline-flex items-center gap-1">
-          <TrendingUp className="w-3 h-3" />
+          <Icon name="trending_up" className="icon-xs" />
           top {limit}
         </span>
       </div>

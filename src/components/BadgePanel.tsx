@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
-import { Check, Copy, ImageIcon, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 type BadgeField = 'version' | 'downloads' | 'license';
 
@@ -88,7 +88,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+            <Icon name="image" className="text-lilac-500 dark:text-lilac-300" />
             Badges —{' '}
             <span className="font-mono text-ink-2">
               @{namespace}/{id}
@@ -99,7 +99,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
             aria-label="Close"
             className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Icon name="close" />
           </button>
         </div>
 
@@ -171,7 +171,11 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
               disabled={selected.length === 0}
               className="btn btn-secondary btn-sm shrink-0"
             >
-              {copied === 'markdown' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied === 'markdown' ? (
+                <Icon name="check" className="icon-xs" />
+              ) : (
+                <Icon name="content_copy" className="icon-xs" />
+              )}
               <span>{copied === 'markdown' ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
@@ -188,7 +192,11 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
               disabled={selected.length === 0}
               className="btn btn-secondary btn-sm shrink-0"
             >
-              {copied === 'url' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {copied === 'url' ? (
+                <Icon name="check" className="icon-xs" />
+              ) : (
+                <Icon name="content_copy" className="icon-xs" />
+              )}
               <span>{copied === 'url' ? 'Copied' : 'Copy'}</span>
             </button>
           </div>

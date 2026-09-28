@@ -9,7 +9,7 @@ import {
 } from '../lib/prometheus';
 import { CodeEditor } from './CodeEditor';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { Activity, Check, Copy, Gauge, RefreshCw, ShieldAlert, X } from 'lucide-react';
+import { Icon } from './Icon';
 
 const TYPE_CHIP: Record<string, string> = {
   gauge:
@@ -170,7 +170,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             id="admin-metrics-title"
             className="text-base font-display font-semibold text-ink flex items-center gap-2"
           >
-            <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <Icon name="monitoring" className="text-amber-600 dark:text-amber-400" />
             Site statistics
           </h2>
           <p className="text-[11px] text-ink-3">Live numbers from the server.</p>
@@ -183,14 +183,14 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             title="Refresh"
             className="p-1 text-ink-3 hover:text-ink transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <Icon name="refresh" className={` ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={onClose}
             className="text-ink-3 hover:text-ink transition-colors"
             aria-label="Close metrics"
           >
-            <X className="w-5 h-5" />
+            <Icon name="close" className="icon-lg" />
           </button>
         </div>
       </div>
@@ -204,7 +204,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         ) : error ? (
           <div className="space-y-3">
             <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
-              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <Icon name="gpp_maybe" className="text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <strong>Couldn't load the statistics:</strong> {error}
               </div>
@@ -233,7 +233,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             {unlabelled.length > 0 && (
               <div className="space-y-2">
                 <h3 className="label text-ink-3 flex items-center gap-1.5">
-                  <Gauge className="w-3 h-3" />
+                  <Icon name="speed" className="icon-xs" />
                   Current values
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -301,12 +301,12 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           >
             {copied ? (
               <>
-                <Check className="w-3 h-3 text-emerald-600" />
+                <Icon name="check" className="icon-xs text-emerald-600" />
                 <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
               </>
             ) : (
               <>
-                <Copy className="w-3 h-3" />
+                <Icon name="content_copy" className="icon-xs" />
                 <span>Copy</span>
               </>
             )}
