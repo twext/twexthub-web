@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { MarkdownView } from './MarkdownView';
-import { useModalDialog } from '../hooks/useModalDialog';
-import { X, Save, Eye, Pencil, Columns2 } from 'lucide-react';
+import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 type EditorMode = 'write' | 'preview' | 'split';
 
@@ -29,10 +29,6 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
 
   // The hook owns Escape (preserving the existing close behavior), focus,
   // and Tab trapping.
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    labelledById: 'markdown-editor-title',
-    onClose,
-  });
 
   const handleSave = async () => {
     setSaveError(null);
@@ -53,7 +49,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
       key={target}
       onClick={() => setMode(target)}
       aria-pressed={mode === target}
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-meta font-medium transition-colors ${
         mode === target
           ? 'bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300'
           : 'text-ink-3 hover:text-ink hover:bg-wash dark:hover:bg-raised'
@@ -65,10 +61,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
   );
 
   return (
-    <div
-      {...dialogProps}
-      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
-    >
+    <Modal variant="fullscreen" labelledById="markdown-editor-title" onClose={onClose}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
@@ -79,11 +72,11 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
             >
               {title}
             </h2>
-            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
+            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-meta">
               revision #{version}
             </span>
           </div>
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             Markdown policy editor — changes publish a new revision users may need to re-accept.
           </p>
         </div>
@@ -92,16 +85,16 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
           className="text-ink-3 hover:text-ink transition-colors shrink-0"
           aria-label={`Close ${title} editor`}
         >
-          <X className="w-5 h-5" />
+          <Icon name="close" className="icon-lg" />
         </button>
       </div>
 
       {/* View mode toggle */}
       <div className="flex items-center justify-end px-5 py-2.5 bg-wash dark:bg-raised border-b border-line">
         <div className="flex items-center gap-0.5 border border-line rounded-lg p-0.5 bg-surface dark:bg-surface">
-          {modeButton('write', 'Write', <Pencil className="w-3 h-3" />)}
-          {modeButton('preview', 'Preview', <Eye className="w-3 h-3" />)}
-          {modeButton('split', 'Split', <Columns2 className="w-3 h-3" />)}
+          {modeButton('write', 'Write', <Icon name="edit" className="icon-xs" />)}
+          {modeButton('preview', 'Preview', <Icon name="visibility" className="icon-xs" />)}
+          {modeButton('split', 'Split', <Icon name="view_column" className="icon-xs" />)}
         </div>
       </div>
 
@@ -140,7 +133,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
+      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-meta text-ink-3 font-mono">
         <span>
           Markdown • {lineCount} lines • {wordCount} words • {charCount} chars
         </span>
@@ -157,10 +150,10 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
           disabled={isSaving || draft === value}
           className="btn btn-primary btn-sm disabled:opacity-50"
         >
-          <Save className="w-3.5 h-3.5" />
+          <Icon name="save" className="icon-sm" />
           <span>{isSaving ? 'Publishing...' : 'Publish Revision'}</span>
         </button>
       </div>
-    </div>
+    </Modal>
   );
 };

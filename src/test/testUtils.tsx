@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import type {
   AutomationToken,
   Extension,
+  ExtensionSummary,
   InstanceStats,
   PaginatedList,
   PendingVersion,
@@ -28,11 +29,19 @@ export const makeUser = (overrides: Partial<User> = {}): User => ({
 export const makeAdminUser = (overrides: Partial<User> = {}) =>
   makeUser({ role: 'admin', ...overrides });
 
-export const makeExtension = (overrides: Partial<Extension> = {}): Extension => ({
+/**
+ * A detail-shaped extension that is also a valid list/search row, so fixtures
+ * feed both `PaginatedList<Extension>` and `PaginatedList<ExtensionSummary>`.
+ */
+export const makeExtension = (
+  overrides: Partial<Extension> = {},
+): Extension & ExtensionSummary => ({
   namespace: 'kane',
   id: 'demo',
   name: 'Demo Extension',
   description: 'A test extension.',
+  version: '1.0.0',
+  publishedAt: '2026-01-01T00:00:00Z',
   latestVersion: '1.0.0',
   status: 'published',
   author: 'kane',
@@ -56,6 +65,7 @@ export const makeStats = (overrides: Partial<InstanceStats> = {}): InstanceStats
   published: 3,
   pending: 1,
   authors: 2,
+  downloads: 1234,
   ...overrides,
 });
 
@@ -105,6 +115,8 @@ export interface AuthOverrides {
   isAdmin?: boolean;
   isLoading?: boolean;
   latestTermsVersion?: number | null;
+  hasTerms?: boolean;
+  termsResolved?: boolean;
   hasAcceptedCurrentTerms?: boolean;
 }
 
@@ -127,6 +139,8 @@ export function makeAuthState(overrides: AuthOverrides = {}) {
     isAdmin: overrides.isAdmin ?? (user ? user.role === 'admin' : false),
     isLoading: overrides.isLoading ?? false,
     latestTermsVersion: overrides.latestTermsVersion ?? 2,
+    hasTerms: overrides.hasTerms ?? true,
+    termsResolved: overrides.termsResolved ?? true,
     hasAcceptedCurrentTerms: overrides.hasAcceptedCurrentTerms ?? true,
     login,
     signup,

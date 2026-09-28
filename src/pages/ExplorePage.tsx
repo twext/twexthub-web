@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { api, ApiError } from '../services/api';
-import { Extension, Pagination } from '../types/api';
+import { ExtensionSummary, Pagination } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
-import { StatusBadge } from '../components/StatusBadge';
+
 import { useSavedExtensions } from '../hooks/useCollections';
-import { extensionAuthor } from '../lib/collections';
 import {
   EXPLORE_LIMITS,
   ExploreSort,
@@ -12,20 +11,7 @@ import {
   loadExplorePrefs,
   saveExplorePrefs,
 } from '../lib/preferences';
-import {
-  Search,
-  SlidersHorizontal,
-  ChevronRight,
-  ChevronLeft,
-  LayoutGrid,
-  List as ListIcon,
-  AlertCircle,
-  X,
-  User as UserIcon,
-  ArrowRight,
-  Bookmark,
-  ArrowDownWideNarrow,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface ExplorePageProps {
   initialQuery?: string;
@@ -35,7 +21,7 @@ interface ExplorePageProps {
 export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onNavigate }) => {
   const [query, setQuery] = useState(initialQuery);
   const [activeQuery, setActiveQuery] = useState(initialQuery);
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [extensions, setExtensions] = useState<ExtensionSummary[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
@@ -59,7 +45,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
     if (sort === 'newest') return list;
     return [...list].sort((a, b) => {
       if (sort === 'author') {
-        const byAuthor = extensionAuthor(a).localeCompare(extensionAuthor(b));
+        // List rows carry the owning namespace rather than an author object.
+        const byAuthor = a.namespace.localeCompare(b.namespace);
         if (byAuthor !== 0) return byAuthor;
       }
       return a.name.localeCompare(b.name);
@@ -130,94 +117,22 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line">
-        <div>
-          <h1 className="text-2xl font-display font-semibold text-ink">Explore Twext Extensions</h1>
-          <p className="text-sm text-ink-3 mt-1">
-            Browse published packages, search community authors, or discover newly submitted
-            TurboWarp plugins.
-          </p>
-        </div>
-
-        {/* View Switcher, Sort & Filters */}
-        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
-          <div className="flex items-center border border-line rounded-lg bg-surface p-0.5">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md text-sm transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 font-semibold'
-                  : 'text-ink-3 hover:text-ink'
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-md text-sm transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 font-semibold'
-                  : 'text-ink-3 hover:text-ink'
-              }`}
-              title="List View"
-            >
-              <ListIcon className="w-4 h-4" />
-            </button>
-          </div>
-
-          <button
-            onClick={() => setSavedOnly((v) => !v)}
-            aria-pressed={savedOnly}
-            title="Show only saved extensions"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
-              savedOnly
-                ? 'border-lilac-300 dark:border-lilac-700 text-lilac-700 dark:text-lilac-300 bg-lilac-50 dark:bg-lilac-950'
-                : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
-            }`}
-          >
-            <Bookmark className="w-3.5 h-3.5" fill={savedOnly ? 'currentColor' : 'none'} />
-            <span className="hidden sm:inline">Saved</span>
-          </button>
-
-          <div className="flex items-center gap-1.5 text-sm text-ink-2">
-            <ArrowDownWideNarrow className="w-3.5 h-3.5 text-ink-3" />
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as ExploreSort)}
-              aria-label="Sort results"
-              className="input w-auto px-2 py-1 text-sm"
-            >
-              <option value="newest">Newest</option>
-              <option value="name">Name (A–Z)</option>
-              <option value="author">Author</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-sm text-ink-2">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-ink-3" />
-            <span className="hidden sm:inline">Per page:</span>
-            <select
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-              aria-label="Extensions per page"
-              className="input w-auto px-2 py-1 text-sm"
-            >
-              {EXPLORE_LIMITS.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
+      <header className="pb-4 border-b border-line">
+        <h1 className="text-2xl font-display font-semibold text-ink">Explore Twext Extensions</h1>
+        <p className="text-sm text-ink-3 mt-1">
+          Packages published with the Twext CLI load straight into the TurboWarp editor, with source
+          and security checks listed below.
+        </p>
+      </header>
 
       {/* Search Input Bar */}
       <div className="flex flex-col gap-2.5">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-ink-3 absolute left-3 top-3 pointer-events-none" />
+            <Icon
+              name="search"
+              className="text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
             <input
               type="text"
               value={query}
@@ -230,9 +145,9 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                 type="button"
                 onClick={handleClearSearch}
                 aria-label="Clear search"
-                className="absolute right-2.5 top-2.5 text-ink-3 hover:text-ink"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center text-ink-3 hover:text-ink"
               >
-                <X className="w-3.5 h-3.5" />
+                <Icon name="close" className="icon-sm" />
               </button>
             )}
           </div>
@@ -256,10 +171,83 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
         )}
       </div>
 
+      {/* View switcher, saved filter, sort & density — the tools, not the action */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center border border-line rounded-lg bg-surface p-0.5">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1.5 rounded-md text-sm transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 font-semibold'
+                : 'text-ink-3 hover:text-ink'
+            }`}
+            title="Grid View"
+          >
+            <Icon name="grid_view" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1.5 rounded-md text-sm transition-colors ${
+              viewMode === 'list'
+                ? 'bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 font-semibold'
+                : 'text-ink-3 hover:text-ink'
+            }`}
+            title="List View"
+          >
+            <Icon name="view_list" />
+          </button>
+        </div>
+
+        <button
+          onClick={() => setSavedOnly((v) => !v)}
+          aria-pressed={savedOnly}
+          title="Show only saved extensions"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+            savedOnly
+              ? 'border-lilac-300 dark:border-lilac-700 text-lilac-700 dark:text-lilac-300 bg-lilac-50 dark:bg-lilac-950'
+              : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
+          }`}
+        >
+          <Icon name="bookmark" className="icon-sm" filled={savedOnly} />
+          <span className="hidden sm:inline">Saved</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 text-sm text-ink-2">
+          <Icon name="sort" className="icon-sm text-ink-3" />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as ExploreSort)}
+            aria-label="Sort results"
+            className="input w-auto px-2 py-1 text-sm"
+          >
+            <option value="newest">Newest</option>
+            <option value="name">Name (A–Z)</option>
+            <option value="author">Author</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-sm text-ink-2">
+          <Icon name="tune" className="icon-sm text-ink-3" />
+          <span className="hidden sm:inline">Per page:</span>
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            aria-label="Extensions per page"
+            className="input w-auto px-2 py-1 text-sm"
+          >
+            {EXPLORE_LIMITS.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Error notification */}
       {error && (
-        <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-4 rounded-xl text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+        <div data-tone="danger" className="alert items-center text-sm">
+          <Icon name="error" className="shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -289,16 +277,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
         ) : (
           <div className="card divide-y divide-line">
             {displayedExtensions.map((ext) => {
-              const authorNamespace =
-                typeof ext.author === 'object' && ext.author !== null
-                  ? ext.author.namespace
-                  : ext.author || ext.namespace;
-              const authorDisplayName =
-                typeof ext.author === 'object' && ext.author !== null
-                  ? ext.author.displayName || authorNamespace
-                  : authorNamespace;
-              const version =
-                ext.latestVersion || (ext.versions && ext.versions[0]?.version) || '1.0.0';
+              const version = ext.version;
 
               return (
                 <div
@@ -319,8 +298,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                       <span className="font-mono text-xs text-ink-3">
                         @{ext.namespace}/{ext.id}
                       </span>
-                      <StatusBadge status={ext.status || 'published'} size="sm" />
-                      <span className="chip bg-wash border-line text-ink-2 font-mono text-[11px]">
+                      <span className="chip bg-wash border-line text-ink-2 font-mono text-meta">
                         v{version}
                       </span>
                     </div>
@@ -328,18 +306,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                       {ext.name}
                     </h3>
                     <p className="text-xs text-ink-2 line-clamp-1">
-                      {ext.shortDescription || ext.description || 'No description provided.'}
+                      {ext.description || 'No description provided.'}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-4 text-xs text-ink-3 shrink-0">
                     <div className="flex items-center gap-1">
-                      <UserIcon className="w-3.5 h-3.5 text-ink-3" />
-                      <span className="text-ink font-medium">{authorDisplayName}</span>
+                      <Icon name="person" className="icon-sm text-ink-3" />
+                      <span className="text-ink font-medium">{ext.namespace}</span>
                     </div>
-                    <span className="text-lilac-700 dark:text-lilac-300 font-medium hover:underline inline-flex items-center gap-0.5">
-                      View <ArrowRight className="w-3 h-3" />
-                    </span>
                   </div>
                 </div>
               );
@@ -396,7 +371,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
             disabled={cursorHistory.length === 0 || loading}
             className="btn btn-secondary btn-sm disabled:opacity-40"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Icon name="chevron_left" />
             Previous
           </button>
 
@@ -406,7 +381,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
             className="btn btn-secondary btn-sm disabled:opacity-40"
           >
             Next
-            <ChevronRight className="w-4 h-4" />
+            <Icon name="chevron_right" />
           </button>
         </div>
       </div>

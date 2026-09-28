@@ -1,4 +1,10 @@
-export const DEFAULT_API_BASE_URL = 'https://twexts.sdisk.us/api/v0';
+/**
+ * The browser only ever talks to its own origin: `server.js` (production) and
+ * the Vite dev server both forward `/api/v1` to the configured upstream, so
+ * "the API" is wherever this page is served from. An absolute URL remains a
+ * valid override for static hosts that have no proxy (see `VITE_TWEXTHUB_API_URL`).
+ */
+export const DEFAULT_API_BASE_URL = '/api/v1';
 
 export interface AppConfig {
   apiBaseUrl: string;
@@ -23,11 +29,18 @@ function isLoopbackHost(hostname: string): boolean {
 /**
  * Remote APIs must use HTTPS so bearer tokens never travel in cleartext and
  * to avoid mixed-content failures on HTTPS-hosted pages. Plain HTTP is only
- * accepted for loopback development URLs such as http://localhost:8080/api/v0.
+ * accepted for loopback development URLs such as http://localhost:8080/api/v1.
+ *
+ * A root-relative path (`/api/v1`) is accepted too: it keeps every call on the
+ * page's own origin, where a server-side proxy forwards it to the real API.
+ * That is the default now, so `localhost` in operator config never has to mean
+ * the *client's* localhost again.
  */
 export function isValidApiBaseUrl(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('/')) return !trimmed.startsWith('//') && !/\s/.test(trimmed);
   try {
-    const parsed = new URL(raw.trim());
+    const parsed = new URL(trimmed);
     if (parsed.protocol === 'https:') return true;
     return parsed.protocol === 'http:' && isLoopbackHost(parsed.hostname);
   } catch {

@@ -1,15 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
-import { Extension, Pagination, User } from '../types/api';
+import { useAuth } from '../context/AuthContext';
+import { ExtensionSummary, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
-import {
-  ArrowLeft,
-  Calendar,
-  Package,
-  AlertTriangle,
-  User as UserIcon,
-  RefreshCw,
-} from 'lucide-react';
+import { Icon } from '../components/Icon';
+import { toSameOriginImageUrl } from '../lib/profile-image';
 
 interface AuthorPageProps {
   namespace: string;
@@ -17,8 +12,9 @@ interface AuthorPageProps {
 }
 
 export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate }) => {
+  const { user, latestTermsVersion } = useAuth();
   const [author, setAuthor] = useState<User | null>(null);
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [extensions, setExtensions] = useState<ExtensionSummary[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [loading, setLoading] = useState(true);
   const [loadingExtensions, setLoadingExtensions] = useState(true);
@@ -40,12 +36,9 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       try {
         const res = await api.searchExtensions(namespace, cursor ? { cursor } : undefined);
         if (requestId !== loadExtensionsSeqRef.current) return;
-        const own = (res.data || []).filter(
-          (ext) =>
-            ext.namespace === namespace ||
-            (typeof ext.author === 'object' && ext.author?.namespace === namespace) ||
-            ext.author === namespace,
-        );
+        // List rows are addressed by their namespace; the spec's summary rows
+        // carry no author field to match against.
+        const own = (res.data || []).filter((ext) => ext.namespace === namespace);
         setExtensions((prev) => (cursor ? [...prev, ...own] : own));
         setPagination(res.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
@@ -91,6 +84,13 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     };
   }, [namespace, loadExtensions]);
 
+  // `termsAcceptedVersion` arrives only for self/admin viewers, so treat its
+  // absence as "hidden from you" rather than "never accepted".
+  const termsAccepted = author?.termsAcceptedVersion ?? null;
+  const isSelf = author !== null && user?.namespace === author.namespace;
+  const termsOutdated =
+    termsAccepted !== null && latestTermsVersion !== null && termsAccepted < latestTermsVersion;
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -110,10 +110,10 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   if (error || !author) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto" />
+        <Icon name="warning" className="icon-3xl text-rose-600 dark:text-rose-400 mx-auto" />
         <h2 className="text-xl font-display font-semibold text-ink">Author Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
-          {error || `No account named @${namespace} exists on this Twext instance.`}
+          {error || `No account named @${namespace} exists here.`}
         </p>
         <div className="pt-2">
           <button onClick={() => onNavigate('search')} className="btn btn-secondary">
@@ -130,47 +130,119 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         onClick={() => onNavigate('search')}
         className="text-xs text-ink-3 hover:text-ink flex items-center gap-1.5 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <Icon name="arrow_back" className="icon-sm" />
         Back to Explore
       </button>
 
-      <div className="card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-lg bg-wash dark:bg-raised border border-line flex items-center justify-center text-ink-2 font-bold text-2xl shrink-0">
-            {(author.displayName || author.namespace).charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-display font-semibold text-ink">
-                {author.displayName || author.namespace}
-              </h1>
-              <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-xs">
-                @{author.namespace}
-              </span>
-              {author.role === 'admin' && (
-                <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
-                  Admin
+      <div className="card p-0 overflow-hidden">
+        {author.bannerUrl && (
+          <img
+            src={toSameOriginImageUrl(author.bannerUrl, api.getBaseUrl()) ?? undefined}
+            alt={`Banner for @${author.namespace}`}
+            className="w-full h-28 sm:h-36 object-cover bg-wash dark:bg-raised"
+          />
+        )}
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <img
+              src={
+                toSameOriginImageUrl(
+                  author.avatarUrl || `${api.getBaseUrl()}/users/${author.namespace}/avatar`,
+                  api.getBaseUrl(),
+                ) ?? undefined
+              }
+              alt={`Avatar for @${author.namespace}`}
+              className="w-16 h-16 rounded-lg object-cover bg-wash dark:bg-raised border border-line shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-display font-semibold text-ink">
+                  {author.displayName || author.namespace}
+                </h1>
+                <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-xs">
+                  @{author.namespace}
                 </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
-              {author.createdAt && (
+                {author.role === 'admin' && (
+                  <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                    Admin
+                  </span>
+                )}
+                {isSelf && (
+                  <button
+                    onClick={() => onNavigate('settings')}
+                    className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium inline-flex items-center gap-1"
+                  >
+                    <Icon name="settings" className="icon-sm" />
+                    Edit profile
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
+                {author.createdAt && (
+                  <span className="flex items-center gap-1">
+                    <Icon name="calendar_today" className="icon-xs" />
+                    Member since {new Date(author.createdAt).toLocaleDateString()}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  Member since {new Date(author.createdAt).toLocaleDateString()}
+                  <Icon name="inventory_2" className="icon-xs" />
+                  {extensions.length}
+                  {pagination.hasMore ? '+' : ''} published extension
+                  {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
                 </span>
+                {!author.hasPublished && (
+                  <span className="flex items-center gap-1">
+                    <Icon name="person" className="icon-xs" />
+                    No published releases yet
+                  </span>
+                )}
+                {/*
+                  `termsAcceptedVersion` is serialized only for self and admin
+                  viewers, so its absence here means "not visible to you", not
+                  "never accepted".
+                */}
+                {termsAccepted !== null && (
+                  <span
+                    className="flex items-center gap-1"
+                    title={`Terms of Service version ${termsAccepted}`}
+                  >
+                    <Icon name="description" className="icon-xs" />
+                    {termsOutdated ? 'Terms update pending' : `Terms v${termsAccepted} accepted`}
+                    {termsOutdated && latestTermsVersion !== null && (
+                      <span className="font-mono">({latestTermsVersion} available)</span>
+                    )}
+                  </span>
+                )}
+              </div>
+              {author.bio && (
+                <p className="text-sm text-ink-2 leading-relaxed mt-3 whitespace-pre-wrap break-words">
+                  {author.bio}
+                </p>
               )}
-              <span className="flex items-center gap-1">
-                <Package className="w-3 h-3" />
-                {extensions.length}
-                {pagination.hasMore ? '+' : ''} published extension
-                {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
-              </span>
-              {!author.hasPublished && (
-                <span className="flex items-center gap-1">
-                  <UserIcon className="w-3 h-3" />
-                  No published releases yet
-                </span>
+              {(author.website || author.github) && (
+                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                  {author.website && (
+                    <a
+                      href={author.website}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1 break-all"
+                    >
+                      <Icon name="link" className="icon-xs shrink-0" />
+                      {author.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                  {author.github && (
+                    <a
+                      href={`https://github.com/${author.github}`}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-ink-2 hover:text-ink inline-flex items-center gap-1 font-mono"
+                    >
+                      @{author.github}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -186,7 +258,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
             onClick={() => loadExtensions()}
             className="text-xs text-lilac-700 dark:text-lilac-300 font-medium flex items-center gap-1"
           >
-            <RefreshCw className="w-3 h-3" />
+            <Icon name="refresh" className="icon-xs" />
             <span>Refresh</span>
           </button>
         </div>
@@ -202,7 +274,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           </div>
         ) : extensionsError ? (
           <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <Icon name="warning" className="shrink-0" />
             <span>{extensionsError}</span>
           </div>
         ) : extensions.length > 0 ? (
@@ -219,7 +291,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           <div className="border border-line rounded-lg bg-surface p-5 space-y-2">
             <p className="text-sm font-semibold text-ink">No published extensions</p>
             <p className="text-xs text-ink-3 max-w-lg leading-relaxed">
-              @{author.namespace} hasn't published any extensions to this registry yet.
+              @{author.namespace} hasn't published any extensions to this site yet.
             </p>
           </div>
         )}

@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Extension } from '../types/api';
+import { ExtensionSummary } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
-import { Settings } from 'lucide-react';
+import { WebhookPanel } from '../components/WebhookPanel';
+import { Icon } from '../components/Icon';
 
 interface DashboardPageProps {
   onNavigate: (route: string) => void;
@@ -11,8 +12,9 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [userExtensions, setUserExtensions] = useState<Extension[]>([]);
+  const [userExtensions, setUserExtensions] = useState<ExtensionSummary[]>([]);
   const [loadingExts, setLoadingExts] = useState(true);
+  const [webhooksFor, setWebhooksFor] = useState<{ namespace: string; id: string } | null>(null);
 
   const loadUserExtensions = useCallback(async () => {
     if (!user) return;
@@ -58,10 +60,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
   }
 
-  const publishedCount = userExtensions.filter(
-    (e) => e.status !== 'pending' && e.status !== 'yanked',
-  ).length;
-  const pendingCount = userExtensions.filter((e) => e.status === 'pending').length;
+  // Search only ever returns published versions, so every row counts as
+  // published and none of them are waiting on review.
+  const publishedCount = userExtensions.length;
+  const pendingCount = 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -82,8 +84,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1">
-                <span>Role: {user.role || 'author'}</span>
-                <span>•</span>
                 <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
@@ -92,7 +92,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             <button onClick={() => onNavigate('settings')} className="btn btn-secondary">
-              <Settings className="w-3.5 h-3.5" />
+              <Icon name="settings" className="icon-sm" />
               Settings
             </button>
           </div>
@@ -142,6 +142,61 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
+
+      {/* Webhooks are per-extension, so they are surfaced here per extension. */}
+      {userExtensions.length > 0 && (
+        <div className="space-y-4">
+          <div className="pb-2 border-b border-line">
+            <h2 className="text-xl font-display font-semibold text-ink flex items-center gap-2">
+              <Icon name="webhook" className="icon-lg text-lilac-700 dark:text-lilac-300" />
+              Webhooks
+            </h2>
+            <p className="text-xs text-ink-3 mt-1 max-w-2xl leading-relaxed">
+              Each extension gets its own webhooks. TwextHub sends a signed event to your URL when a
+              version is published, unpublished, deprecated, rejected, or changes owner. The signing
+              secret is shown once when the webhook is created.
+            </p>
+          </div>
+          <div className="divide-y divide-line border border-line rounded-lg">
+            {userExtensions.map((ext) => (
+              <div
+                key={`${ext.namespace}/${ext.id}`}
+                className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-ink truncate">{ext.name}</div>
+                  <div className="font-mono text-meta text-ink-3 truncate">
+                    @{ext.namespace}/{ext.id}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => onNavigate(`ext/${ext.namespace}/${ext.id}`)}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => setWebhooksFor({ namespace: ext.namespace, id: ext.id })}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    <Icon name="webhook" className="icon-sm" />
+                    Manage webhooks
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {webhooksFor && (
+        <WebhookPanel
+          namespace={webhooksFor.namespace}
+          id={webhooksFor.id}
+          onClose={() => setWebhooksFor(null)}
+        />
+      )}
     </div>
   );
 };

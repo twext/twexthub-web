@@ -34,7 +34,7 @@ describe('AuditPanel', () => {
     renderWithProviders(<AuditPanel />);
 
     expect(screen.queryByText(/Audited/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Run Audit/ }));
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
 
     expect(await screen.findByText(/Audited 1 account\(s\)/)).toBeInTheDocument();
     expect(screen.getByText('Expired sessions')).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('AuditPanel', () => {
     const user = userEvent.setup();
     renderWithProviders(<AuditPanel />);
 
-    await user.click(screen.getByRole('button', { name: /Run Audit/ }));
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
     await screen.findByText(/Audited 1 account\(s\)/);
     await user.click(screen.getByRole('button', { name: /Revoke all/ }));
     await user.click(await screen.findByRole('button', { name: 'Revoke sessions' }));
@@ -64,7 +64,7 @@ describe('AuditPanel', () => {
 
     const user = userEvent.setup();
     renderWithProviders(<AuditPanel />);
-    await user.click(screen.getByRole('button', { name: /Run Audit/ }));
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
 
     expect(await screen.findByText('Terms not accepted')).toBeInTheDocument();
     expect(screen.getByText('Dormant accounts')).toBeInTheDocument();

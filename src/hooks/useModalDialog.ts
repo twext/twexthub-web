@@ -3,6 +3,14 @@ import React, { useEffect, useRef } from 'react';
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Enabled dialogs in the order they opened, so the last entry is the one on
+ * top. Every dialog listens on `document` in the capture phase, and siblings on
+ * the same target all run even once one calls `stopPropagation`, so without this
+ * a single Escape would dismiss a confirm dialog and the panel beneath it.
+ */
+const openDialogs: symbol[] = [];
+
 interface UseModalDialogOptions {
   /** id of the element (usually the h2) naming the dialog. */
   labelledById?: string;
@@ -16,6 +24,11 @@ interface UseModalDialogOptions {
    * that mount only while open; pass the open flag for persistent components.
    */
   enabled?: boolean;
+  /**
+   * Element to focus on open. Defaults to the first focusable child, which is
+   * usually the close button rather than what the dialog is actually for.
+   */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 /**
@@ -28,9 +41,20 @@ export function useModalDialog<T extends HTMLElement>({
   ariaLabel,
   onClose,
   enabled = true,
+  initialFocusRef,
 }: UseModalDialogOptions) {
   const dialogRef = useRef<T | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  // The stack effect re-registers only when `enabled` changes, so the handler
+  // reads the current `onClose` through a ref instead of closing over the one
+  // from the render that turned the dialog on. An inline arrow is a new
+  // function every render, and depending on it directly would push the token
+  // back onto the end of `openDialogs` each time, promoting a lower dialog
+  // above one that opened after it.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -38,19 +62,23 @@ export function useModalDialog<T extends HTMLElement>({
     const dialog = dialogRef.current;
     if (dialog) {
       const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-      (firstFocusable ?? dialog).focus();
+      (initialFocusRef?.current ?? firstFocusable ?? dialog).focus();
     }
     return () => {
       previouslyFocusedRef.current?.focus?.();
     };
-  }, [enabled]);
+  }, [enabled, initialFocusRef]);
 
   useEffect(() => {
     if (!enabled) return;
+    const token = Symbol();
+    openDialogs.push(token);
+    const isTopmost = () => openDialogs.at(-1) === token;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && onClose) {
+      if (!isTopmost()) return;
+      if (e.key === 'Escape' && onCloseRef.current) {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -75,8 +103,12 @@ export function useModalDialog<T extends HTMLElement>({
       }
     };
     document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [enabled, onClose]);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      const at = openDialogs.indexOf(token);
+      if (at !== -1) openDialogs.splice(at, 1);
+    };
+  }, [enabled]);
 
   const dialogProps = {
     role: 'dialog' as const,

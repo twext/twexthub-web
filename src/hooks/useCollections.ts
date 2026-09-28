@@ -2,6 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import {
   clearRecentExtensions,
   clearSavedExtensions,
+  ExtensionIdentity,
   getRecentSnapshot,
   getSavedSnapshot,
   recordExtensionView,
@@ -9,7 +10,6 @@ import {
   subscribe,
   toggleExtensionSaved,
 } from '../lib/collections';
-import { Extension } from '../types/api';
 
 export function useSavedExtensions() {
   const saved = useSyncExternalStore(subscribe, getSavedSnapshot, getSavedSnapshot);
@@ -20,7 +20,7 @@ export function useSavedExtensions() {
     [saved],
   );
 
-  const toggle = useCallback((extension: Extension) => toggleExtensionSaved(extension), []);
+  const toggle = useCallback((extension: ExtensionIdentity) => toggleExtensionSaved(extension), []);
   const remove = useCallback(
     (namespace: string, id: string) => removeExtensionSaved(namespace, id),
     [],
@@ -32,7 +32,7 @@ export function useSavedExtensions() {
 
 export function useRecentExtensions() {
   const recent = useSyncExternalStore(subscribe, getRecentSnapshot, getRecentSnapshot);
-  const record = useCallback((extension: Extension) => recordExtensionView(extension), []);
+  const record = useCallback((extension: ExtensionIdentity) => recordExtensionView(extension), []);
   const clear = useCallback(() => clearRecentExtensions(), []);
   return { recent, record, clear };
 }

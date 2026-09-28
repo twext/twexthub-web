@@ -1,6 +1,6 @@
 import React from 'react';
 import { ModerationStatus } from '../types/api';
-import { AlertCircle, CheckCircle2, Clock, Ban } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface StatusBadgeProps {
   status?: ModerationStatus;
@@ -8,33 +8,46 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status = 'published', size = 'sm' }) => {
-  const styles: Record<ModerationStatus, { cls: string; label: string; icon: React.ReactNode }> = {
+  const tones: Record<ModerationStatus, { tone: string; label: string; icon: React.ReactNode }> = {
     published: {
-      cls: 'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
+      tone: 'success',
       label: 'Published',
-      icon: <CheckCircle2 className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+      icon: <Icon name="check_circle" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
     },
     pending: {
-      cls: 'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
-      label: 'Pending Review',
-      icon: <Clock className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+      tone: 'warn',
+      label: 'Awaiting review',
+      icon: <Icon name="schedule" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
     },
     yanked: {
-      cls: 'bg-rose-50 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60',
-      label: 'Yanked',
-      icon: <Ban className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+      tone: 'danger',
+      label: 'Unpublished',
+      icon: <Icon name="block" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
     },
     rejected: {
-      cls: 'bg-wash dark:bg-raised text-ink-2 dark:text-ink-2 border-line',
+      tone: 'neutral',
       label: 'Rejected',
-      icon: <AlertCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
+      icon: <Icon name="error" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
+    },
+    deprecated: {
+      tone: 'warn',
+      label: 'Deprecated',
+      icon: <Icon name="warning" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
+    },
+    staging: {
+      tone: 'neutral',
+      label: 'Draft',
+      icon: <Icon name="schedule" className={size === 'sm' ? 'icon-xs' : 'icon-sm'} />,
     },
   };
 
-  const current = styles[status] || styles.published;
+  const current = tones[status] || tones.published;
 
   return (
-    <span className={`chip ${current.cls} ${size === 'sm' ? 'text-xs' : 'text-sm px-2.5 py-1'}`}>
+    <span
+      data-tone={current.tone}
+      className={`chip tone-pill ${size === 'sm' ? 'text-xs' : 'text-sm px-2.5 py-1'}`}
+    >
       {current.icon}
       <span>{current.label}</span>
     </span>

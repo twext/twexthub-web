@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PendingVersion } from '../types/api';
 import { CodeEditor } from './CodeEditor';
-import { useModalDialog } from '../hooks/useModalDialog';
-import { Check, Copy, ShieldAlert, X } from 'lucide-react';
+import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 interface SourceReviewModalProps {
   item: PendingVersion;
@@ -30,11 +30,6 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const [codeUnavailable, setCodeUnavailable] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    labelledById: 'source-review-title',
-    onClose,
-  });
 
   const ns = item.ownerNamespace || item.namespace;
 
@@ -82,10 +77,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   };
 
   return (
-    <div
-      {...dialogProps}
-      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
-    >
+    <Modal variant="fullscreen" labelledById="source-review-title" onClose={onClose}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
@@ -99,11 +91,11 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
             <span className="font-mono text-xs text-ink-3">
               @{ns}/{item.id}
             </span>
-            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
+            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-meta">
               v{item.version}
             </span>
           </div>
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             Source review — inspect the compiled JavaScript before approving.
           </p>
         </div>
@@ -112,12 +104,12 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           className="text-ink-3 hover:text-ink transition-colors shrink-0"
           aria-label="Close source review"
         >
-          <X className="w-5 h-5" />
+          <Icon name="close" className="icon-lg" />
         </button>
       </div>
 
       {/* Metadata strip */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3 bg-wash dark:bg-raised border-b border-line text-[11px]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3 bg-wash dark:bg-raised border-b border-line text-meta">
         {item.description && (
           <span className="text-ink-2 line-clamp-1 max-w-xl">{item.description}</span>
         )}
@@ -145,7 +137,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           <div className="space-y-3">
             {codeUnavailable ? (
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-amber-600 shrink-0" />
                 <div>
                   <strong>extension.js is not available.</strong> The compiled output for this
                   version could not be loaded from the registry.
@@ -153,7 +145,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
               </div>
             ) : (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-rose-600 shrink-0" />
                 <div>
                   <strong>Unable to load extension.js:</strong> {codeError}
                 </div>
@@ -175,7 +167,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
+      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-meta text-ink-3 font-mono">
         <div className="min-w-0">
           <span>
             extension.js • {lineCount} lines • {sizeKb} KB
@@ -195,12 +187,12 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
         >
           {copied ? (
             <>
-              <Check className="w-3 h-3 text-emerald-600" />
+              <Icon name="check" className="icon-xs text-emerald-600" />
               <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
             </>
           ) : (
             <>
-              <Copy className="w-3 h-3" />
+              <Icon name="content_copy" className="icon-xs" />
               <span>Copy source</span>
             </>
           )}
@@ -226,6 +218,6 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           Approve & Publish
         </button>
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -85,6 +85,30 @@
   --font-mono:
     'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
+
+  /* Meta size: descriptions, timestamps, table rows, status bars. The app used
+     to reach for an arbitrary text-micro/text-meta; this puts it on the
+     scale so every piece of secondary text matches. */
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.5;
+
+  /* Micro size: chips, tags, kbd hints, uppercase captions. The smallest step
+     on the scale; anything smaller is a dot, not text. */
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.5;
+
+  /* Two-step radius scale. Cards and modals take the large step, everything
+     else the small step. Nothing else should introduce a radius. The inherited
+     Tailwind steps collapse onto these two so a stray rounded-md/xl can never
+     re-introduce a third, off-brand corner. */
+  --radius-panel: 0.5rem;
+  --radius-control: 0.25rem;
+  --radius-xs: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-panel);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-panel);
 }
 
 .dark {
@@ -98,6 +122,91 @@
   --color-ink-3: #9f97b4;
 }
 
+/*
+ * Semantic tones.
+ *
+ * Every status, alert, and pill in the app used to spell out its own colour
+ * ramp plus a `dark:` twin — 618 raw palette classes, 257 of them duplicated
+ * for dark mode. These five tones carry the whole set instead, and they flip
+ * with the theme, so no component ever needs a `dark:` variant for a tone.
+ *
+ * Use data-tone="neutral|info|success|warn|danger" on any element, then style
+ * it with .alert, .tone-pill, .tone-text, or .tone-bar.
+ */
+:root {
+  --tone-neutral-fg: var(--color-ink-2);
+  --tone-neutral-bg: var(--color-wash);
+  --tone-neutral-border: var(--color-line);
+
+  --tone-info-fg: var(--color-lilac-700);
+  --tone-info-bg: var(--color-lilac-50);
+  --tone-info-border: var(--color-lilac-200);
+
+  --tone-success-fg: var(--color-emerald-600);
+  --tone-success-bg: var(--color-emerald-50);
+  --tone-success-border: var(--color-emerald-200);
+
+  --tone-warn-fg: var(--color-amber-700);
+  --tone-warn-bg: var(--color-amber-50);
+  --tone-warn-border: var(--color-amber-200);
+
+  --tone-danger-fg: var(--color-rose-600);
+  --tone-danger-bg: var(--color-rose-50);
+  --tone-danger-border: var(--color-rose-200);
+}
+
+.dark {
+  --tone-neutral-fg: var(--color-ink-2);
+  --tone-neutral-bg: var(--color-raised);
+  --tone-neutral-border: var(--color-line);
+
+  --tone-info-fg: var(--color-lilac-300);
+  --tone-info-bg: var(--color-lilac-900);
+  --tone-info-border: var(--color-lilac-800);
+
+  --tone-success-fg: var(--color-emerald-300);
+  --tone-success-bg: var(--color-emerald-900);
+  --tone-success-border: var(--color-emerald-800);
+
+  --tone-warn-fg: var(--color-amber-300);
+  --tone-warn-bg: var(--color-amber-900);
+  --tone-warn-border: var(--color-amber-800);
+
+  --tone-danger-fg: var(--color-rose-300);
+  --tone-danger-bg: var(--color-rose-900);
+  --tone-danger-border: var(--color-rose-800);
+}
+
+[data-tone='neutral'] {
+  --tone-fg: var(--tone-neutral-fg);
+  --tone-bg: var(--tone-neutral-bg);
+  --tone-border: var(--tone-neutral-border);
+}
+
+[data-tone='info'] {
+  --tone-fg: var(--tone-info-fg);
+  --tone-bg: var(--tone-info-bg);
+  --tone-border: var(--tone-info-border);
+}
+
+[data-tone='success'] {
+  --tone-fg: var(--tone-success-fg);
+  --tone-bg: var(--tone-success-bg);
+  --tone-border: var(--tone-success-border);
+}
+
+[data-tone='warn'] {
+  --tone-fg: var(--tone-warn-fg);
+  --tone-bg: var(--tone-warn-bg);
+  --tone-border: var(--tone-warn-border);
+}
+
+[data-tone='danger'] {
+  --tone-fg: var(--tone-danger-fg);
+  --tone-bg: var(--tone-danger-bg);
+  --tone-border: var(--tone-danger-border);
+}
+
 @layer base {
   html {
     scrollbar-color: var(--color-zinc-400) transparent;
@@ -106,8 +215,7 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
-    font-family:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
@@ -137,7 +245,7 @@
     font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-control);
     padding: 0.6rem 0.95rem;
     border: 1px solid transparent;
     cursor: pointer;
@@ -198,7 +306,7 @@
 
   .input {
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-control);
     background: var(--color-surface);
     border: 1px solid var(--color-line);
     color: var(--color-ink);
@@ -219,9 +327,30 @@
     color: var(--color-ink-3);
   }
 
+  /*
+   * <select> styled as a control. The app previously put .input straight on
+   * <select>, which left the native dropdown chevron in place and the padding
+   * out of step with the text inputs. Use .select on <select> instead.
+   */
+  .select {
+    appearance: none;
+    padding-right: 1.75rem;
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentcolor 50%),
+      linear-gradient(135deg, currentcolor 50%, transparent 50%);
+    background-position:
+      calc(100% - 0.95rem) calc(50% + 1px),
+      calc(100% - 0.65rem) calc(50% + 1px);
+    background-size:
+      5px 5px,
+      5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
   .card {
     border: 1px solid var(--color-line);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-panel);
     background: var(--color-surface);
     transition:
       border-color 0.15s ease,
@@ -232,9 +361,9 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    border-radius: 0.3125rem;
+    border-radius: var(--radius-control);
     padding: 0.18rem 0.45rem;
-    font-size: 0.6875rem;
+    font-size: var(--text-meta);
     font-weight: 600;
     line-height: 1.4;
     border: 1px solid transparent;
@@ -242,11 +371,44 @@
   }
 
   .label {
-    font-size: 0.6875rem;
+    font-size: var(--text-meta);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.09em;
     color: var(--color-ink-3);
+  }
+
+  /*
+   * Tone shapes. data-tone="neutral|info|success|warn|danger" picks the colour
+   * trio (--tone-fg/-bg/-border), and these shapes apply it. Prefer these over
+   * hand-rolled rose/amber pills with a dark: twin -- every status, alert, and
+   * badge in the app should route through one of them.
+   */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--tone-border);
+    border-radius: var(--radius-panel);
+    background: var(--tone-bg);
+    color: var(--tone-fg);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .tone-pill {
+    background: var(--tone-bg);
+    border-color: var(--tone-border);
+    color: var(--tone-fg);
+  }
+
+  .tone-text {
+    color: var(--tone-fg);
+  }
+
+  .tone-bar {
+    background: var(--tone-bg);
   }
 }
 
@@ -314,7 +476,7 @@
   background-color: var(--color-lilac-50);
   color: var(--color-lilac-700);
   padding: 0.15rem 0.35rem;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-control);
   font-size: 0.875em;
   font-family: var(--font-mono);
   border: 1px solid var(--color-lilac-200);
@@ -330,7 +492,7 @@
   background-color: #17151d;
   color: #ece8f5;
   padding: 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-panel);
   overflow-x: auto;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -348,6 +510,227 @@
   padding: 0;
   border: none;
   font-size: 0.9em;
+}
+
+/*
+ * Icons.
+ *
+ * Lucide, rendered as inline SVG. Every glyph is drawn on a 24-unit grid
+ * with the stroke optically centered in its viewBox, so a flex row or button
+ * aligns it to the text with no per-glyph corrections of the kind the
+ * Material font needed.
+ *
+ * The span carries size and tint. The SVG is pinned to the current font size
+ * with 1em, so .icon-xs through .icon-3xl along with the text-* utilities
+ * all just work. Stroke and fill use currentColor, so an icon follows the
+ * tone of the text around it. .icon-filled decides whether the drawn outline
+ * is solid-filled, the role the Material FILL axis used to play.
+ */
+.icon {
+  /*
+   * Track whatever the surrounding text is set at, so an icon next to 11px
+   * metadata is 11px too. A fixed size here left unsized icons a full 16px
+   * inside text-xs labels and buttons. The .icon-* steps below still win,
+   * since they come later in the cascade.
+   */
+  font-size: inherit;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  /*
+   * True inline (non-flex) text runs anchor an inline-flex icon to the text
+   * baseline. Middle puts the icon's center on the parent's x-height line,
+   * where the lowercase letters it sits next to are centered. Flex rows
+   * ignore vertical-align entirely, so this only touches genuine inline
+   * embedding.
+   */
+  vertical-align: middle;
+  user-select: none;
+}
+
+.icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.icon-xs {
+  font-size: 0.75rem;
+}
+
+.icon-sm {
+  font-size: 0.875rem;
+}
+
+.icon-lg {
+  font-size: 1.25rem;
+}
+
+.icon-xl {
+  font-size: 1.5rem;
+}
+
+.icon-2xl {
+  font-size: 2rem;
+}
+
+.icon-3xl {
+  font-size: 2.5rem;
+}
+
+@layer components {
+  /* Modals: one overlay, one panel, one entrance. */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(4px);
+    /* Keep a scroll gesture inside the panel from chaining to the page. */
+    overscroll-behavior: contain;
+    animation: modal-overlay-in 140ms ease-out both;
+  }
+
+  .modal-panel {
+    width: 100%;
+    /* Height is capped so the panel scrolls internally instead of the page. */
+    max-height: 85vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 20px 40px -12px rgb(15 12 24 / 0.35);
+    animation: modal-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /*
+   * Full-screen variants (the Markdown editor, site metrics, source review) are
+   * the dialog surface itself: no backdrop, no inset, nothing to scroll around.
+   */
+  .modal-panel-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--color-surface);
+    animation-name: modal-fullscreen-in;
+  }
+}
+
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes modal-fullscreen-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-panel {
+    animation: none;
+  }
+}
+
+/*
+ * Sidebar. One column, two widths: the full column, and the icon rail it
+ * collapses to. The width is a custom property so the transition animates a
+ * single value rather than two competing width utilities.
+ */
+.sidebar-rail {
+  width: 15rem;
+  transition: width 180ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] {
+  width: 3.5rem;
+}
+
+/*
+ * Expanded, the contents scroll inside the column. Collapsed, the rail is short
+ * enough to fit any laptop, and leaving it unclipped is what lets the label
+ * flyouts escape sideways instead of being cut off at the column edge.
+ */
+.sidebar-rail[data-collapsed='false'] .sidebar-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Collapsed: icons stand in for the labels, which fly out on hover or focus.
+ */
+.sidebar-rail[data-collapsed='true'] [data-tip] {
+  position: relative;
+}
+.sidebar-rail[data-collapsed='true'] [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 0.5rem);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 60;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-control);
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] [data-tip]:hover::after,
+.sidebar-rail[data-collapsed='true'] [data-tip]:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-rail {
+    transition: none;
+  }
+
+  .sidebar-rail[data-collapsed='true'] [data-tip]::after {
+    transition: none;
+  }
 }
 
 .markdown-body blockquote {
@@ -449,4 +832,15 @@
 
 :is(.code-highlight, .markdown-body) .token.entity {
   cursor: help;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

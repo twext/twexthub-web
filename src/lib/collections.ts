@@ -1,4 +1,22 @@
-import { Extension } from '../types/api';
+import { Extension, ExtensionVersion } from '../types/api';
+
+/**
+ * The identity a saved/recent item keeps: satisfied by a detail payload, a
+ * list or search row, and a card alike.
+ */
+export interface ExtensionIdentity {
+  namespace: string;
+  id: string;
+  name: string;
+  description?: string;
+  shortDescription?: string;
+  author?: Extension['author'];
+  /** Latest published version, as detail and list rows spell it. */
+  version?: string;
+  /** Legacy local-storage spelling kept for previously saved items. */
+  latestVersion?: string;
+  versions?: ExtensionVersion[];
+}
 
 const SAVED_KEY = 'twexthub_saved_extensions';
 const RECENT_KEY = 'twexthub_recent_extensions';
@@ -67,21 +85,21 @@ export function getRecentSnapshot(): RecentExtension[] {
   return recentCache;
 }
 
-export function extensionAuthor(extension: Extension): string {
+export function extensionAuthor(extension: ExtensionIdentity): string {
   if (typeof extension.author === 'object' && extension.author !== null) {
     return extension.author.displayName || extension.author.namespace;
   }
   return extension.author || extension.namespace;
 }
 
-function toSaved(extension: Extension): SavedExtension {
+function toSaved(extension: ExtensionIdentity): SavedExtension {
   return {
     namespace: extension.namespace,
     id: extension.id,
     name: extension.name,
     description: extension.shortDescription || extension.description,
     author: extensionAuthor(extension),
-    latestVersion: extension.latestVersion || extension.versions?.[0]?.version,
+    latestVersion: extension.version || extension.latestVersion || extension.versions?.[0]?.version,
     savedAt: new Date().toISOString(),
   };
 }
@@ -91,7 +109,7 @@ export function isExtensionSaved(namespace: string, id: string): boolean {
 }
 
 /** Toggles the saved state. Returns `true` when the extension is now saved. */
-export function toggleExtensionSaved(extension: Extension): boolean {
+export function toggleExtensionSaved(extension: ExtensionIdentity): boolean {
   const current = getSavedSnapshot();
   const exists = current.some(
     (item) => item.namespace === extension.namespace && item.id === extension.id,
@@ -122,7 +140,7 @@ export function clearSavedExtensions(): void {
   emit();
 }
 
-export function recordExtensionView(extension: Extension): void {
+export function recordExtensionView(extension: ExtensionIdentity): void {
   const ref: RecentExtension = {
     namespace: extension.namespace,
     id: extension.id,

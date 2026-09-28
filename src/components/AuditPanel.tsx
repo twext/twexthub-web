@@ -3,18 +3,7 @@ import { api, ApiError } from '../services/api';
 import { AutomationToken, PaginatedList, Session, User } from '../types/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToast } from '../context/ToastContext';
-import {
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Key,
-  Laptop,
-  Loader2,
-  RefreshCw,
-  ShieldAlert,
-  Trash2,
-} from 'lucide-react';
+import { Icon, IconName } from './Icon';
 
 interface AuditItem {
   id: string;
@@ -70,28 +59,26 @@ function isIdle(date?: string | null): boolean {
 const AuditList: React.FC<{ items: AuditItem[] }> = ({ items }) => (
   <ul className="mt-2 border border-line rounded-lg divide-y divide-line max-h-48 overflow-y-auto">
     {items.slice(0, MAX_ITEMS_SHOWN).map((item) => (
-      <li key={item.id} className="px-3 py-2 text-[11px] flex items-center justify-between gap-3">
+      <li key={item.id} className="px-3 py-2 text-meta flex items-center justify-between gap-3">
         <span className="font-mono text-ink-2 truncate">@{item.namespace}</span>
         <span className="text-ink-3 truncate">{item.label}</span>
       </li>
     ))}
     {items.length > MAX_ITEMS_SHOWN && (
-      <li className="px-3 py-2 text-[11px] text-ink-3">
-        +{items.length - MAX_ITEMS_SHOWN} more...
-      </li>
+      <li className="px-3 py-2 text-meta text-ink-3">+{items.length - MAX_ITEMS_SHOWN} more...</li>
     )}
   </ul>
 );
 
 const FindingCard: React.FC<{
-  icon: React.ElementType;
+  icon: IconName;
   title: string;
   count: number;
   description: string;
   tone?: 'warning' | 'danger' | 'info';
   action?: React.ReactNode;
   children?: React.ReactNode;
-}> = ({ icon: Icon, title, count, description, tone = 'info', action, children }) => {
+}> = ({ icon, title, count, description, tone = 'info', action, children }) => {
   const toneClass =
     count === 0
       ? 'text-emerald-600 dark:text-emerald-400'
@@ -104,10 +91,10 @@ const FindingCard: React.FC<{
     <div className="border border-line rounded-lg p-3.5 space-y-1">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Icon className={`w-4 h-4 ${toneClass}`} />
+          <Icon name={icon} className={toneClass} />
           <span className="text-xs font-semibold text-ink">{title}</span>
           <span
-            className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+            className={`text-micro font-mono font-bold px-1.5 py-0.2 rounded-full ${
               count === 0
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                 : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
@@ -118,7 +105,7 @@ const FindingCard: React.FC<{
         </div>
         {count > 0 && action}
       </div>
-      <p className="text-[11px] text-ink-3 leading-relaxed">{description}</p>
+      <p className="text-meta text-ink-3 leading-relaxed">{description}</p>
       {count > 0 && children}
     </div>
   );
@@ -238,7 +225,7 @@ export const AuditPanel: React.FC = () => {
       }
     } catch (err: unknown) {
       if (mountedRef.current) {
-        setError(err instanceof ApiError ? err.message : 'Failed to run the registry audit');
+        setError(err instanceof ApiError ? err.message : 'Failed to run the health check');
       }
     } finally {
       if (mountedRef.current) setScanning(false);
@@ -323,12 +310,12 @@ export const AuditPanel: React.FC = () => {
 
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <ShieldAlert className="w-4 h-4 text-lilac-600 dark:text-lilac-300 mt-0.5" />
+          <Icon name="gpp_maybe" className="text-lilac-600 dark:text-lilac-300" />
           <div>
-            <h3 className="text-sm font-semibold text-ink">Registry Health Audit</h3>
-            <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
-              Scan every account for expired sessions and tokens, stale sign-ins, unaccepted terms,
-              and dormant accounts. Findings are informational unless an action is offered.
+            <h3 className="text-sm font-semibold text-ink">Health check</h3>
+            <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
+              Scans every account for expired sign-ins, unused access keys, unaccepted terms, and
+              dormant accounts. Findings are informational unless an action is offered.
             </p>
           </div>
         </div>
@@ -337,14 +324,14 @@ export const AuditPanel: React.FC = () => {
           disabled={scanning || busyAction !== null}
           className="btn btn-primary btn-sm shrink-0 disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${scanning ? 'animate-spin' : ''}`} />
-          <span>{scanning ? 'Auditing...' : 'Run Audit'}</span>
+          <Icon name="refresh" className={`icon-sm ${scanning ? 'animate-spin' : ''}`} />
+          <span>{scanning ? 'Checking...' : 'Check now'}</span>
         </button>
       </div>
 
       {scanning && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-ink-3">
+          <div className="flex items-center justify-between text-meta text-ink-3">
             <span>
               Inspecting accounts... {progress.done} of {progress.total}
             </span>
@@ -361,21 +348,21 @@ export const AuditPanel: React.FC = () => {
 
       {error && (
         <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-300 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <Icon name="warning" className="shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {report && !scanning && (
         <div className="space-y-3">
-          <div className="text-[11px] text-ink-3">
+          <div className="text-meta text-ink-3">
             Audited {report.scannedUsers} account(s) at{' '}
             {new Date(report.scannedAt).toLocaleTimeString()}.
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <FindingCard
-              icon={Laptop}
+              icon="laptop"
               title="Expired sessions"
               count={report.expiredSessions.length}
               tone="danger"
@@ -387,9 +374,9 @@ export const AuditPanel: React.FC = () => {
                   className="btn btn-danger btn-sm disabled:opacity-50"
                 >
                   {busyAction === 'sessions' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Icon name="progress_activity" className="icon-sm animate-spin" />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Icon name="delete" className="icon-sm" />
                   )}
                   <span>Revoke all</span>
                 </button>
@@ -399,7 +386,7 @@ export const AuditPanel: React.FC = () => {
             </FindingCard>
 
             <FindingCard
-              icon={Key}
+              icon="key"
               title="Expired tokens"
               count={report.expiredTokens.length}
               tone="danger"
@@ -411,9 +398,9 @@ export const AuditPanel: React.FC = () => {
                   className="btn btn-danger btn-sm disabled:opacity-50"
                 >
                   {busyAction === 'tokens' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Icon name="progress_activity" className="icon-sm animate-spin" />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Icon name="delete" className="icon-sm" />
                   )}
                   <span>Delete all</span>
                 </button>
@@ -423,7 +410,7 @@ export const AuditPanel: React.FC = () => {
             </FindingCard>
 
             <FindingCard
-              icon={Clock}
+              icon="schedule"
               title="Idle sessions"
               count={report.idleSessions.length}
               tone="warning"
@@ -433,7 +420,7 @@ export const AuditPanel: React.FC = () => {
             </FindingCard>
 
             <FindingCard
-              icon={Key}
+              icon="key"
               title={`Tokens expiring within ${EXPIRING_SOON_DAYS} days`}
               count={report.expiringTokens.length}
               tone="warning"
@@ -443,7 +430,7 @@ export const AuditPanel: React.FC = () => {
             </FindingCard>
 
             <FindingCard
-              icon={Activity}
+              icon="monitoring"
               title="Terms not accepted"
               count={report.pendingTerms.length}
               tone="warning"
@@ -453,7 +440,7 @@ export const AuditPanel: React.FC = () => {
                 {report.pendingTerms.slice(0, MAX_ITEMS_SHOWN).map((item) => (
                   <li
                     key={item.namespace}
-                    className="px-3 py-2 text-[11px] flex items-center justify-between gap-3"
+                    className="px-3 py-2 text-meta flex items-center justify-between gap-3"
                   >
                     <span className="font-mono text-ink-2">@{item.namespace}</span>
                     <span className="text-ink-3">
@@ -466,7 +453,7 @@ export const AuditPanel: React.FC = () => {
             </FindingCard>
 
             <FindingCard
-              icon={Activity}
+              icon="monitoring"
               title="Dormant accounts"
               count={report.dormantUsers.length}
               tone="info"
@@ -476,7 +463,7 @@ export const AuditPanel: React.FC = () => {
                 {report.dormantUsers.slice(0, MAX_ITEMS_SHOWN).map((item) => (
                   <li
                     key={item.namespace}
-                    className="px-3 py-2 text-[11px] flex items-center justify-between gap-3"
+                    className="px-3 py-2 text-meta flex items-center justify-between gap-3"
                   >
                     <span className="font-mono text-ink-2">@{item.namespace}</span>
                     {item.hasPublished && <span className="text-ink-3">has published</span>}
@@ -493,7 +480,7 @@ export const AuditPanel: React.FC = () => {
             report.pendingTerms.length === 0 &&
             report.dormantUsers.length === 0 && (
               <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300">
-                <CheckCircle2 className="w-4 h-4" />
+                <Icon name="check_circle" />
                 <span>No issues found. The registry looks healthy.</span>
               </div>
             )}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PrivacyDoc } from '../types/api';
 import { MarkdownView } from '../components/MarkdownView';
-import { Shield, Calendar, AlertCircle } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 export const PrivacyPage: React.FC = () => {
   const [privacy, setPrivacy] = useState<PrivacyDoc | null>(null);
@@ -43,7 +43,7 @@ export const PrivacyPage: React.FC = () => {
       {/* Header */}
       <div className="pb-4 border-b border-line">
         <div className="flex items-center gap-2 mb-1">
-          <Shield className="w-5 h-5 text-lilac-500 dark:text-lilac-300" />
+          <Icon name="shield" className="icon-lg text-lilac-500 dark:text-lilac-300" />
           <h1 className="text-2xl font-display font-semibold text-ink">Privacy Policy</h1>
         </div>
         <div className="flex items-center gap-3 text-xs text-ink-3">
@@ -54,7 +54,7 @@ export const PrivacyPage: React.FC = () => {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+                <Icon name="calendar_today" className="icon-sm" />
                 Last Updated {new Date(privacy.updatedAt).toLocaleDateString()}
               </span>
             </>
@@ -73,7 +73,7 @@ export const PrivacyPage: React.FC = () => {
           </div>
         ) : error ? (
           <div className="text-center py-12 text-xs text-rose-600 dark:text-rose-400 space-y-2">
-            <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+            <Icon name="error" className="icon-2xl text-rose-400 mx-auto" />
             <p className="font-semibold">{error}</p>
           </div>
         ) : privacy ? (

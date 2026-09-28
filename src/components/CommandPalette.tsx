@@ -2,31 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
-import { useModalDialog } from '../hooks/useModalDialog';
-import { Extension } from '../types/api';
-import {
-  Bookmark,
-  Compass,
-  FileText,
-  Home,
-  Loader2,
-  Lock,
-  LogOut,
-  Moon,
-  Package,
-  Search,
-  Settings,
-  Shield,
-  Sun,
-  User as UserIcon,
-} from 'lucide-react';
+import { ExtensionSummary } from '../types/api';
+import { Icon, IconName } from './Icon';
+import { Modal } from './Modal';
 
 interface PaletteItem {
   id: string;
   label: string;
   hint?: string;
   group: string;
-  icon: React.ElementType;
+  icon: IconName;
   run: () => void;
 }
 
@@ -40,7 +25,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Extension[]>([]);
+  const [results, setResults] = useState<ExtensionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +72,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         id: 'nav-home',
         label: 'Home',
         group: 'Navigate',
-        icon: Home,
+        icon: 'home',
         run: () => onNavigate('home'),
       },
       {
@@ -95,35 +80,35 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         label: 'Explore Extensions',
         hint: 'search',
         group: 'Navigate',
-        icon: Compass,
+        icon: 'explore',
         run: () => onNavigate('search'),
       },
       {
         id: 'nav-saved',
         label: 'Saved Extensions',
         group: 'Navigate',
-        icon: Bookmark,
+        icon: 'bookmark',
         run: () => onNavigate('saved'),
       },
       {
         id: 'action-theme',
         label: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
         group: 'Actions',
-        icon: theme === 'dark' ? Sun : Moon,
+        icon: theme === 'dark' ? 'light_mode' : 'dark_mode',
         run: toggleTheme,
       },
       {
         id: 'nav-terms',
         label: 'Terms of Service',
         group: 'Navigate',
-        icon: FileText,
+        icon: 'description',
         run: () => onNavigate('terms'),
       },
       {
         id: 'nav-privacy',
         label: 'Privacy Policy',
         group: 'Navigate',
-        icon: Lock,
+        icon: 'lock',
         run: () => onNavigate('privacy'),
       },
     ];
@@ -134,21 +119,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         label: 'Dashboard',
         hint: user?.namespace ? `@${user.namespace}` : undefined,
         group: 'Navigate',
-        icon: UserIcon,
+        icon: 'person',
         run: () => onNavigate('dashboard'),
       });
       items.splice(4, 0, {
         id: 'nav-settings',
         label: 'Settings',
         group: 'Navigate',
-        icon: Settings,
+        icon: 'settings',
         run: () => onNavigate('settings'),
       });
       items.push({
         id: 'action-logout',
         label: 'Sign Out',
         group: 'Actions',
-        icon: LogOut,
+        icon: 'logout',
         run: async () => {
           await logout();
           onNavigate('home');
@@ -161,7 +146,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         id: 'nav-admin',
         label: 'Registry Administration',
         group: 'Navigate',
-        icon: Shield,
+        icon: 'shield',
         run: () => onNavigate('admin'),
       });
     }
@@ -179,7 +164,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
       label: ext.name,
       hint: `@${ext.namespace}/${ext.id}`,
       group: 'Extensions',
-      icon: Package,
+      icon: 'inventory_2',
       run: () => onNavigate(`ext/${ext.namespace}/${ext.id}`),
     }));
     return [...extensionItems, ...filteredCommands];
@@ -192,14 +177,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
-
-  // The palette stays mounted, so enable the dialog behavior only while open;
-  // the hook owns Escape, Tab trapping, initial focus, and focus restoration.
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    ariaLabel: 'Command palette',
-    onClose,
-    enabled: open,
-  });
 
   if (!open) return null;
 
@@ -225,88 +202,88 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
   let lastGroup = '';
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-[65] flex items-start justify-center p-4 pt-[12vh] bg-black/50 backdrop-blur-xs"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Modal
+      onClose={onClose}
+      size="xl"
+      zIndex={65}
+      ariaLabel="Command palette"
+      initialFocusRef={inputRef}
+      className="p-0 overflow-hidden"
     >
-      <div {...dialogProps} className="card w-full max-w-xl p-0 overflow-hidden focus:outline-none">
-        <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
-          <Search className="w-4 h-4 text-ink-3 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            role="combobox"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search extensions or jump to a page..."
-            aria-label="Command palette search"
-            aria-expanded
-            aria-controls="command-palette-results"
-            aria-activedescendant={
-              items.length > 0 ? `command-palette-option-${activeIndex}` : undefined
-            }
-            autoComplete="off"
-            spellCheck={false}
-            className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
-          />
-          {loading && <Loader2 className="w-3.5 h-3.5 text-ink-3 animate-spin shrink-0" />}
-          <kbd className="hidden sm:inline-block text-[10px] font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
-            Esc
-          </kbd>
-        </div>
-
-        <div
-          id="command-palette-results"
-          role="listbox"
-          aria-label="Command palette results"
-          className="max-h-[55vh] overflow-y-auto py-1.5"
-        >
-          {items.length === 0 ? (
-            <p className="px-3.5 py-6 text-center text-xs text-ink-3">
-              {query.trim().length >= 2 && !loading
-                ? 'No matching extensions or commands.'
-                : 'Type at least two characters to search the registry.'}
-            </p>
-          ) : (
-            items.map((item, index) => {
-              const Icon = item.icon;
-              const showGroup = item.group !== lastGroup;
-              lastGroup = item.group;
-              const isActive = index === activeIndex;
-              return (
-                <React.Fragment key={item.id}>
-                  {showGroup && (
-                    <div className="px-3.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
-                      {item.group}
-                    </div>
-                  )}
-                  <div
-                    id={`command-palette-option-${index}`}
-                    ref={isActive ? activeRef : undefined}
-                    role="option"
-                    aria-selected={isActive}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => select(item)}
-                    className={`mx-1.5 px-2.5 py-2 rounded-lg cursor-pointer flex items-center gap-2.5 text-sm ${
-                      isActive ? 'bg-wash dark:bg-raised text-ink' : 'text-ink-2'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 text-ink-3 shrink-0" />
-                    <span className="flex-1 min-w-0 truncate">{item.label}</span>
-                    {item.hint && (
-                      <span className="text-[11px] font-mono text-ink-3 truncate">{item.hint}</span>
-                    )}
-                  </div>
-                </React.Fragment>
-              );
-            })
-          )}
-        </div>
+      <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
+        <Icon name="search" className="text-ink-3 shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          role="combobox"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search extensions or jump to a page..."
+          aria-label="Command palette search"
+          aria-expanded
+          aria-controls="command-palette-results"
+          aria-activedescendant={
+            items.length > 0 ? `command-palette-option-${activeIndex}` : undefined
+          }
+          autoComplete="off"
+          spellCheck={false}
+          className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
+        />
+        {loading && (
+          <Icon name="progress_activity" className="icon-sm text-ink-3 animate-spin shrink-0" />
+        )}
+        <kbd className="hidden sm:inline-block text-micro font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
+          Esc
+        </kbd>
       </div>
-    </div>
+
+      <div
+        id="command-palette-results"
+        role="listbox"
+        aria-label="Command palette results"
+        className="max-h-[55vh] overflow-y-auto py-1.5"
+      >
+        {items.length === 0 ? (
+          <p className="px-3.5 py-6 text-center text-xs text-ink-3">
+            {query.trim().length >= 2 && !loading
+              ? 'No matching extensions or commands.'
+              : 'Type at least two characters to search the registry.'}
+          </p>
+        ) : (
+          items.map((item, index) => {
+            const showGroup = item.group !== lastGroup;
+            lastGroup = item.group;
+            const isActive = index === activeIndex;
+            return (
+              <React.Fragment key={item.id}>
+                {showGroup && (
+                  <div className="px-3.5 pt-2 pb-1 text-micro font-semibold uppercase tracking-wide text-ink-3">
+                    {item.group}
+                  </div>
+                )}
+                <div
+                  id={`command-palette-option-${index}`}
+                  ref={isActive ? activeRef : undefined}
+                  role="option"
+                  aria-selected={isActive}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => select(item)}
+                  className={`mx-1.5 px-2.5 py-2 rounded-lg cursor-pointer flex items-center gap-2.5 text-sm ${
+                    isActive ? 'bg-wash dark:bg-raised text-ink' : 'text-ink-2'
+                  }`}
+                >
+                  <Icon name={item.icon} className="text-ink-3 shrink-0" />
+                  <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                  {item.hint && (
+                    <span className="text-meta font-mono text-ink-3 truncate">{item.hint}</span>
+                  )}
+                </div>
+              </React.Fragment>
+            );
+          })
+        )}
+      </div>
+    </Modal>
   );
 };

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { downloadFile, timestampedFilename, toCsv } from '../lib/csv';
 import { useToast } from '../context/ToastContext';
-import { Extension, PaginatedList, PendingVersion, User } from '../types/api';
-import { Download, FileJson, FileSpreadsheet, Package, ShieldCheck, Users } from 'lucide-react';
+import { ExtensionSummary, PaginatedList, PendingVersion, User } from '../types/api';
+import { Icon, IconName } from './Icon';
 
 async function collectAll<T>(
   fetcher: (params?: { cursor?: string; limit?: number }) => Promise<PaginatedList<T>>,
@@ -20,20 +20,16 @@ async function collectAll<T>(
   return all;
 }
 
-const extensionRows = (items: Extension[]) =>
+const extensionRows = (items: ExtensionSummary[]) =>
   items.map((ext) => ({
     namespace: ext.namespace,
     id: ext.id,
     name: ext.name,
-    description: ext.shortDescription || ext.description || '',
-    author:
-      typeof ext.author === 'object' && ext.author !== null
-        ? ext.author.displayName || ext.author.namespace
-        : ext.author,
-    latestVersion: ext.latestVersion || '',
-    status: ext.status || 'published',
-    createdAt: ext.createdAt || '',
-    updatedAt: ext.updatedAt || '',
+    description: ext.description || '',
+    author: ext.namespace,
+    latestVersion: ext.version || '',
+    status: 'published',
+    publishedAt: ext.publishedAt || '',
   }));
 
 const userRows = (items: User[]) =>
@@ -67,28 +63,29 @@ export const ExportPanel: React.FC = () => {
     key: DatasetKey;
     label: string;
     description: string;
-    icon: React.ElementType;
+    icon: IconName;
     load: () => Promise<Array<Record<string, unknown>>>;
   }> = [
     {
       key: 'extensions',
-      label: 'Extension Catalog',
+      label: 'Extensions',
       description: 'Every published extension with metadata.',
-      icon: Package,
-      load: async () => extensionRows(await collectAll<Extension>((p) => api.getExtensions(p))),
+      icon: 'inventory_2',
+      load: async () =>
+        extensionRows(await collectAll<ExtensionSummary>((p) => api.getExtensions(p))),
     },
     {
       key: 'users',
       label: 'Accounts',
-      description: 'All registered accounts and roles.',
-      icon: Users,
+      description: 'All registered accounts.',
+      icon: 'group',
       load: async () => userRows(await collectAll<User>((p) => api.getUsers(p))),
     },
     {
       key: 'queue',
-      label: 'Moderation Queue',
+      label: 'Pending versions',
       description: 'Versions currently awaiting review.',
-      icon: ShieldCheck,
+      icon: 'verified_user',
       load: async () =>
         queueRows(await collectAll<PendingVersion>((p) => api.listVersionsForReview(p))),
     },
@@ -118,18 +115,18 @@ export const ExportPanel: React.FC = () => {
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-start gap-2">
-        <Download className="w-4 h-4 text-lilac-600 dark:text-lilac-300 mt-0.5" />
+        <Icon name="download" className="text-lilac-600 dark:text-lilac-300" />
         <div>
-          <h3 className="text-sm font-semibold text-ink">Registry Data Export</h3>
-          <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
-            Download registry data compiled in your browser. Nothing is stored on the server.
+          <h3 className="text-sm font-semibold text-ink">Download site data</h3>
+          <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
+            Download a copy of the site's data, compiled right in your browser. Nothing is stored on
+            the server.
           </p>
         </div>
       </div>
 
       <div className="divide-y divide-line border border-line rounded-lg">
         {datasets.map((dataset) => {
-          const Icon = dataset.icon;
           const jsonBusy = busy === `${dataset.key}:json`;
           const csvBusy = busy === `${dataset.key}:csv`;
           return (
@@ -138,10 +135,10 @@ export const ExportPanel: React.FC = () => {
               className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="flex items-start gap-2.5 min-w-0">
-                <Icon className="w-4 h-4 text-ink-3 mt-0.5 shrink-0" />
+                <Icon name={dataset.icon} className="text-ink-3 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-ink">{dataset.label}</div>
-                  <div className="text-[11px] text-ink-3">{dataset.description}</div>
+                  <div className="text-meta text-ink-3">{dataset.description}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -150,7 +147,7 @@ export const ExportPanel: React.FC = () => {
                   disabled={busy !== null}
                   className="btn btn-secondary btn-sm disabled:opacity-50"
                 >
-                  <FileJson className="w-3.5 h-3.5" />
+                  <Icon name="data_object" className="icon-sm" />
                   <span>{jsonBusy ? 'Exporting...' : 'JSON'}</span>
                 </button>
                 <button
@@ -158,7 +155,7 @@ export const ExportPanel: React.FC = () => {
                   disabled={busy !== null}
                   className="btn btn-secondary btn-sm disabled:opacity-50"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <Icon name="table_chart" className="icon-sm" />
                   <span>{csvBusy ? 'Exporting...' : 'CSV'}</span>
                 </button>
               </div>

@@ -31,9 +31,9 @@ beforeEach(() => {
 describe('ExportPanel', () => {
   it('renders an export row for every dataset', () => {
     renderWithProviders(<ExportPanel />);
-    expect(screen.getByText('Extension Catalog')).toBeInTheDocument();
+    expect(screen.getByText('Extensions')).toBeInTheDocument();
     expect(screen.getByText('Accounts')).toBeInTheDocument();
-    expect(screen.getByText('Moderation Queue')).toBeInTheDocument();
+    expect(screen.getByText('Pending versions')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /JSON/ })).toHaveLength(3);
     expect(screen.getAllByRole('button', { name: /CSV/ })).toHaveLength(3);
   });
@@ -47,7 +47,7 @@ describe('ExportPanel', () => {
     expect(apiMock.getExtensions).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
     expect(
-      await screen.findByText(/Exported 1 extension catalog record\(s\) as JSON\./),
+      await screen.findByText(/Exported 1 extensions record\(s\) as JSON\./),
     ).toBeInTheDocument();
   });
 

@@ -3,27 +3,15 @@ import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { useRecentExtensions, useSavedExtensions } from '../hooks/useCollections';
-import { Extension, VersionInfo } from '../types/api';
+import { Extension, ExtensionVersion, ModerationStatus, VersionInfo } from '../types/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VersionCompareModal } from '../components/VersionCompareModal';
-import {
-  User as UserIcon,
-  Copy,
-  Check,
-  Calendar,
-  Clock,
-  ArrowLeft,
-  ExternalLink,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  Ban,
-  Trash2,
-  ShieldAlert,
-  Info,
-  Bookmark,
-  GitCompare,
-} from 'lucide-react';
+import { WebhookPanel } from '../components/WebhookPanel';
+import { BadgePanel } from '../components/BadgePanel';
+import { DistTagPanel } from '../components/DistTagPanel';
+import { OwnersPanel } from '../components/OwnersPanel';
+import { DeprecateVersionModal } from '../components/DeprecateVersionModal';
+import { Icon } from '../components/Icon';
 
 interface ExtensionDetailPageProps {
   namespace: string;
@@ -53,6 +41,11 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [versionDetailError, setVersionDetailError] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [webhooksOpen, setWebhooksOpen] = useState(false);
+  const [badgesOpen, setBadgesOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [ownersOpen, setOwnersOpen] = useState(false);
+  const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
   const versionRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -103,9 +96,12 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
 
   const publishedVersion =
     extension?.versions?.find((v) => v.status === 'published')?.version || extension?.latestVersion;
+  const publishedVersionList = (extension?.versions || [])
+    .filter((v) => v.status === 'published' || v.status === 'deprecated')
+    .map((v) => v.version);
   const loadUrl =
     moderationStatus === 'published' && publishedVersion
-      ? `${api.getBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
+      ? `${api.getPublicBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
       : null;
 
   const handleCopy = async (text: string) => {
@@ -150,9 +146,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const handleYankVersion = async (version: string) => {
     if (!extension) return;
     const confirmed = await confirm({
-      title: 'Yank version',
-      message: `Yank version ${version} of @${extension.namespace}/${extension.id}? It will be hidden from the registry and can no longer be installed.`,
-      confirmLabel: 'Yank version',
+      title: 'Unpublish version',
+      message: `Unpublish version ${version} of @${extension.namespace}/${extension.id}? It will be hidden from the site and can no longer be installed.`,
+      confirmLabel: 'Unpublish version',
       variant: 'danger',
     });
     if (!confirmed) return;
@@ -175,13 +171,74 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
             }
           : prev,
       );
-      setActionSuccess(`Version ${version} has been yanked.`);
+      setActionSuccess(`Version ${version} has been unpublished.`);
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to yank version';
+      const msg = err instanceof ApiError ? err.message : 'Could not remove the version';
       setActionError(msg);
     } finally {
       setYankingVersion(null);
     }
+  };
+
+  const handleUndeprecateVersion = async (ver: ExtensionVersion) => {
+    if (!extension) return;
+    const confirmed = await confirm({
+      title: 'Clear deprecation',
+      message: `Clear the deprecation notice on v${ver.version}? It goes back to being an ordinary published version.`,
+      confirmLabel: 'Clear deprecation',
+    });
+    if (!confirmed) return;
+
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await api.deprecateVersion(
+        extension.namespace,
+        extension.id,
+        ver.version,
+        null,
+      );
+      setExtension((prev) =>
+        prev
+          ? {
+              ...prev,
+              versions: prev.versions?.map((v) =>
+                v.version === ver.version
+                  ? { ...v, status: updated.status, deprecation: updated.deprecation }
+                  : v,
+              ),
+            }
+          : prev,
+      );
+      if (expandedVersion === ver.version) {
+        setVersionDetail(updated);
+      }
+      setActionSuccess(`Deprecation cleared for version ${ver.version}.`);
+    } catch (err: unknown) {
+      const msg = err instanceof ApiError ? err.message : 'Failed to clear deprecation';
+      setActionError(msg);
+    }
+  };
+
+  const handleDeprecationSaved = (
+    version: string,
+    status: ModerationStatus,
+    message: string | null,
+  ) => {
+    setExtension((prev) =>
+      prev
+        ? {
+            ...prev,
+            versions: prev.versions?.map((v) =>
+              v.version === version
+                ? { ...v, status: status as VersionInfo['status'], deprecation: message }
+                : v,
+            ),
+          }
+        : prev,
+    );
+    setDeprecateTarget(null);
+    setActionSuccess(`Version ${version} is now marked deprecated.`);
   };
 
   const handleDeleteExtension = async () => {
@@ -226,11 +283,10 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   if (error || !extension) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto" />
+        <Icon name="warning" className="icon-3xl text-rose-600 dark:text-rose-400 mx-auto" />
         <h2 className="text-xl font-display font-semibold text-ink">Extension Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
-          {error ||
-            `The extension @${namespace}/${id} could not be located on this Twext instance.`}
+          {error || `The extension @${namespace}/${id} could not be found on this site.`}
         </p>
         <div className="pt-2">
           <button onClick={() => onNavigate('search')} className="btn btn-secondary">
@@ -251,29 +307,29 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
         onClick={() => onNavigate('search')}
         className="text-xs text-ink-3 hover:text-ink flex items-center gap-1.5 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <Icon name="arrow_back" className="icon-sm" />
         Back to search results
       </button>
 
       {/* Action notifications */}
       {actionError && (
-        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+        <div data-tone="danger" className="alert items-center text-xs">
+          <Icon name="error" className="shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
 
       {actionSuccess && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div data-tone="success" className="alert items-center text-xs">
+          <Icon name="check_circle" className="shrink-0" />
           <span>{actionSuccess}</span>
         </div>
       )}
 
       {/* Moderation Warning if Pending */}
       {isPending && (
-        <div className="bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3">
-          <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <div data-tone="warn" className="alert">
+          <Icon name="schedule" className="icon-lg shrink-0" />
           <div>
             <strong className="font-semibold block text-sm">Pending Moderation Review</strong>
             <p className="mt-0.5 leading-relaxed">
@@ -319,19 +375,28 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                     : 'border-line text-ink-2 hover:bg-wash dark:hover:bg-raised'
                 }`}
               >
-                <Bookmark
-                  className="w-3.5 h-3.5"
-                  fill={isSaved(extension.namespace, extension.id) ? 'currentColor' : 'none'}
+                <Icon
+                  name="bookmark"
+                  className="icon-sm"
+                  filled={isSaved(extension.namespace, extension.id)}
                 />
                 <span>{isSaved(extension.namespace, extension.id) ? 'Saved' : 'Save'}</span>
               </button>
             </div>
             {extension.updatedAt && (
-              <span className="text-[11px] text-ink-3 flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+              <span className="text-meta text-ink-3 flex items-center gap-1">
+                <Icon name="calendar_today" className="icon-xs" />
                 Updated {new Date(extension.updatedAt).toLocaleDateString()}
               </span>
             )}
+            <button
+              type="button"
+              onClick={() => setBadgesOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+            >
+              <Icon name="image" className="icon-sm" />
+              Embed badges
+            </button>
           </div>
         </div>
       </div>
@@ -348,7 +413,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   onClick={() => setCompareOpen(true)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
-                  <GitCompare className="w-3.5 h-3.5" />
+                  <Icon name="compare_arrows" className="icon-sm" />
                   Compare versions
                 </button>
               )}
@@ -370,10 +435,19 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                         {ver.changelog && (
                           <p className="text-xs text-ink-2 mt-1">{ver.changelog}</p>
                         )}
+                        {ver.status === 'deprecated' && ver.deprecation && (
+                          <p
+                            data-tone="warn"
+                            className="tone-text text-meta mt-1 flex items-start gap-1"
+                          >
+                            <Icon name="warning" className="icon-xs shrink-0" />
+                            <span>{ver.deprecation}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[11px] text-ink-3">
+                        <span className="text-meta text-ink-3">
                           {ver.createdAt
                             ? new Date(ver.createdAt).toLocaleDateString()
                             : 'Initial release'}
@@ -385,25 +459,44 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                           aria-expanded={expandedVersion === ver.version}
                           className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                         >
-                          <Info className="w-3.5 h-3.5" />
+                          <Icon name="info" className="icon-sm" />
                         </button>
                         {canManage && ver.status === 'published' && (
                           <button
                             onClick={() => handleYankVersion(ver.version)}
                             disabled={yankingVersion === ver.version}
-                            title={`Yank v${ver.version} from the registry`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
+                            title={`Unpublish v${ver.version}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                           >
-                            <Ban className="w-3 h-3" />
-                            {yankingVersion === ver.version ? 'Yanking...' : 'Yank'}
+                            <Icon name="block" className="icon-xs" />
+                            {yankingVersion === ver.version ? 'Unpublishing...' : 'Unpublish'}
                           </button>
                         )}
+                        {canManage &&
+                          (ver.status === 'published' || ver.status === 'deprecated') && (
+                            <button
+                              onClick={() =>
+                                ver.status === 'deprecated'
+                                  ? handleUndeprecateVersion(ver)
+                                  : setDeprecateTarget(ver)
+                              }
+                              title={
+                                ver.status === 'deprecated'
+                                  ? `Clear the deprecation on v${ver.version}`
+                                  : `Mark v${ver.version} as deprecated`
+                              }
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                            >
+                              <Icon name="warning" className="icon-xs" />
+                              {ver.status === 'deprecated' ? 'Undeprecate' : 'Deprecate'}
+                            </button>
+                          )}
                       </div>
                     </div>
 
                     {expandedVersion === ver.version && (
                       <div className="px-4 pb-4">
-                        <div className="border border-line rounded-lg bg-wash dark:bg-raised p-3 text-[11px] space-y-1.5">
+                        <div className="border border-line rounded-lg bg-wash dark:bg-raised p-3 text-meta space-y-1.5">
                           {loadingVersion ? (
                             <p className="text-ink-3">Loading version metadata...</p>
                           ) : versionDetailError ? (
@@ -460,9 +553,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                                       className="btn btn-secondary btn-sm shrink-0"
                                     >
                                       {copiedUrl ? (
-                                        <Check className="w-3 h-3" />
+                                        <Icon name="check" className="icon-xs" />
                                       ) : (
-                                        <Copy className="w-3 h-3" />
+                                        <Icon name="content_copy" className="icon-xs" />
                                       )}
                                       <span>Copy</span>
                                     </button>
@@ -486,16 +579,16 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-ink-3">Current version</span>
+                  <span className="text-meta text-ink-3">Current version</span>
                   {canManage && moderationStatus === 'published' && (
                     <button
                       onClick={() => handleYankVersion(latestVersion)}
                       disabled={yankingVersion === latestVersion}
-                      title={`Yank v${latestVersion} from the registry`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
+                      title={`Unpublish v${latestVersion}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                     >
-                      <Ban className="w-3 h-3" />
-                      {yankingVersion === latestVersion ? 'Yanking...' : 'Yank'}
+                      <Icon name="block" className="icon-xs" />
+                      {yankingVersion === latestVersion ? 'Unpublishing...' : 'Unpublish'}
                     </button>
                   )}
                 </div>
@@ -510,7 +603,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           {loadUrl && (
             <div className="card p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <ExternalLink className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+                <Icon name="open_in_new" className="text-lilac-500 dark:text-lilac-300" />
                 <h2 className="label">Load in TurboWarp</h2>
               </div>
               <p className="text-xs text-ink-2 leading-relaxed">
@@ -530,9 +623,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   title="Copy URL"
                 >
                   {copiedUrl ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Icon name="check" className="icon-sm text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Icon name="content_copy" className="icon-sm" />
                   )}
                 </button>
               </div>
@@ -545,7 +638,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   className="btn btn-primary w-full"
                 >
                   <span>Open directly in TurboWarp</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <Icon name="open_in_new" className="icon-sm" />
                 </a>
               </div>
             </div>
@@ -569,7 +662,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                 onClick={() => onNavigate(`author/${encodeURIComponent(authorNamespace)}`)}
                 className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium flex items-center gap-1"
               >
-                <UserIcon className="w-3.5 h-3.5" />
+                <Icon name="person" className="icon-sm" />
                 View all packages by @{authorNamespace}
               </button>
             </div>
@@ -579,21 +672,42 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           {canManage && (
             <div className="card p-5 space-y-3 border-rose-200 dark:border-rose-900/60">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <Icon name="gpp_maybe" className="text-rose-600 dark:text-rose-400" />
                 <h2 className="label">Manage Extension</h2>
               </div>
               <p className="text-xs text-ink-2 leading-relaxed">
                 {isOwner ? 'You own' : 'You administer'} @{extension.namespace}/{extension.id}.
-                Yanking a version hides it from new installs; deleting the extension permanently
-                removes every version and its compiled code.
+                Unpublishing a version hides it from new installs; deleting the extension
+                permanently removes every version and its compiled code.
               </p>
-              <div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setTagsOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Icon name="sell" className="icon-sm" />
+                  Dist-tags
+                </button>
+                <button
+                  onClick={() => setOwnersOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Icon name="group" className="icon-sm" />
+                  Owners
+                </button>
+                <button
+                  onClick={() => setWebhooksOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Icon name="webhook" className="icon-sm" />
+                  Manage webhooks
+                </button>
                 <button
                   onClick={handleDeleteExtension}
                   disabled={deleting}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Icon name="delete" className="icon-sm" />
                   {deleting ? 'Deleting...' : 'Delete extension'}
                 </button>
               </div>
@@ -608,6 +722,53 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           id={extension.id}
           versions={extension.versions}
           onClose={() => setCompareOpen(false)}
+        />
+      )}
+
+      {webhooksOpen && (
+        <WebhookPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          onClose={() => setWebhooksOpen(false)}
+        />
+      )}
+
+      {badgesOpen && (
+        <BadgePanel
+          namespace={extension.namespace}
+          id={extension.id}
+          onClose={() => setBadgesOpen(false)}
+        />
+      )}
+
+      {ownersOpen && (
+        <OwnersPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          canManage={canManage}
+          onClose={() => setOwnersOpen(false)}
+        />
+      )}
+
+      {tagsOpen && (
+        <DistTagPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          publishedVersions={publishedVersionList}
+          onClose={() => setTagsOpen(false)}
+        />
+      )}
+
+      {deprecateTarget && (
+        <DeprecateVersionModal
+          namespace={extension.namespace}
+          id={extension.id}
+          version={deprecateTarget.version}
+          currentMessage={deprecateTarget.deprecation}
+          onClose={() => setDeprecateTarget(null)}
+          onSaved={(status, message) =>
+            handleDeprecationSaved(deprecateTarget.version, status, message)
+          }
         />
       )}
 

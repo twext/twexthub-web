@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
+import { Sidebar } from './components/Sidebar';
 import { TermsBanner } from './components/TermsBanner';
 import { CommandPalette } from './components/CommandPalette';
 
 // Pages
+import { getRouteFromLocation, navigateToRoute } from './lib/router';
 import { HomePage } from './pages/HomePage';
 import { ExplorePage } from './pages/ExplorePage';
 import { ExtensionDetailPage } from './pages/ExtensionDetailPage';
@@ -22,24 +22,20 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { AdminPage } from './pages/AdminPage';
 
 export const App: React.FC = () => {
-  // Hash-based routing keeps deep links working on a static host without server rewrites.
-  const getHashRoute = () => {
-    const raw = window.location.hash.replace(/^#\/?/, '');
-    return raw || 'home';
-  };
-
-  const [route, setRoute] = useState<string>(getHashRoute());
+  // History-based routing: URLs are real paths (/ext/ns/id), served with an
+  // index.html fallback on the server side.
+  const [route, setRoute] = useState<string>(getRouteFromLocation());
   const [configRefreshKey] = useState(0);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(getHashRoute());
+    const handlePopState = () => {
+      setRoute(getRouteFromLocation());
       window.scrollTo(0, 0);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
@@ -54,7 +50,7 @@ export const App: React.FC = () => {
   }, []);
 
   const navigate = useCallback((targetRoute: string) => {
-    window.location.hash = targetRoute;
+    navigateToRoute(targetRoute);
     setRoute(targetRoute);
     window.scrollTo(0, 0);
   }, []);
@@ -134,22 +130,21 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          <div className="min-h-screen flex flex-col bg-canvas text-ink font-sans transition-colors duration-150">
-            {/* Navigation Bar */}
-            <Navbar
+          {/* Stacks under the mobile bar, and sits beside the column at lg. */}
+          <div className="flex min-h-screen flex-col bg-canvas text-ink font-sans transition-colors duration-150 lg:flex-row">
+            <Sidebar
               currentRoute={route}
               onNavigate={navigate}
               onOpenCommandPalette={() => setCommandPaletteOpen(true)}
             />
 
-            {/* Global Terms Acceptance Warning Banner */}
-            <TermsBanner onNavigate={navigate} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              {/* Global Terms Acceptance Warning Banner */}
+              <TermsBanner onNavigate={navigate} />
 
-            {/* Main Content Area */}
-            <main className="flex-1">{renderCurrentPage()}</main>
-
-            {/* Footer */}
-            <Footer onNavigate={navigate} />
+              {/* Main Content Area */}
+              <main className="flex-1">{renderCurrentPage()}</main>
+            </div>
 
             <CommandPalette
               open={commandPaletteOpen}

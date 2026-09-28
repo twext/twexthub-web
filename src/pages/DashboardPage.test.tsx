@@ -14,6 +14,7 @@ const useAuthMock = vi.mocked(useAuth);
 
 beforeEach(() => {
   apiMock.searchExtensions.mockResolvedValue(paginated([makeExtension()]));
+  apiMock.getWebhooks.mockResolvedValue([]);
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue(makeAuthState());
 });
@@ -36,8 +37,28 @@ describe('DashboardPage', () => {
 
   it('lists extensions owned by the current user', async () => {
     render(<DashboardPage onNavigate={noop} />);
-    expect(await screen.findByText('Demo Extension')).toBeInTheDocument();
+    // The name appears in the extension card and again in the webhook row.
+    expect((await screen.findAllByText('Demo Extension')).length).toBeGreaterThan(0);
     expect(apiMock.searchExtensions).toHaveBeenCalledWith('kane', { limit: 50 });
+  });
+
+  it('surfaces webhook management per extension', async () => {
+    const user = userEvent.setup();
+    render(<DashboardPage onNavigate={noop} />);
+    await screen.findByText('Your Extensions');
+
+    expect(screen.getByRole('heading', { name: 'Webhooks' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Manage webhooks' }));
+
+    expect(apiMock.getWebhooks).toHaveBeenCalledWith('kane', 'demo');
+    expect(await screen.findByRole('dialog', { name: /webhooks/i })).toBeInTheDocument();
+  });
+
+  it('hides the webhook section when the user has no extensions', async () => {
+    apiMock.searchExtensions.mockResolvedValue(paginated([]));
+    render(<DashboardPage onNavigate={noop} />);
+    await screen.findByText(/No extensions under/);
+    expect(screen.queryByRole('heading', { name: 'Webhooks' })).toBeNull();
   });
 
   it('shows an empty state when the user has no published extensions', async () => {

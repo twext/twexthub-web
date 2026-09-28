@@ -31,11 +31,11 @@
 - Save extensions locally (bookmarks) and recently-viewed history.
 - Accounts with 7-day logins and scoped automation tokens (`publish` / `yank`) meant for CI use.
 - Admin surface for moderating submissions, managing users and roles, editing the Terms and Privacy docs, and maintenance tasks.
-- The API base URL is configurable at build time or at runtime; the app runs on any static host.
+- The API is same-origin by default: the page calls `/api/v1`, and the bundled server forwards it to the registry you configure. On a static host a URL can be pinned at build time instead.
 
 ## Overview
 
-TwextHub is the registry of Twext-compiled TurboWarp extensions. This repo is its official web frontend: a React + TypeScript single-page app bundled with Vite and styled with Tailwind CSS. It talks to the TwextHub API and uses hash-based routing, so deep links work on a static host without server rewrites.
+TwextHub is the registry of Twext-compiled TurboWarp extensions. This repo is its official web frontend: a React + TypeScript single-page app bundled with Vite and styled with Tailwind CSS. It talks to the TwextHub API and uses path-based routing, so the host must serve `index.html` as the fallback for unknown paths.
 
 Packages are namespaced to their publishing account (`@namespace/id`) and versioned with SemVer. Publishing happens with the Twext CLI, not the UI; the first version from a new publisher sits in a moderation queue until an administrator approves or rejects it.
 
@@ -45,7 +45,7 @@ TwextHub is maintained by the [Twext Team](https://github.com/twext).
 
 ## Usage
 
-The public registry default is `https://twexts.sdisk.us/api/v0`. The UI points at it unless an operator overrides the API base URL (see [Installation](#installation)).
+The public registry default is `https://twexts.sdisk.us/api/v1`. `server.js` forwards the page's `/api/v1` calls there unless an operator points it at another registry (see [Installation](#installation)).
 
 ### Publish
 
@@ -56,7 +56,7 @@ twext login
 twext publish
 ```
 
-Create the account first at `#/signup`. New publishers' first submissions are reviewed by an administrator before they appear publicly.
+Create the account first at `/signup`. New publishers' first submissions are reviewed by an administrator before they appear publicly.
 
 ### Install
 
@@ -68,7 +68,7 @@ ${apiBaseUrl}/@${namespace}/${id}/versions/${version}/download
 
 ### Manage your account
 
-`#/settings` holds your profile, open sessions, and automation tokens. Sessions expire after 7 days; automation tokens never expire unless you set a lifetime when creating them. Tokens are scoped to `publish` and/or `yank`, for CI workflows (for example a `twext publish` GitHub Action) rather than interactive use.
+`/settings` holds your profile, open sessions, and automation tokens. Sessions expire after 7 days; automation tokens never expire unless you set a lifetime when creating them. Tokens are scoped to `publish` and/or `yank`, for CI workflows (for example a `twext publish` GitHub Action) rather than interactive use.
 
 ## Installation
 
@@ -97,26 +97,33 @@ The dev server runs at `http://localhost:3000`.
 
 ### Pointing the UI at another backend
 
-The API base URL is resolved in this order:
+By default the browser calls its own origin — `/api/v1` — and the server relays it to the configured registry. The upstream is resolved on the server in this order:
 
-1. Runtime `window.TWEXTHUB_CONFIG.apiBaseUrl`, injected by `server.js` into `index.html`.
-2. Build-time env `VITE_TWEXTHUB_API_URL` (baked into the bundle).
-3. Default: `https://twexts.sdisk.us/api/v0`.
+1. `server.js`, at startup: `TWEXTHUB_API_URL`, or `apiBaseUrl` in a config file.
+2. Default: `https://twexts.sdisk.us/api/v1`.
 
-So a static deploy pins the URL at build time, while a `server.js` deploy can switch it at startup:
+For a `server.js` deploy, `localhost` in that value means the _server's_ loopback, never a visitor's browser. Retarget an existing build at startup without rebuilding, even to a registry running on the same host:
 
 ```sh
 npm run build
-TWEXTHUB_API_URL=https://registry.example.com/api/v0 node server.js
+TWEXTHUB_API_URL=http://localhost:8080/api/v1 node server.js
 ```
 
-`server.js` also reads `apiBaseUrl` from a `config.yml` / `config.yaml` in the working directory, or from the file given as its first CLI argument. It serves `dist/`, injects the resolved URL into the served HTML, and falls back to `index.html` for unknown paths, so client-side routes keep working.
+The dev server proxies the same way: `TWEXTHUB_API_URL=http://localhost:8080/api/v1 npm run dev`. It also injects the same-origin path into the page, so `VITE_TWEXTHUB_API_URL` only ever picks the proxy's upstream in dev — a client-facing baked URL happens only on a static host built with it.
+
+A purely static deploy has no relay, so it pins an absolute URL at build time:
+
+```sh
+VITE_TWEXTHUB_API_URL=https://registry.example.com/api/v1 npm run build
+```
+
+`server.js` also reads `apiBaseUrl` from a `config.yml` / `config.yaml` in the working directory, or from the file given as its first CLI argument. It serves `dist/`, forwards `/api/v1` to the resolved upstream, injects the public API path into the served HTML, and falls back to `index.html` for unknown paths, so client-side routes keep working.
 
 ### Docker
 
 ```sh
 docker build -t twexthub-web .
-docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v0 twexthub-web
+docker run --rm -p 8080:3000 -e TWEXTHUB_API_URL=https://registry.example.com/api/v1 twexthub-web
 ```
 
 `compose.example.yml` shows the same setup under Docker Compose. The image builds `dist/` in a multi-stage build and runs `server.js` as the `node` user, listening on port 3000.

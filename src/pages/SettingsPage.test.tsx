@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsPage } from './SettingsPage';
 import { api } from '../services/api';
@@ -35,11 +35,19 @@ beforeEach(() => {
 });
 
 describe('SettingsPage', () => {
-  it('renders the account tab by default', () => {
+  it('renders the account section by default', () => {
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    expect(screen.getByRole('heading', { level: 1, name: /User Settings/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Account' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Account' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByPlaceholderText('e.g. Kane Marshall')).toBeInTheDocument();
+  });
+
+  it('puts each section under a heading of its own, and only the current one in the document', () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    // The heading and the sidebar entry are described in one place, so the
+    // panel and its navigation can never disagree about what a section is.
+    expect(screen.getByRole('heading', { level: 2, name: 'Account' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Sessions' })).toBeNull();
   });
 
   it('redirects a signed-out visitor to login', async () => {
@@ -60,6 +68,133 @@ describe('SettingsPage', () => {
     expect(apiMock.updateUser).toHaveBeenCalledWith('kane', { displayName: 'Kane Marshall' });
     expect(authState.refreshUser).toHaveBeenCalled();
     expect(await screen.findByText('Account profile updated successfully.')).toBeInTheDocument();
+  });
+
+  it('saves bio, website, and github', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    await user.type(screen.getByPlaceholderText('Tell visitors about yourself'), 'Hello there');
+    await user.type(screen.getByPlaceholderText('https://example.com'), 'https://kane.dev');
+    await user.type(screen.getByPlaceholderText('octocat'), 'kane');
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(apiMock.updateUser).toHaveBeenCalledWith('kane', {
+      bio: 'Hello there',
+      website: 'https://kane.dev',
+      github: 'kane',
+    });
+  });
+
+  it('saves avatar and banner URLs entered through the link option', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    await user.click(screen.getByTestId('avatar-toggle-url'));
+    await user.type(screen.getByTestId('avatar-url'), 'https://cdn.example.com/me.png');
+    await user.click(screen.getByTestId('banner-toggle-url'));
+    await user.type(screen.getByTestId('banner-url'), 'https://cdn.example.com/banner.png');
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(apiMock.updateUser).toHaveBeenCalledWith('kane', {
+      avatarUrl: 'https://cdn.example.com/me.png',
+      bannerUrl: 'https://cdn.example.com/banner.png',
+    });
+  });
+
+  it('sends null to clear a profile field', async () => {
+    const user = userEvent.setup();
+    useAuthMock.mockReturnValue(
+      makeAuthState({ user: makeUser({ bio: 'old bio', website: 'https://old.example' }) }),
+    );
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    await user.clear(screen.getByDisplayValue('old bio'));
+    await user.clear(screen.getByDisplayValue('https://old.example'));
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(apiMock.updateUser).toHaveBeenCalledWith('kane', {
+      bio: null,
+      website: null,
+    });
+  });
+
+  it('prefills existing profile fields', () => {
+    useAuthMock.mockReturnValue(
+      makeAuthState({
+        user: makeUser({
+          bio: 'a bio',
+          website: 'https://kane.dev',
+          github: 'kane',
+          avatarUrl: 'https://cdn.example.com/me.png',
+          bannerUrl: 'https://cdn.example.com/banner.png',
+        }),
+      }),
+    );
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    expect(screen.getByDisplayValue('a bio')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('https://kane.dev')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('kane')).toBeInTheDocument();
+    expect(screen.getByTestId('banner-preview')).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/banner.png',
+    );
+    expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/me.png',
+    );
+  });
+
+  it('shows an empty placeholder for a banner and the identicon for an avatar', () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    // A banner has no generated fallback, so an unset one is visibly empty.
+    expect(screen.getByTestId('banner-empty')).toBeInTheDocument();
+    // An avatar falls back to the registry identicon rather than to nothing.
+    expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
+      'src',
+      '/api/v1/users/kane/avatar',
+    );
+  });
+
+  it('falls back to the registry avatar endpoint when only a banner is set', () => {
+    useAuthMock.mockReturnValue(
+      makeAuthState({ user: makeUser({ bannerUrl: 'https://cdn.example.com/b.png' }) }),
+    );
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
+      'src',
+      '/api/v1/users/kane/avatar',
+    );
+    expect(screen.getByTestId('banner-preview')).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/b.png',
+    );
+  });
+
+  it('rejects a non-http avatar URL without calling the API', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    await user.click(screen.getByTestId('avatar-toggle-url'));
+    await user.type(screen.getByTestId('avatar-url'), 'javascript:alert(1)');
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(
+      await screen.findByText('Avatar image URL must be an http:// or https:// URL.'),
+    ).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects a GitHub URL that is not a username', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    await user.type(screen.getByPlaceholderText('octocat'), 'https://github.com/kane');
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    expect(await screen.findByText('GitHub must be a username, not a URL.')).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
   });
 
   it('requires and sends the current password when changing it', async () => {
@@ -92,8 +227,8 @@ describe('SettingsPage', () => {
   it('creates a token with an expiration', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci');
     await user.selectOptions(screen.getByRole('combobox'), '30');
     await user.click(screen.getByRole('button', { name: /Create Automation Token/ }));
@@ -110,8 +245,8 @@ describe('SettingsPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
 
     await user.click(screen.getByTitle('Edit Token'));
     const nameInput = screen.getByDisplayValue('ci-deploy');
@@ -134,7 +269,7 @@ describe('SettingsPage', () => {
     apiMock.getSessions.mockResolvedValueOnce(paginated([makeSession({ id: 'sess-2' })]));
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Sessions' }));
+    await user.click(screen.getByRole('button', { name: 'Sessions' }));
     await screen.findByText('Active Web Sessions');
 
     await user.click(screen.getByRole('button', { name: 'Load more sessions' }));
@@ -142,7 +277,7 @@ describe('SettingsPage', () => {
     expect(apiMock.getSessions).toHaveBeenLastCalledWith({ cursor: 'cursor-2' });
   });
 
-  it('revokes an active session from the sessions tab', async () => {
+  it('revokes an active session from the sessions section', async () => {
     apiMock.getSessions.mockResolvedValue(
       paginated([
         makeSession({ id: 'sess-1', lastUsedAt: '2026-03-01T00:00:00Z' }),
@@ -151,7 +286,7 @@ describe('SettingsPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Sessions' }));
+    await user.click(screen.getByRole('button', { name: 'Sessions' }));
     await screen.findByText('Active Web Sessions');
     await user.click(
       screen
@@ -165,8 +300,8 @@ describe('SettingsPage', () => {
   it('creates a token and reveals the one-time secret', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci-dev');
     await user.click(screen.getByRole('button', { name: /Create Automation Token/ }));
     expect(apiMock.createToken).toHaveBeenCalledWith({ name: 'ci-dev', scopes: ['publish'] });
@@ -177,8 +312,8 @@ describe('SettingsPage', () => {
   it('deletes an automation token after confirmation', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('tab', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.click(screen.getByRole('button', { name: 'Revoke Token' }));
     await user.click(screen.getByRole('button', { name: 'Delete token' }));
     expect(apiMock.deleteToken).toHaveBeenCalledWith('tok-1');
@@ -198,5 +333,123 @@ describe('SettingsPage', () => {
     expect(apiMock.deleteUser).toHaveBeenCalledWith('kane');
     expect(authState.logout).toHaveBeenCalled();
     expect(onNavigate).toHaveBeenCalledWith('home');
+  });
+});
+
+describe('SettingsPage v1 profile limits', () => {
+  const save = async () => {
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+  };
+
+  /** Bypass the input's own maxLength so the guard is what rejects the value. */
+  const forceValue = (element: HTMLElement, value: string) => {
+    fireEvent.change(element, { target: { value } });
+  };
+
+  it('caps the display name at the registry limit of 80', () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    expect(screen.getByLabelText(/Display Name/)).toHaveAttribute('maxlength', '80');
+  });
+
+  it('caps bio, website, github, avatar and banner inputs', () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    expect(screen.getByLabelText(/^Bio/)).toHaveAttribute('maxlength', '280');
+    expect(screen.getByLabelText(/^Website/)).toHaveAttribute('maxlength', '400');
+    expect(screen.getByLabelText(/GitHub username/)).toHaveAttribute('maxlength', '39');
+  });
+
+  it('keeps the link option behind a toggle and caps it when opened', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+
+    // The URL fields are an alternative, not the primary affordance.
+    expect(screen.queryByTestId('avatar-url')).toBeNull();
+    await user.click(screen.getByTestId('avatar-toggle-url'));
+    expect(screen.getByTestId('avatar-url')).toHaveAttribute('maxlength', '400');
+    await user.click(screen.getByTestId('banner-toggle-url'));
+    expect(screen.getByTestId('banner-url')).toHaveAttribute('maxlength', '400');
+  });
+
+  it('rejects a display name longer than 80 characters', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/Display Name/), 'a'.repeat(81));
+    await save();
+
+    expect(
+      await screen.findByText('Display name must be 80 characters or fewer.'),
+    ).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects a website longer than 400 characters', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/^Website/), `https://example.com/${'a'.repeat(400)}`);
+    await save();
+
+    expect(await screen.findByText('Website must be 400 characters or fewer.')).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects an avatar URL longer than 400 characters', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    await user.click(screen.getByTestId('avatar-toggle-url'));
+    forceValue(screen.getByTestId('avatar-url'), `https://example.com/${'a'.repeat(400)}.png`);
+    await save();
+
+    expect(
+      await screen.findByText('Avatar image URL must be 400 characters or fewer.'),
+    ).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects a banner URL longer than 400 characters', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    await user.click(screen.getByTestId('banner-toggle-url'));
+    forceValue(screen.getByTestId('banner-url'), `https://example.com/${'a'.repeat(400)}.png`);
+    await save();
+
+    expect(
+      await screen.findByText('Banner image URL must be 400 characters or fewer.'),
+    ).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects a GitHub username with a trailing hyphen, which the API refuses', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/GitHub username/), 'kane-');
+    await save();
+
+    expect(await screen.findByText('GitHub must be a username, not a URL.')).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects a GitHub username with a leading hyphen', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/GitHub username/), '-kane');
+    await save();
+
+    expect(await screen.findByText('GitHub must be a username, not a URL.')).toBeInTheDocument();
+    expect(apiMock.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('accepts a hyphenated GitHub username', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/GitHub username/), 'kane-dev');
+    await save();
+
+    await waitFor(() =>
+      expect(apiMock.updateUser).toHaveBeenCalledWith('kane', { github: 'kane-dev' }),
+    );
+  });
+
+  it('accepts a single-character GitHub username', async () => {
+    renderWithProviders(<SettingsPage onNavigate={noop} />);
+    forceValue(screen.getByLabelText(/GitHub username/), 'k');
+    await save();
+
+    await waitFor(() => expect(apiMock.updateUser).toHaveBeenCalledWith('kane', { github: 'k' }));
   });
 });

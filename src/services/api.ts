@@ -1,25 +1,47 @@
 import { DEFAULT_API_BASE_URL, isValidApiBaseUrl, normalizeApiBaseUrl } from '../config/settings';
 import {
+  AuditEntry,
   AuthSessionResponse,
   AutomationToken,
+  CreateWebhookPayload,
+  DistTags,
   Extension,
+  ExtensionSummary,
+  ExtensionOwner,
   InstanceStats,
+  MarkNotificationsReadResult,
   Meta,
+  NotificationList,
   PaginatedList,
   PendingVersion,
   PrivacyDoc,
   ProblemDetails,
+  Quota,
   ReviewVersionPayload,
+  ServerConfig,
+  ServerConfigUpdate,
+  ServerSetting,
   Session,
   TermsDoc,
   UpdateUserPayload,
   User,
   UserRole,
   VersionInfo,
+  Webhook,
+  WebhookCreated,
 } from '../types/api';
 
 const STORAGE_KEY_TOKEN = 'twexthub_auth_token';
 const STORAGE_KEY_USER = 'twexthub_auth_user';
+
+/** snake_case spellings some endpoints answer with, mapped to the camelCase the client reads. */
+const SNAKE_FIELDS: Record<string, string> = {
+  display_name: 'displayName',
+  added_at: 'addedAt',
+  created_at: 'createdAt',
+  last_delivery_status: 'lastDeliveryStatus',
+  last_delivery_at: 'lastDeliveryAt',
+};
 
 export class ApiError extends Error {
   status: number;
@@ -48,6 +70,21 @@ class ApiService {
 
   getBaseUrl(): string {
     return this.baseUrl;
+  }
+
+  /**
+   * The base as an absolute URL, for anything that leaves the page: a copied
+   * install command, a Markdown badge, a feed advertised to readers. The
+   * configured base is normally root-relative, which resolves against whatever
+   * host the reader happens to be on — `turbowarp.org` handed `/api/v1/...`
+   * would look for the API on TurboWarp's own origin. Same-origin calls stay on
+   * `getBaseUrl()`.
+   */
+  getPublicBaseUrl(): string {
+    const base = this.getBaseUrl();
+    if (/^https?:\/\//i.test(base)) return base;
+    if (typeof window === 'undefined' || !window.location?.origin) return base;
+    return `${window.location.origin}${base.startsWith('/') ? base : `/${base}`}`;
   }
 
   configure(config: { apiBaseUrl?: string }) {
@@ -168,11 +205,63 @@ class ApiService {
     }
 
     if (isJson) {
-      return (await response.json()) as T;
+      return this.withPagination(await response.json()) as T;
     }
 
     const text = await response.text();
     return text as unknown as T;
+  }
+
+  /**
+   * List responses carry `_links` (self/next/prev), while the app pages with a
+   * cursor. Derive the `pagination` shape the UI expects from `_links.next`:
+   * `nextCursor` is the `cursor` inside the next-page URL, and `hasMore` is
+   * simply whether there is a next page.
+   *
+   * The link may be absolute or root-relative (the server rebuilds the request
+   * URL, which keeps the path but not the origin), so it is resolved against a
+   * placeholder base: only the query string matters here.
+   */
+  private withPagination(body: unknown): unknown {
+    if (!body || typeof body !== 'object') return body;
+    const record = body as Record<string, unknown>;
+    if (!('_links' in record) || 'pagination' in record) return body;
+    const links = record._links as { next?: string | null } | null;
+    const next = typeof links?.next === 'string' && links.next.length > 0 ? links.next : null;
+    let nextCursor: string | null = null;
+    if (next) {
+      try {
+        nextCursor = new URL(next, 'http://twexthub.invalid').searchParams.get('cursor');
+      } catch {
+        nextCursor = null;
+      }
+    }
+    return { ...record, pagination: { nextCursor, hasMore: next !== null } };
+  }
+
+  /**
+   * The owners and webhooks endpoints answer with rows taken straight from the
+   * database, so those arrive snake_case while the rest of the API is
+   * camelCase. Fold the spelling the rest of the client reads onto them; a row
+   * that is already camelCase (what the spec documents for webhooks) passes
+   * through untouched.
+   */
+  private normalizeRow<T>(row: unknown): T {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return row as T;
+    const source = row as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...source };
+    for (const [snake, camel] of Object.entries(SNAKE_FIELDS)) {
+      if (snake in out && !(camel in out)) {
+        out[camel] = out[snake];
+        delete out[snake];
+      }
+    }
+    return out as T;
+  }
+
+  private normalizeRows<T>(rows: unknown): T[] {
+    if (!Array.isArray(rows)) return rows as T[];
+    return rows.map((row) => this.normalizeRow<T>(row));
   }
 
   // --- Public Registry & Info Endpoints ---
@@ -188,28 +277,126 @@ class ApiService {
   async getExtensions(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<PaginatedList<Extension>> {
+  }): Promise<PaginatedList<ExtensionSummary>> {
     const query = new URLSearchParams();
     if (params?.cursor) query.set('cursor', params.cursor);
     if (params?.limit) query.set('limit', String(params.limit));
     const qs = query.toString();
-    return this.request<PaginatedList<Extension>>(`/extensions${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedList<ExtensionSummary>>(`/extensions${qs ? `?${qs}` : ''}`);
   }
 
   async searchExtensions(
     searchQuery: string,
     params?: { cursor?: string; limit?: number },
-  ): Promise<PaginatedList<Extension>> {
+  ): Promise<PaginatedList<ExtensionSummary>> {
     const query = new URLSearchParams();
     if (searchQuery) query.set('query', searchQuery);
     if (params?.cursor) query.set('cursor', params.cursor);
     if (params?.limit) query.set('limit', String(params.limit));
     const qs = query.toString();
-    return this.request<PaginatedList<Extension>>(`/search${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedList<ExtensionSummary>>(`/search${qs ? `?${qs}` : ''}`);
   }
 
   async getExtension(namespace: string, id: string): Promise<Extension> {
     return this.request<Extension>(`/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}`);
+  }
+
+  async getTrendingExtensions(): Promise<PaginatedList<ExtensionSummary>> {
+    return this.request<PaginatedList<ExtensionSummary>>('/extensions/trending');
+  }
+
+  // --- Dist-tags, Owners & Webhooks (owner/admin) ---
+
+  /** Tag name to version. `latest` is reserved and implicit. */
+  async getDistTags(namespace: string, id: string): Promise<DistTags> {
+    return this.request<DistTags>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags`,
+    );
+  }
+
+  /** Points a dist-tag at an already-published version. */
+  async setDistTag(namespace: string, id: string, tag: string, version: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ version }),
+      },
+    );
+  }
+
+  async deleteDistTag(namespace: string, id: string, tag: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/tags/${encodeURIComponent(tag)}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  async getExtensionOwners(namespace: string, id: string): Promise<ExtensionOwner[]> {
+    const res = await this.request<{ data: ExtensionOwner[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners`,
+    );
+    return this.normalizeRows<ExtensionOwner>(res.data);
+  }
+
+  async addExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'PUT' },
+    );
+  }
+
+  async removeExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  async getWebhooks(namespace: string, id: string): Promise<Webhook[]> {
+    const res = await this.request<{ data: Webhook[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
+    );
+    return this.normalizeRows<Webhook>(res.data);
+  }
+
+  /** The returned secret is shown once and cannot be recovered. */
+  async createWebhook(
+    namespace: string,
+    id: string,
+    payload: CreateWebhookPayload,
+  ): Promise<WebhookCreated> {
+    const created = await this.request<WebhookCreated>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
+    return this.normalizeRow<WebhookCreated>(created);
+  }
+
+  async deleteWebhook(namespace: string, id: string, webhookId: number): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks/${webhookId}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  /** A non-null message marks the version deprecated; `null` clears it. */
+  async deprecateVersion(
+    namespace: string,
+    id: string,
+    version: string,
+    message: string | null,
+  ): Promise<VersionInfo> {
+    return this.request<VersionInfo>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ deprecationMessage: message }),
+      },
+    );
   }
 
   async getTerms(): Promise<TermsDoc> {
@@ -234,8 +421,10 @@ class ApiService {
 
   // --- Auth Endpoints ---
 
+  // Signing in is creating a session (`POST /sessions`): the response carries
+  // the session, its owner, and the one-time bearer token.
   async login(credentials: { namespace: string; password: string }): Promise<AuthSessionResponse> {
-    const res = await this.request<AuthSessionResponse>('/auth/login', {
+    const res = await this.request<AuthSessionResponse>('/sessions', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -244,12 +433,13 @@ class ApiService {
     return res;
   }
 
+  // Creating the account and signing in are the same act (`POST /users`).
   async signup(payload: {
     namespace: string;
     password: string;
     displayName?: string;
   }): Promise<AuthSessionResponse> {
-    const res = await this.request<AuthSessionResponse>('/auth/signup', {
+    const res = await this.request<AuthSessionResponse>('/users', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -261,7 +451,9 @@ class ApiService {
   async logout(): Promise<void> {
     try {
       if (this.token) {
-        await this.request<void>('/auth/logout', { method: 'POST' });
+        // `current` is the session that authenticated the request, so the
+        // client can sign itself out without having kept the session's id.
+        await this.request<void>('/sessions/current', { method: 'DELETE' });
       }
     } finally {
       this.setToken(null);
@@ -269,25 +461,31 @@ class ApiService {
     }
   }
 
-  // GET /v0/auth/me - returns the caller's own authenticated account
+  // GET /me - returns the caller's own authenticated account
   async getMe(): Promise<User> {
-    const me = await this.request<User>('/auth/me');
+    const me = await this.request<User>('/me');
     this.setStoredUser(me);
     return me;
   }
 
   // --- Authenticated User Operations ---
 
+  /**
+   * Acceptance is recorded on the account itself: a PATCH of
+   * `termsAcceptedVersion` carrying nothing else, since the spec does not let
+   * an acceptance travel alongside any other edit.
+   */
   async acceptTerms(version: number): Promise<void> {
-    await this.request<void>('/terms/accept', {
-      method: 'POST',
-      body: JSON.stringify({ version }),
-    });
     const current = this.getStoredUser();
-    if (current) {
-      current.termsAcceptedVersion = version;
-      this.setStoredUser(current);
+    if (!current) {
+      throw new ApiError('No signed-in account to record the terms acceptance for', 401);
     }
+    await this.request<void>(`/users/${encodeURIComponent(current.namespace)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ termsAcceptedVersion: version }),
+    });
+    current.termsAcceptedVersion = version;
+    this.setStoredUser(current);
   }
 
   async updateUser(namespace: string, data: UpdateUserPayload): Promise<User> {
@@ -300,6 +498,47 @@ class ApiService {
       this.setStoredUser({ ...current, ...updated });
     }
     return updated;
+  }
+
+  // --- Profile image uploads ---
+
+  /**
+   * Uploads an avatar or banner. The body is the file itself rather than a
+   * multipart form, so the Content-Type has to be set explicitly: `request`
+   * only defaults it for string bodies, and the API sniffs the bytes anyway.
+   *
+   * The response is the whole updated user, which keeps the auth store and the
+   * top-bar profile in step with the new canonical image URL.
+   */
+  async uploadProfileImage(
+    namespace: string,
+    kind: 'avatar' | 'banner',
+    file: Blob,
+    contentType = file.type,
+  ): Promise<User> {
+    const updated = await this.request<User>(`/users/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': contentType || 'application/octet-stream' },
+    });
+    this.syncStoredUser(updated);
+    return updated;
+  }
+
+  async deleteProfileImage(namespace: string, kind: 'avatar' | 'banner'): Promise<User> {
+    const updated = await this.request<User>(`/users/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'DELETE',
+    });
+    this.syncStoredUser(updated);
+    return updated;
+  }
+
+  /** Keeps the locally stored user in step with a server-authoritative copy. */
+  private syncStoredUser(updated: User) {
+    const current = this.getStoredUser();
+    if (current && current.namespace === updated.namespace) {
+      this.setStoredUser({ ...current, ...updated });
+    }
   }
 
   async deleteUser(namespace: string): Promise<void> {
@@ -454,6 +693,112 @@ class ApiService {
       method: 'PATCH',
       body: JSON.stringify({ body }),
     });
+  }
+
+  /** Append-only trail of privileged actions, newest first. */
+  async getAuditLog(params?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<PaginatedList<AuditEntry>> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<PaginatedList<AuditEntry>>(`/admin/audit${qs ? `?${qs}` : ''}`);
+  }
+
+  async getUserQuota(namespace: string): Promise<Quota> {
+    return this.request<Quota>(`/admin/users/${encodeURIComponent(namespace)}/quota`);
+  }
+
+  /** `null` resets the account to the instance default. */
+  async setUserQuota(namespace: string, maxBlobBytes: number | null): Promise<Quota> {
+    return this.request<Quota>(`/admin/users/${encodeURIComponent(namespace)}/quota`, {
+      method: 'PATCH',
+      body: JSON.stringify({ maxBlobBytes }),
+    });
+  }
+
+  /**
+   * The settings an admin is allowed to change, plus whether the file can hold
+   * a change at all. `editable: false` means the file sits inside the container
+   * rather than on a volume, so the interface should explain rather than offer
+   * a form that would quietly do nothing.
+   */
+  async getServerConfig(): Promise<ServerConfig> {
+    return this.request<ServerConfig>('/admin/config');
+  }
+
+  /**
+   * Writes the given dotted settings to the configuration file and to the
+   * running instance. Throws a 409 `ApiError` when the file is not persistent.
+   */
+  async updateServerConfig(
+    settings: Record<string, ServerSetting['value']>,
+  ): Promise<ServerConfigUpdate> {
+    return this.request<ServerConfigUpdate>('/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
+    });
+  }
+
+  /** Fans out to every existing account at insert time. Cannot be recalled. */
+  async broadcastNotification(message: string): Promise<number> {
+    const res = await this.request<{ created: number }>('/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+    return res.created;
+  }
+
+  /**
+   * Prometheus text exposition. Fetched through the authenticated client
+   * because a plain link or `fetch` cannot attach the bearer token, which is
+   * what makes a direct navigation return 401.
+   */
+  async getAdminMetrics(): Promise<string> {
+    return this.request<string>('/admin/metrics', {
+      headers: {
+        Accept: 'text/plain, */*',
+      },
+    });
+  }
+
+  /** Atom feed of newly published versions. */
+  getAtomFeedUrl(): string {
+    return `${this.getPublicBaseUrl()}/feed.atom`;
+  }
+
+  // --- Notifications ---
+
+  /** `unreadCount` covers the whole mailbox, so one call can drive a badge. */
+  async getNotifications(params?: {
+    cursor?: string;
+    limit?: number;
+    unreadOnly?: boolean;
+  }): Promise<NotificationList> {
+    const query = new URLSearchParams();
+    if (params?.unreadOnly) query.set('unread', 'true');
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<NotificationList>(`/notifications${qs ? `?${qs}` : ''}`);
+  }
+
+  /**
+   * Read state is patched onto the collection: send either `ids` (up to 100)
+   * or `all: true`, never both. Idempotent; `updated` counts only rows that
+   * were not already read. Ids are digits-only strings, and the spec types the
+   * array as integers, so they are sent as numbers.
+   */
+  async markNotificationsRead(payload: { ids: string[] } | { all: true }): Promise<number> {
+    const body =
+      'ids' in payload ? { ids: payload.ids.map((id) => Number(id)) } : { all: true as const };
+    const res = await this.request<MarkNotificationsReadResult>('/notifications', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    return res.updated;
   }
 }
 
