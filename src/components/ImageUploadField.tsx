@@ -4,6 +4,7 @@ import {
   formatBytes,
   isOwnImageUrl,
   MAX_IMAGE_BYTES,
+  toSameOriginImageUrl,
 } from '../lib/profile-image';
 import { ApiError, api } from '../services/api';
 import { User } from '../types/api';
@@ -119,7 +120,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   // reporting it.
   const isUpload = isOwnImageUrl(currentUrl, namespace, kind);
   const hasImage = Boolean(currentUrl || localPreview);
-  const displayed = localPreview ?? currentUrl ?? fallbackUrl ?? null;
+  // The preview is rewritten onto the same origin the API is served through,
+  // so the browser fetches the picture from this site's server rather than
+  // straight off the API host, yet what the form submits (urlValue) stays the
+  // raw address for the API to store.
+  const displayed =
+    localPreview ?? toSameOriginImageUrl(currentUrl ?? fallbackUrl, api.getBaseUrl()) ?? null;
   const shape = round ? 'rounded-full' : 'rounded-lg';
   const dimensions = round ? 'w-14 h-14' : 'w-24 h-16';
 

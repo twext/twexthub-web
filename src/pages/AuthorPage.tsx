@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ExtensionSummary, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { Icon } from '../components/Icon';
+import { toSameOriginImageUrl } from '../lib/profile-image';
 
 interface AuthorPageProps {
   namespace: string;
@@ -136,7 +137,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       <div className="card p-0 overflow-hidden">
         {author.bannerUrl && (
           <img
-            src={author.bannerUrl}
+            src={toSameOriginImageUrl(author.bannerUrl, api.getBaseUrl()) ?? undefined}
             alt={`Banner for @${author.namespace}`}
             className="w-full h-28 sm:h-36 object-cover bg-wash dark:bg-raised"
           />
@@ -144,7 +145,12 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         <div className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <img
-              src={author.avatarUrl || `${api.getBaseUrl()}/users/${author.namespace}/avatar`}
+              src={
+                toSameOriginImageUrl(
+                  author.avatarUrl || `${api.getBaseUrl()}/users/${author.namespace}/avatar`,
+                  api.getBaseUrl(),
+                ) ?? undefined
+              }
               alt={`Avatar for @${author.namespace}`}
               className="w-16 h-16 rounded-lg object-cover bg-wash dark:bg-raised border border-line shrink-0"
             />

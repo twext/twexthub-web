@@ -8,6 +8,7 @@ import { NotificationInbox } from './NotificationInbox';
 import { Icon, type IconName } from './Icon';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useDismissable } from '../hooks/useDismissable';
+import { toSameOriginImageUrl } from '../lib/profile-image';
 import type { Meta, User } from '../types/api';
 
 const COLLAPSE_KEY = 'twexthub:sidebar-collapsed';
@@ -115,7 +116,11 @@ const AccountCard: React.FC<{
   onSignOut: () => void;
 }> = ({ user, collapsed, onNavigate, onSignOut }) => {
   const displayName = user.displayName || user.namespace;
-  const avatar = user.avatarUrl || `${api.getBaseUrl()}/users/${user.namespace}/avatar`;
+  const avatar =
+    toSameOriginImageUrl(
+      user.avatarUrl || `${api.getBaseUrl()}/users/${user.namespace}/avatar`,
+      api.getBaseUrl(),
+    ) ?? undefined;
 
   if (collapsed) {
     return (

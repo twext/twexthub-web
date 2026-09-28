@@ -35,6 +35,9 @@ export function formatBytes(bytes: number): string {
  * public, and refusing to recognise an upload over that difference would hide
  * the remove control.
  */
+/** The digest prefix the server stamps on the uploads it publishes. */
+const VERSION = /^[0-9a-f]{16}$/;
+
 export function isOwnImageUrl(url: string | null | undefined, namespace: string, kind: string) {
   if (!url) return false;
   // The server publishes an absolute URL, but a root-relative one still names
@@ -45,8 +48,65 @@ export function isOwnImageUrl(url: string | null | undefined, namespace: string,
   if (!parsed) return false;
   return (
     parsed.pathname.endsWith(`/users/${namespace}/${kind}`) &&
-    /^[0-9a-f]{16}$/.test(parsed.searchParams.get('v') ?? '')
+    VERSION.test(parsed.searchParams.get('v') ?? '')
   );
+}
+
+/**
+ * Whether a URL names one of this instance's own uploads for any author,
+ * rather than an address the account linked to.
+ *
+ * The same shape `isOwnImageUrl` checks, minus the namespace and kind. That is
+ * what the image elements need when choosing whether an address is safe to
+ * rewrite onto this site's own origin.
+ */
+export function looksLikeOwnUploadUrl(url: string | null | undefined) {
+  if (!url) return false;
+  const parsed = parseUrl(url);
+  if (!parsed) return false;
+  return (
+    /\/users\/[^/]+\/(?:avatar|banner)$/.test(parsed.pathname) &&
+    VERSION.test(parsed.searchParams.get('v') ?? '')
+  );
+}
+
+/**
+ * The src an <img> should use so the browser pulls the picture through this
+ * site's own server instead of straight off the API host.
+ *
+ * The server reports an upload relative to its API base, so with an absolute
+ * base the reported address alone is absolute too and points the browser at
+ * the API host. When that address lives on the API origin (or is the public
+ * `/api/v1` prefix, which this site's server proxies), it is rewritten to
+ * that prefix plus the rest. Addresses on any other origin are left as they
+ * are: a link is someone else's host by design, and no request to it should
+ * be forced through this site.
+ */
+export function toSameOriginImageUrl(value: string | null | undefined, apiBaseUrl: string) {
+  if (!value) return value;
+  if (value.startsWith('/api/v1')) return value;
+  const base = /^https?:\/\//i.test(apiBaseUrl) ? parseUrl(apiBaseUrl) : null;
+  if (base) {
+    const basePath = base.pathname.replace(/\/+$/, '');
+    if (basePath && (value === basePath || value.startsWith(`${basePath}/`))) {
+      return '/api/v1' + value.slice(basePath.length);
+    }
+    const parsed = parseUrl(value);
+    if (parsed?.origin === base.origin) {
+      if (basePath && parsed.pathname.startsWith(`${basePath}/`)) {
+        return '/api/v1' + parsed.pathname.slice(basePath.length) + parsed.search;
+      }
+      if (parsed.pathname.startsWith('/api/v1')) {
+        return parsed.pathname + parsed.search;
+      }
+    }
+  } else if (looksLikeOwnUploadUrl(value)) {
+    const parsed = parseUrl(value);
+    if (parsed?.pathname.startsWith('/api/v1')) {
+      return parsed.pathname + parsed.search;
+    }
+  }
+  return value;
 }
 
 function parseUrl(value: string): URL | null {

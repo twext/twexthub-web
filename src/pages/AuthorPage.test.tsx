@@ -83,7 +83,7 @@ describe('AuthorPage', () => {
     render(<AuthorPage namespace="kane" onNavigate={noop} />);
 
     const img = await screen.findByAltText('Avatar for @kane');
-    expect(img).toHaveAttribute('src', `${api.getBaseUrl()}/users/kane/avatar`);
+    expect(img).toHaveAttribute('src', '/api/v1/users/kane/avatar');
     expect(screen.queryByAltText('Banner for @kane')).toBeNull();
   });
 

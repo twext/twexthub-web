@@ -11,7 +11,12 @@ vi.mock('../services/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../services/api')>();
   return {
     ...actual,
-    api: { ...actual.api, uploadProfileImage: vi.fn(), deleteProfileImage: vi.fn() },
+    api: {
+      ...actual.api,
+      getBaseUrl: vi.fn(),
+      uploadProfileImage: vi.fn(),
+      deleteProfileImage: vi.fn(),
+    },
   };
 });
 
@@ -47,6 +52,8 @@ function imageFile(name = 'me.png', type = 'image/png', size = 1024) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The component renders the preview on the API base it is served through.
+  apiMock.getBaseUrl.mockReturnValue('/api/v1');
   apiMock.uploadProfileImage.mockResolvedValue({
     ...USER,
     avatarUrl: '/v1/users/kane/avatar?v=0123456789abcdef',

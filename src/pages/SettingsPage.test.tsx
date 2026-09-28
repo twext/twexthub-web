@@ -153,7 +153,7 @@ describe('SettingsPage', () => {
     // An avatar falls back to the registry identicon rather than to nothing.
     expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
       'src',
-      `${api.getBaseUrl()}/users/kane/avatar`,
+      '/api/v1/users/kane/avatar',
     );
   });
 
@@ -164,7 +164,7 @@ describe('SettingsPage', () => {
     renderWithProviders(<SettingsPage onNavigate={noop} />);
     expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
       'src',
-      `${api.getBaseUrl()}/users/kane/avatar`,
+      '/api/v1/users/kane/avatar',
     );
     expect(screen.getByTestId('banner-preview')).toHaveAttribute(
       'src',

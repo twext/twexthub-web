@@ -291,7 +291,7 @@ describe('Sidebar account card', () => {
 
     expect(
       within(column(container).getByTestId('account-card')).getByRole('presentation'),
-    ).toHaveAttribute('src', 'https://api.test/v1/users/kane/avatar');
+    ).toHaveAttribute('src', '/api/v1/users/kane/avatar');
   });
 
   it('signs out and returns to the home page', async () => {
