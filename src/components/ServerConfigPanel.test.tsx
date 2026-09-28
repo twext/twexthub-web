@@ -171,6 +171,32 @@ describe('ServerConfigPanel', () => {
     expect(await screen.findByText(/Start with http/)).toBeInTheDocument();
   });
 
+  it('unsets a base URL by clearing its field, the way numbers behave', async () => {
+    renderWithProviders(<ServerConfigPanel />);
+    const input = (await screen.findByLabelText(/Public base URL/)) as HTMLInputElement;
+
+    await userEvent.clear(input);
+    // An empty field means the file stops mentioning the key, so it is not a
+    // value that needs fixing.
+    expect(input).not.toHaveAttribute('aria-invalid');
+    await userEvent.click(save());
+
+    await waitFor(() =>
+      expect(apiMock.updateServerConfig).toHaveBeenCalledWith({ publicBaseUrl: null }),
+    );
+  });
+
+  it('treats a whitespace-only base URL as unset rather than as a missing scheme', async () => {
+    renderWithProviders(<ServerConfigPanel />);
+    const input = (await screen.findByLabelText(/Public base URL/)) as HTMLInputElement;
+
+    await userEvent.clear(input);
+    await userEvent.type(input, '   ');
+
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByText(/Start with http/)).not.toBeInTheDocument();
+  });
+
   it('says a setting needs a restart once it has been written', async () => {
     renderWithProviders(<ServerConfigPanel />);
     const input = await screen.findByLabelText(/Session lifetime/);

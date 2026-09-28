@@ -41,7 +41,7 @@ function fromDraft(setting: ServerSetting, draft: DraftValue): ServerSetting['va
     const text = String(draft).trim();
     return text === '' ? null : Number(text);
   }
-  const text = String(draft);
+  const text = String(draft).trim();
   return text === '' ? null : text;
 }
 
@@ -64,8 +64,8 @@ function validate(setting: ServerSetting, draft: DraftValue): string | null {
   }
   if (setting.type === 'url') {
     const text = String(draft).trim();
-    if (text === '') return 'Enter the address the registry is reached at.';
-    if (!/^https?:\/\/.+/i.test(text)) return 'Start with http:// or https://.';
+    if (text === '') return null;
+    if (!/^https?:\/\/.+/i.test(text)) return 'Start with http:// or https://';
   }
   return null;
 }
