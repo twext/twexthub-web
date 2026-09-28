@@ -515,18 +515,18 @@
 /*
  * Icons.
  *
- * Material Symbols Rounded, loaded as a subsetted font in index.html. The
- * glyph is a ligature, so the element's text content is the icon name and
- * has to stay exactly that -- changing a name string breaks the render,
- * since the font is subset to the names listed in index.html.
+ * Lucide, rendered as inline SVG. Every glyph is drawn on a 24-unit grid
+ * with the stroke optically centered in its viewBox, so a flex row or button
+ * aligns it to the text with no per-glyph corrections of the kind the
+ * Material font needed.
  *
- * These properties mirror what the Google stylesheet sets, so an icon looks
- * the same if that stylesheet is blocked or slow.
+ * The span carries size and tint. The SVG is pinned to the current font size
+ * with 1em, so .icon-xs through .icon-3xl along with the text-* utilities
+ * all just work. Stroke and fill use currentColor, so an icon follows the
+ * tone of the text around it. .icon-filled decides whether the drawn outline
+ * is solid-filled, the role the Material FILL axis used to play.
  */
 .icon {
-  font-family: 'Material Symbols Rounded';
-  font-weight: normal;
-  font-style: normal;
   /*
    * Track whatever the surrounding text is set at, so an icon next to 11px
    * metadata is 11px too. A fixed size here left unsized icons a full 16px
@@ -534,273 +534,26 @@
    * since they come later in the cascade.
    */
   font-size: inherit;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  /*
-   * Inline (non-flex) text runs anchor an inline-block icon to the text
-   * baseline, which leaves the glyph floating above the words. Flex rows
-   * ignore vertical-align entirely, so this only touches true inline
-   * embedding and pulls the glyph down onto the x-height line.
-   */
-  vertical-align: -0.125em;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-feature-settings: 'liga';
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 20;
-  user-select: none;
+  display: inline-flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  /*
+   * True inline (non-flex) text runs anchor an inline-flex icon to the text
+   * baseline. Middle puts the icon's center on the parent's x-height line,
+   * where the lowercase letters it sits next to are centered. Flex rows
+   * ignore vertical-align entirely, so this only touches genuine inline
+   * embedding.
+   */
+  vertical-align: middle;
+  user-select: none;
 }
 
-/*
- * Each icon name is set through a ::before content rule rather than as text in
- * the element. A ligature is ordinary text, so leaving it in the DOM would put
- * "close" and "add" into every label's text content, which is where
- * getByLabelText and getByText look.
- */
-.i-add::before {
-  content: 'add';
-}
-.i-add_photo_alternate::before {
-  content: 'add_photo_alternate';
-}
-.i-arrow_back::before {
-  content: 'arrow_back';
-}
-.i-arrow_forward::before {
-  content: 'arrow_forward';
-}
-.i-arrow_outward::before {
-  content: 'arrow_outward';
-}
-.i-block::before {
-  content: 'block';
-}
-.i-bookmark::before {
-  content: 'bookmark';
-}
-.i-build::before {
-  content: 'build';
-}
-.i-calendar_today::before {
-  content: 'calendar_today';
-}
-.i-campaign::before {
-  content: 'campaign';
-}
-.i-cancel::before {
-  content: 'cancel';
-}
-.i-check::before {
-  content: 'check';
-}
-.i-check_circle::before {
-  content: 'check_circle';
-}
-.i-chevron_left::before {
-  content: 'chevron_left';
-}
-.i-chevron_right::before {
-  content: 'chevron_right';
-}
-.i-close::before {
-  content: 'close';
-}
-.i-compare_arrows::before {
-  content: 'compare_arrows';
-}
-.i-content_copy::before {
-  content: 'content_copy';
-}
-.i-content_cut::before {
-  content: 'content_cut';
-}
-.i-dark_mode::before {
-  content: 'dark_mode';
-}
-.i-data_object::before {
-  content: 'data_object';
-}
-.i-delete::before {
-  content: 'delete';
-}
-.i-description::before {
-  content: 'description';
-}
-.i-dns::before {
-  content: 'dns';
-}
-.i-done_all::before {
-  content: 'done_all';
-}
-.i-download::before {
-  content: 'download';
-}
-.i-draft::before {
-  content: 'draft';
-}
-.i-edit::before {
-  content: 'edit';
-}
-.i-edit_note::before {
-  content: 'edit_note';
-}
-.i-error::before {
-  content: 'error';
-}
-.i-expand_more::before {
-  content: 'expand_more';
-}
-.i-explore::before {
-  content: 'explore';
-}
-.i-grid_view::before {
-  content: 'grid_view';
-}
-.i-group::before {
-  content: 'group';
-}
-.i-gpp_maybe::before {
-  content: 'gpp_maybe';
-}
-.i-home::before {
-  content: 'home';
-}
-.i-image::before {
-  content: 'image';
-}
-.i-info::before {
-  content: 'info';
-}
-.i-inventory_2::before {
-  content: 'inventory_2';
-}
-.i-key::before {
-  content: 'key';
-}
-.i-laptop::before {
-  content: 'laptop';
-}
-.i-light_mode::before {
-  content: 'light_mode';
-}
-.i-link::before {
-  content: 'link';
-}
-.i-local_fire_department::before {
-  content: 'local_fire_department';
-}
-.i-lock::before {
-  content: 'lock';
-}
-.i-login::before {
-  content: 'login';
-}
-.i-logout::before {
-  content: 'logout';
-}
-.i-menu::before {
-  content: 'menu';
-}
-.i-monitoring::before {
-  content: 'monitoring';
-}
-.i-notifications::before {
-  content: 'notifications';
-}
-.i-open_in_new::before {
-  content: 'open_in_new';
-}
-.i-person::before {
-  content: 'person';
-}
-.i-person_add::before {
-  content: 'person_add';
-}
-.i-progress_activity::before {
-  content: 'progress_activity';
-}
-.i-refresh::before {
-  content: 'refresh';
-}
-.i-restart_alt::before {
-  content: 'restart_alt';
-}
-.i-save::before {
-  content: 'save';
-}
-.i-schedule::before {
-  content: 'schedule';
-}
-.i-search::before {
-  content: 'search';
-}
-.i-sell::before {
-  content: 'sell';
-}
-.i-settings::before {
-  content: 'settings';
-}
-.i-shield::before {
-  content: 'shield';
-}
-.i-sort::before {
-  content: 'sort';
-}
-.i-speed::before {
-  content: 'speed';
-}
-.i-storage::before {
-  content: 'storage';
-}
-.i-swap_horiz::before {
-  content: 'swap_horiz';
-}
-.i-table_chart::before {
-  content: 'table_chart';
-}
-.i-terminal::before {
-  content: 'terminal';
-}
-.i-trending_up::before {
-  content: 'trending_up';
-}
-.i-tune::before {
-  content: 'tune';
-}
-.i-upload::before {
-  content: 'upload';
-}
-.i-verified_user::before {
-  content: 'verified_user';
-}
-.i-view_column::before {
-  content: 'view_column';
-}
-.i-view_list::before {
-  content: 'view_list';
-}
-.i-visibility::before {
-  content: 'visibility';
-}
-.i-warning::before {
-  content: 'warning';
-}
-
-.icon-filled {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 20;
+.icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
 }
 
 .icon-xs {
@@ -940,17 +693,8 @@
 }
 
 /*
- * Icons carry `line-height: 1` so a large glyph never inflates the box it sits
- * in. Beside a text run that leaves the two with different line heights, and
- * flex centring lines the boxes up while leaving the glyphs visibly offset from
- * the words they belong to. Handing the icon the run's line-height puts both
- * baselines in the same place, which is what centres them optically.
+ * Collapsed: icons stand in for the labels, which fly out on hover or focus.
  */
-.sidebar-row .icon {
-  line-height: inherit;
-}
-
-/* Collapsed: icons stand in for the labels, which fly out on hover or focus. */
 .sidebar-rail[data-collapsed='true'] [data-tip] {
   position: relative;
 }
