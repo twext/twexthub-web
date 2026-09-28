@@ -233,7 +233,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
         {loading && (
           <Icon name="progress_activity" className="icon-sm text-ink-3 animate-spin shrink-0" />
         )}
-        <kbd className="hidden sm:inline-block text-[10px] font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
+        <kbd className="hidden sm:inline-block text-micro font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
           Esc
         </kbd>
       </div>
@@ -258,7 +258,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
             return (
               <React.Fragment key={item.id}>
                 {showGroup && (
-                  <div className="px-3.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+                  <div className="px-3.5 pt-2 pb-1 text-micro font-semibold uppercase tracking-wide text-ink-3">
                     {item.group}
                   </div>
                 )}
@@ -276,7 +276,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
                   <Icon name={item.icon} className="text-ink-3 shrink-0" />
                   <span className="flex-1 min-w-0 truncate">{item.label}</span>
                   {item.hint && (
-                    <span className="text-[11px] font-mono text-ink-3 truncate">{item.hint}</span>
+                    <span className="text-meta font-mono text-ink-3 truncate">{item.hint}</span>
                   )}
                 </div>
               </React.Fragment>

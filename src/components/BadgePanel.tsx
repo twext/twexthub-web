@@ -121,7 +121,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
             </label>
           ))}
         </div>
-        <p className="text-[11px] text-ink-3">
+        <p className="text-meta text-ink-3">
           One fact renders that fact's compact ~90-140px badge. Two or more switches to the combined
           badge, which packs all three facts into a single ~250px pill.
         </p>
@@ -151,7 +151,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
               className="h-6 align-middle"
             />
           ) : (
-            <span className="text-[11px] text-ink-3">Select at least one fact to preview.</span>
+            <span className="text-meta text-ink-3">Select at least one fact to preview.</span>
           )}
         </div>
       </div>
@@ -159,7 +159,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
       <div className="space-y-2">
         <div className="label">Markdown</div>
         <div className="flex items-center gap-2">
-          <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
+          <code className="flex-1 min-w-0 text-meta font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
             {markdown}
           </code>
           <button
@@ -180,7 +180,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
       <div className="space-y-2">
         <div className="label">Direct image URL</div>
         <div className="flex items-center gap-2">
-          <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
+          <code className="flex-1 min-w-0 text-meta font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
             {badgeUrl}
           </code>
           <button

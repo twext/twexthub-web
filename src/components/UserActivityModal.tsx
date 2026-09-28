@@ -120,7 +120,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                       <span className="font-mono text-ink font-semibold">
                         {sess.id.slice(0, 16)}...
                       </span>
-                      <div className="text-[11px] text-ink-3">
+                      <div className="text-meta text-ink-3">
                         Created {new Date(sess.createdAt).toLocaleString()}
                         {sess.lastUsedAt &&
                           ` • Last used ${new Date(sess.lastUsedAt).toLocaleString()}`}
@@ -137,7 +137,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-ink-3 py-2">No active sessions.</p>
+              <p className="text-meta text-ink-3 py-2">No active sessions.</p>
             )}
           </div>
 
@@ -159,13 +159,13 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                         {tok.scopes?.map((sc) => (
                           <span
                             key={sc}
-                            className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-[10px]"
+                            className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-micro"
                           >
                             {sc}
                           </span>
                         ))}
                       </div>
-                      <div className="text-[11px] text-ink-3">
+                      <div className="text-meta text-ink-3">
                         Created {new Date(tok.createdAt).toLocaleDateString()}
                         {tok.expiresAt
                           ? ` • Expires ${new Date(tok.expiresAt).toLocaleDateString()}`
@@ -184,7 +184,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-ink-3 py-2">No access tokens.</p>
+              <p className="text-meta text-ink-3 py-2">No access tokens.</p>
             )}
           </div>
         </>

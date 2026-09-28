@@ -163,7 +163,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
                   @{author.namespace}
                 </span>
                 {author.role === 'admin' && (
-                  <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                  <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
                     Admin
                   </span>
                 )}

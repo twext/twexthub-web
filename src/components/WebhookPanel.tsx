@@ -226,7 +226,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
           aria-label="Webhook URL"
           className="input font-mono text-xs"
         />
-        <label className="flex items-center gap-2 text-[11px] text-ink-2 cursor-pointer">
+        <label className="flex items-center gap-2 text-meta text-ink-2 cursor-pointer">
           <input type="checkbox" checked={active} onChange={() => setActive((v) => !v)} />
           <span>
             Start active
@@ -237,7 +237,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
           </span>
         </label>
         <fieldset className="space-y-1.5">
-          <legend className="text-[11px] text-ink-3 mb-1">Events</legend>
+          <legend className="text-meta text-ink-3 mb-1">Events</legend>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {WEBHOOK_EVENTS.map((event) => (
               <label
@@ -255,7 +255,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
           </div>
         </fieldset>
         {createError && (
-          <p className="text-[11px] text-rose-700 dark:text-rose-400">{createError}</p>
+          <p className="text-meta text-rose-700 dark:text-rose-400">{createError}</p>
         )}
         <button type="submit" disabled={creating} className="btn btn-primary btn-sm">
           <Icon name="add" className="icon-sm" />
@@ -281,11 +281,11 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
                     {hook.url}
                   </code>
                   {hook.active ? (
-                    <span className="chip bg-wash dark:bg-raised border-line text-ink-3 text-[10px] shrink-0">
+                    <span className="chip bg-wash dark:bg-raised border-line text-ink-3 text-micro shrink-0">
                       Active
                     </span>
                   ) : (
-                    <span className="chip bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-[10px] shrink-0">
+                    <span className="chip bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-micro shrink-0">
                       Paused
                     </span>
                   )}
@@ -294,13 +294,13 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
                   {hook.events.map((event) => (
                     <span
                       key={event}
-                      className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-[10px]"
+                      className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-micro"
                     >
                       {event}
                     </span>
                   ))}
                 </div>
-                <div className={`text-[11px] ${deliveryClass(hook.lastDeliveryStatus)}`}>
+                <div className={`text-meta ${deliveryClass(hook.lastDeliveryStatus)}`}>
                   {hook.lastDeliveryAt
                     ? `Last delivery ${new Date(hook.lastDeliveryAt).toLocaleString()}`
                     : 'No deliveries yet'}
@@ -320,7 +320,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-ink-3 py-2">No webhooks yet. Add one above.</p>
+        <p className="text-meta text-ink-3 py-2">No webhooks yet. Add one above.</p>
       )}
 
       {confirmDialog}

@@ -497,7 +497,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           <Icon name="schedule" />
           <span>Awaiting review</span>
           {pendingVersions.length > 0 && (
-            <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-amber-500 text-white font-mono font-bold">
+            <span className="px-1.5 py-0.2 text-micro rounded-full bg-amber-500 text-white font-mono font-bold">
               {pendingVersions.length}
             </span>
           )}
@@ -627,11 +627,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         <span className="font-mono text-xs text-ink-3">
                           @{ns}/{item.id}
                         </span>
-                        <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
+                        <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-meta">
                           v{item.version}
                         </span>
                         {item.license && (
-                          <span className="text-[10px] uppercase font-mono bg-wash dark:bg-raised text-ink-2 px-1.5 py-0.5 rounded border border-line">
+                          <span className="text-micro uppercase font-mono bg-wash dark:bg-raised text-ink-2 px-1.5 py-0.5 rounded border border-line">
                             {item.license}
                           </span>
                         )}
@@ -641,7 +641,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         <p className="text-xs text-ink-2 line-clamp-2">{item.description}</p>
                       )}
 
-                      <div className="text-[11px] text-ink-3 flex items-center gap-3">
+                      <div className="text-meta text-ink-3 flex items-center gap-3">
                         <span>
                           Submitted by <strong className="text-ink-2">@{ns}</strong>
                         </span>
@@ -752,7 +752,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         @{ext.namespace}/{ext.id}
                       </span>
                       {ext.version && (
-                        <span className="px-1.5 py-0.2 font-mono text-[10px] bg-wash dark:bg-raised text-ink-2 rounded border border-line">
+                        <span className="px-1.5 py-0.2 font-mono text-micro bg-wash dark:bg-raised text-ink-2 rounded border border-line">
                           v{ext.version}
                         </span>
                       )}
@@ -864,13 +864,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                           <span className="font-bold text-ink">@{u.namespace}</span>
                           {u.displayName && <span className="text-ink-2">({u.displayName})</span>}
                           {isTargetAdmin && (
-                            <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                            <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
                               Admin
                             </span>
                           )}
-                          {isMe && <span className="text-[10px] text-ink-3 italic">(You)</span>}
+                          {isMe && <span className="text-micro text-ink-3 italic">(You)</span>}
                         </div>
-                        <div className="text-[11px] text-ink-3 flex items-center gap-2">
+                        <div className="text-meta text-ink-3 flex items-center gap-2">
                           <span>
                             {u.termsAcceptedVersion
                               ? `Terms accepted (v${u.termsAcceptedVersion})`
@@ -962,11 +962,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <h3 className="text-sm font-semibold text-ink">
                   Terms of Service (v{termsDoc?.version ?? 1})
                 </h3>
-                <p className="text-[11px] text-ink-3">
+                <p className="text-meta text-ink-3">
                   Publishing a new revision may prompt users to re-accept the updated terms.
                 </p>
                 {termsDoc?.updatedAt && (
-                  <p className="text-[11px] text-ink-3">
+                  <p className="text-meta text-ink-3">
                     Last updated {new Date(termsDoc.updatedAt).toLocaleString()}
                   </p>
                 )}
@@ -996,11 +996,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <h3 className="text-sm font-semibold text-ink">
                   Privacy Policy (v{privacyDoc?.version ?? 1})
                 </h3>
-                <p className="text-[11px] text-ink-3">
+                <p className="text-meta text-ink-3">
                   Public privacy statement explaining data retention and user privacy commitments.
                 </p>
                 {privacyDoc?.updatedAt && (
-                  <p className="text-[11px] text-ink-3">
+                  <p className="text-meta text-ink-3">
                     Last updated {new Date(privacyDoc.updatedAt).toLocaleString()}
                   </p>
                 )}

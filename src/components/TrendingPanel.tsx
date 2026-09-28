@@ -49,7 +49,7 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({ onNavigate, limit 
           <Icon name="local_fire_department" className="text-amber-500" />
           Trending This Week
         </h2>
-        <span className="text-[10px] text-ink-3 font-mono inline-flex items-center gap-1">
+        <span className="text-micro text-ink-3 font-mono inline-flex items-center gap-1">
           <Icon name="trending_up" className="icon-xs" />
           top {limit}
         </span>
@@ -69,18 +69,18 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({ onNavigate, limit 
                 onClick={() => onNavigate(`ext/${item.namespace}/${item.id}`)}
                 className="w-full flex items-center gap-3 py-2 text-left group"
               >
-                <span className="font-mono text-[11px] text-ink-3 w-4 shrink-0 tabular-nums">
+                <span className="font-mono text-meta text-ink-3 w-4 shrink-0 tabular-nums">
                   {index + 1}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs font-medium text-ink group-hover:text-lilac-700 dark:group-hover:text-lilac-300 truncate transition-colors">
                     {item.name}
                   </span>
-                  <span className="block font-mono text-[10px] text-ink-3 truncate">
+                  <span className="block font-mono text-micro text-ink-3 truncate">
                     @{item.namespace}/{item.id}
                   </span>
                 </span>
-                <span className="font-mono text-[10px] text-ink-3 chip shrink-0">
+                <span className="font-mono text-micro text-ink-3 chip shrink-0">
                   v{item.version}
                 </span>
               </button>
@@ -90,7 +90,7 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({ onNavigate, limit 
       )}
 
       {failed && (
-        <p className="text-[10px] text-ink-3 mt-3">Trending is temporarily unavailable.</p>
+        <p className="text-micro text-ink-3 mt-3">Trending is temporarily unavailable.</p>
       )}
     </section>
   );

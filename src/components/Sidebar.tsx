@@ -89,7 +89,7 @@ const NavRow: React.FC<NavRowProps> = ({
       <span className={collapsed ? 'sr-only' : 'truncate'}>{label}</span>
       {count !== null && (
         <span
-          className={`font-mono text-[10px] font-bold leading-tight ${collapsed ? 'sr-only' : 'ml-auto'} ${
+          className={`font-mono text-micro font-bold leading-tight ${collapsed ? 'sr-only' : 'ml-auto'} ${
             badgeClassName ??
             'rounded-full bg-lilac-100 px-1.5 py-0.5 text-lilac-700 dark:bg-lilac-900 dark:text-lilac-300'
           }`}
@@ -149,12 +149,12 @@ const AccountCard: React.FC<{
         />
         <div className="min-w-0">
           <div className="text-sm font-semibold text-ink truncate">{displayName}</div>
-          <div className="text-[11px] font-mono text-ink-3 truncate">@{user.namespace}</div>
+          <div className="text-meta font-mono text-ink-3 truncate">@{user.namespace}</div>
         </div>
       </button>
 
       {user.bio && (
-        <p className="mt-2 text-[11px] leading-relaxed text-ink-2 line-clamp-4 whitespace-pre-wrap break-words">
+        <p className="mt-2 text-meta leading-relaxed text-ink-2 line-clamp-4 whitespace-pre-wrap break-words">
           {user.bio}
         </p>
       )}
@@ -166,7 +166,7 @@ const AccountCard: React.FC<{
               href={user.website}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="flex items-center gap-1.5 text-[11px] text-lilac-700 dark:text-lilac-300 hover:underline break-all"
+              className="flex items-center gap-1.5 text-meta text-lilac-700 dark:text-lilac-300 hover:underline break-all"
             >
               <Icon name="link" className="shrink-0" />
               {user.website.replace(/^https?:\/\//, '')}
@@ -177,7 +177,7 @@ const AccountCard: React.FC<{
               href={`https://github.com/${user.github}`}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="flex items-center gap-1.5 text-[11px] font-mono text-ink-2 hover:text-ink"
+              className="flex items-center gap-1.5 text-meta font-mono text-ink-2 hover:text-ink"
             >
               <span className="text-ink-3">@</span>
               {user.github}
@@ -187,7 +187,7 @@ const AccountCard: React.FC<{
       )}
 
       {!user.bio && !user.website && !user.github && (
-        <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
+        <p className="mt-2 text-meta leading-relaxed text-ink-3">
           Add a bio, website, or GitHub username so visitors can learn more about you.
         </p>
       )}
@@ -363,7 +363,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <Icon name="terminal" className="icon-sm" />
                 <span className="truncate">Command palette</span>
-                <kbd className="ml-auto rounded border border-line bg-surface px-1 py-0.5 font-mono text-[10px] leading-none text-ink-3">
+                <kbd className="ml-auto rounded border border-line bg-surface px-1 py-0.5 font-mono text-micro leading-none text-ink-3">
                   K
                 </kbd>
               </button>
@@ -481,7 +481,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <button
                         type="button"
                         onClick={() => go(`ext/${item.namespace}/${item.id}`)}
-                        className="flex w-full items-center gap-2 rounded-r px-3 py-1 text-left font-mono text-[11px] text-ink-2 transition-colors hover:bg-wash hover:text-ink"
+                        className="flex w-full items-center gap-2 rounded-r px-3 py-1 text-left font-mono text-meta text-ink-2 transition-colors hover:bg-wash hover:text-ink"
                       >
                         <span className="truncate">
                           @{item.namespace}/{item.id}
@@ -493,7 +493,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={clearRecent}
-                  className="mt-1 px-3 text-[11px] text-ink-3 transition-colors hover:text-ink"
+                  className="mt-1 px-3 text-meta text-ink-3 transition-colors hover:text-ink"
                 >
                   Clear
                 </button>
@@ -553,7 +553,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {!collapsed && (
-          <div className="space-y-1 px-3 pb-4 pt-1 text-[11px] text-ink-3">
+          <div className="space-y-1 px-3 pb-4 pt-1 text-meta text-ink-3">
             <a
               href="https://turbowarp.org"
               target="_blank"
@@ -618,7 +618,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Icon name="notifications" className="icon-sm" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[14px] rounded-full bg-lilac-500 px-1 font-mono text-[9px] font-bold leading-tight text-white">
+              <span className="absolute top-1 right-1 min-w-[14px] rounded-full bg-lilac-600 px-1 font-mono text-micro font-bold leading-tight text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}

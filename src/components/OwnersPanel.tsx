@@ -98,7 +98,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
             <Icon name="group" className="text-lilac-700 dark:text-lilac-300" />
             Owners
           </h2>
-          <p className="font-mono text-[11px] text-ink-3 mt-0.5">
+          <p className="font-mono text-meta text-ink-3 mt-0.5">
             @{namespace}/{id}
           </p>
         </div>
@@ -145,11 +145,11 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                 {adding ? 'Adding...' : 'Add'}
               </button>
             </div>
-            <p className="text-[10px] text-ink-3">
+            <p className="text-micro text-ink-3">
               The new owner is notified. The extension's own account cannot be removed.
             </p>
             {candidateError && (
-              <p className="text-[11px] text-rose-600 dark:text-rose-400">{candidateError}</p>
+              <p className="text-meta text-rose-600 dark:text-rose-400">{candidateError}</p>
             )}
           </div>
         )}
@@ -183,7 +183,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-ink-3 truncate">
+                    <div className="text-meta text-ink-3 truncate">
                       {owner.displayName}
                       {owner.addedAt && (
                         <span className="ml-1.5">
@@ -210,7 +210,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
             })}
           </ul>
         ) : (
-          <p className="text-[11px] text-ink-3">No owners listed.</p>
+          <p className="text-meta text-ink-3">No owners listed.</p>
         )}
       </div>
       {confirmDialog}

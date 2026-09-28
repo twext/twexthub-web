@@ -230,9 +230,9 @@ export const ServerConfigPanel: React.FC = () => {
               <div className="flex items-baseline justify-between gap-2 flex-wrap">
                 <label htmlFor={controlId} className="label block normal-case text-ink-3">
                   <span className="text-xs font-semibold text-ink">{setting.label}</span>
-                  <code className="ml-2 text-[11px] text-ink-3">{setting.key}</code>
+                  <code className="ml-2 text-meta text-ink-3">{setting.key}</code>
                 </label>
-                <span className="text-[11px] text-ink-3">
+                <span className="text-meta text-ink-3">
                   {setting.value === null || setting.value === undefined
                     ? 'not set in the file'
                     : setting.type === 'bytes' && typeof setting.value === 'number'
@@ -244,7 +244,7 @@ export const ServerConfigPanel: React.FC = () => {
               </div>
 
               {setting.help && (
-                <p id={`${controlId}-help`} className="text-[11px] text-ink-3 leading-relaxed">
+                <p id={`${controlId}-help`} className="text-meta text-ink-3 leading-relaxed">
                   {setting.help}
                 </p>
               )}
@@ -300,7 +300,7 @@ export const ServerConfigPanel: React.FC = () => {
               )}
 
               {setting.type === 'bytes' && (
-                <p className="text-[11px] text-ink-3">
+                <p className="text-meta text-ink-3">
                   {Number.isFinite(Number(draft)) && String(draft) !== ''
                     ? formatBytes(Number(draft))
                     : 'Enter a size in bytes.'}
@@ -310,7 +310,7 @@ export const ServerConfigPanel: React.FC = () => {
               {error && (
                 <p
                   id={`${controlId}-error`}
-                  className="text-[11px] text-rose-600 dark:text-rose-400"
+                  className="text-meta text-rose-600 dark:text-rose-400"
                 >
                   {error}
                 </p>
@@ -350,14 +350,14 @@ export const ServerConfigPanel: React.FC = () => {
           Reload
         </button>
         {invalid.length > 0 && (
-          <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+          <span className="flex items-center gap-1 text-meta text-amber-600 dark:text-amber-400">
             <Icon name="warning" className="icon-sm" />
             {invalid.length} setting{invalid.length === 1 ? ' needs' : 's need'} a fix before
             saving.
           </span>
         )}
         {config.editable && invalid.length === 0 && pending.length > 0 && (
-          <span className="text-[11px] text-ink-3">
+          <span className="text-meta text-ink-3">
             {pending.length} unsaved change{pending.length === 1 ? '' : 's'}.
           </span>
         )}

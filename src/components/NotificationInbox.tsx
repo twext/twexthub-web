@@ -178,7 +178,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
         <button
           onClick={handleMarkAll}
           disabled={marking || unreadCount === 0}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-meta font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
         >
           <Icon name="done_all" className="icon-sm" />
           {marking ? 'Marking...' : 'Mark all read'}
@@ -222,7 +222,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                           aria-label="Unread"
                         />
                       )}
-                      <span className="text-[11px] text-ink-3">
+                      <span className="text-meta text-ink-3">
                         {new Date(notification.createdAt).toLocaleString()}
                       </span>
                     </div>
@@ -254,7 +254,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
             })}
           </div>
         ) : (
-          <p className="text-[11px] text-ink-3 py-2">
+          <p className="text-meta text-ink-3 py-2">
             {unreadOnly ? 'No unread notifications.' : 'No notifications yet.'}
           </p>
         )}

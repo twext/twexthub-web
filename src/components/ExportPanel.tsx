@@ -118,7 +118,7 @@ export const ExportPanel: React.FC = () => {
         <Icon name="download" className="text-lilac-600 dark:text-lilac-300 mt-0.5" />
         <div>
           <h3 className="text-sm font-semibold text-ink">Download site data</h3>
-          <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
+          <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
             Download a copy of the site's data, compiled right in your browser. Nothing is stored on
             the server.
           </p>
@@ -138,7 +138,7 @@ export const ExportPanel: React.FC = () => {
                 <Icon name={dataset.icon} className="text-ink-3 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-ink">{dataset.label}</div>
-                  <div className="text-[11px] text-ink-3">{dataset.description}</div>
+                  <div className="text-meta text-ink-3">{dataset.description}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

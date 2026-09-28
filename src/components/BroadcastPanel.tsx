@@ -75,7 +75,7 @@ export const BroadcastPanel: React.FC = () => {
           placeholder="Scheduled maintenance on Sunday 02:00 UTC..."
           className="input resize-y"
         />
-        {error && <p className="text-[11px] text-rose-600 dark:text-rose-400">{error}</p>}
+        {error && <p className="text-meta text-rose-600 dark:text-rose-400">{error}</p>}
       </div>
 
       <button

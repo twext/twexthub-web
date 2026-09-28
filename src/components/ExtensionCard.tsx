@@ -49,7 +49,7 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
 
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             {status !== 'published' && <StatusBadge status={status} size="sm" />}
-            <span className="font-mono text-[11px] text-ink-3">v{version}</span>
+            <span className="font-mono text-meta text-ink-3">v{version}</span>
           </div>
         </div>
 

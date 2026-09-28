@@ -49,7 +49,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
       key={target}
       onClick={() => setMode(target)}
       aria-pressed={mode === target}
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-meta font-medium transition-colors ${
         mode === target
           ? 'bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300'
           : 'text-ink-3 hover:text-ink hover:bg-wash dark:hover:bg-raised'
@@ -72,11 +72,11 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
             >
               {title}
             </h2>
-            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
+            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-meta">
               revision #{version}
             </span>
           </div>
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             Markdown policy editor — changes publish a new revision users may need to re-accept.
           </p>
         </div>
@@ -133,7 +133,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
+      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-meta text-ink-3 font-mono">
         <span>
           Markdown • {lineCount} lines • {wordCount} words • {charCount} chars
         </span>

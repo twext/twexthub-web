@@ -237,7 +237,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
               <Icon name="content_cut" className="text-lilac-600 dark:text-lilac-300" />
               <h3 className="text-sm font-semibold text-ink">Prune Dormant Accounts</h3>
             </div>
-            <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
+            <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
               Find accounts that have no active web sessions and no automation tokens, then delete
               them in bulk. Deletion permanently removes the account and everything it owns.
             </p>
@@ -277,7 +277,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
 
         {isScanning && (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-ink-3">
+            <div className="flex items-center justify-between text-meta text-ink-3">
               <span>
                 Inspecting accounts... {scanProgress.done} of {scanProgress.total}
               </span>
@@ -333,7 +333,7 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
 
       {isPruning && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-ink-3">
+          <div className="flex items-center justify-between text-meta text-ink-3">
             <span>
               Deleting accounts... {pruneProgress.done} of {pruneProgress.total}
             </span>
@@ -408,17 +408,17 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
                             <span className="text-ink-2">({candidate.user.displayName})</span>
                           )}
                           {candidate.user.role === 'admin' && (
-                            <span className="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                            <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
                               Admin
                             </span>
                           )}
                           {candidate.user.hasPublished && (
-                            <span className="px-1.5 py-0.2 text-[10px] font-medium bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border border-lilac-200 dark:border-lilac-800 rounded">
+                            <span className="px-1.5 py-0.2 text-micro font-medium bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border border-lilac-200 dark:border-lilac-800 rounded">
                               Published
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-ink-3 flex flex-wrap items-center gap-2">
+                        <div className="text-meta text-ink-3 flex flex-wrap items-center gap-2">
                           <span>{candidate.sessions} sessions</span>
                           <span>•</span>
                           <span>{candidate.tokens} tokens</span>

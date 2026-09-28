@@ -165,7 +165,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               >
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-ink truncate">{ext.name}</div>
-                  <div className="font-mono text-[11px] text-ink-3 truncate">
+                  <div className="font-mono text-meta text-ink-3 truncate">
                     @{ext.namespace}/{ext.id}
                   </div>
                 </div>

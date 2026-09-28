@@ -93,7 +93,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
             <Icon name="storage" className="text-lilac-700 dark:text-lilac-300" />
             Storage quota
           </h2>
-          <p className="font-mono text-[11px] text-ink-3 mt-0.5">@{namespace}</p>
+          <p className="font-mono text-meta text-ink-3 mt-0.5">@{namespace}</p>
         </div>
         <button
           onClick={onClose}
@@ -140,7 +140,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                   </div>
                 )}
                 {quota.maxBlobBytes == null && (
-                  <p className="text-[10px] text-ink-3">
+                  <p className="text-micro text-ink-3">
                     No per-account limit set. This account uses the site default.
                   </p>
                 )}
@@ -173,7 +173,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                   </button>
                 </div>
                 {inputError && (
-                  <p className="text-[11px] text-rose-600 dark:text-rose-400">{inputError}</p>
+                  <p className="text-meta text-rose-600 dark:text-rose-400">{inputError}</p>
                 )}
               </div>
 

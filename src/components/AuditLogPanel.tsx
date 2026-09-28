@@ -106,7 +106,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
             <Icon name="monitoring" className="text-amber-600 dark:text-amber-400" />
             Site activity
           </h2>
-          <p className="text-[11px] text-ink-3 mt-0.5 max-w-2xl">
+          <p className="text-meta text-ink-3 mt-0.5 max-w-2xl">
             A record of publishes, review decisions, unpublishes, deprecations, tag and owner
             changes, storage limits, and access changes. Newest first.
           </p>
@@ -159,10 +159,10 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
                         {entry.actor === 'system' ? 'system' : `@${entry.actor}`}
                       </span>
                     </div>
-                    {details && <p className="text-[11px] text-ink-3 font-mono">{details}</p>}
+                    {details && <p className="text-meta text-ink-3 font-mono">{details}</p>}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] text-ink-3">
+                    <span className="text-meta text-ink-3">
                       {new Date(entry.createdAt).toLocaleString()}
                     </span>
                     {label && (
@@ -172,7 +172,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
                         }
                         title={`Open ${label}`}
                         aria-label={`Open ${label}`}
-                        className="font-mono text-[11px] text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-0.5"
+                        className="font-mono text-meta text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-0.5"
                       >
                         {label}
                         <Icon name="open_in_new" className="icon-xs" />
@@ -195,7 +195,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
           )}
         </>
       ) : (
-        <p className="text-[11px] text-ink-3 py-2">Nothing recorded yet.</p>
+        <p className="text-meta text-ink-3 py-2">Nothing recorded yet.</p>
       )}
     </div>
   );

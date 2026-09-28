@@ -166,7 +166,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
         </div>
       ) : diff && left && right ? (
         <>
-          <div className="grid grid-cols-2 gap-3 text-[11px]">
+          <div className="grid grid-cols-2 gap-3 text-meta">
             {[left, right].map((side) => (
               <div
                 key={side.version}
@@ -189,7 +189,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] font-mono">
+          <div className="flex items-center gap-3 text-meta font-mono">
             <span className="text-emerald-700 dark:text-emerald-400">+{diff.added} added</span>
             <span className="text-rose-700 dark:text-rose-400">-{diff.removed} removed</span>
           </div>
@@ -200,7 +200,7 @@ export const VersionCompareModal: React.FC<VersionCompareModalProps> = ({
                 The selected versions have identical source code.
               </p>
             ) : (
-              <table className="w-full border-collapse font-mono text-[11px] leading-5">
+              <table className="w-full border-collapse font-mono text-meta leading-5">
                 <tbody>
                   {diff.rows.map((row, index) => (
                     <tr

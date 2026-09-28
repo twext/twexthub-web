@@ -165,7 +165,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
                   </span>
                   <span className="font-mono text-ink-2">v{target}</span>
                   {reserved && (
-                    <span className="text-[10px] text-ink-3 uppercase tracking-wide">reserved</span>
+                    <span className="text-micro text-ink-3 uppercase tracking-wide">reserved</span>
                   )}
                 </div>
                 {!reserved && (
@@ -184,7 +184,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
           })}
         </div>
       ) : (
-        <p className="text-[11px] text-ink-3">No dist-tags yet.</p>
+        <p className="text-meta text-ink-3">No dist-tags yet.</p>
       )}
 
       <form onSubmit={handleSubmit} className="border border-line rounded-lg p-3 space-y-3">
@@ -192,7 +192,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
         {publishedVersions.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label htmlFor="dist-tag-name" className="text-[11px] text-ink-3">
+              <label htmlFor="dist-tag-name" className="text-meta text-ink-3">
                 Tag
               </label>
               <input
@@ -205,7 +205,7 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
               />
             </div>
             <div>
-              <label htmlFor="dist-tag-version" className="text-[11px] text-ink-3">
+              <label htmlFor="dist-tag-version" className="text-meta text-ink-3">
                 Version
               </label>
               <select
@@ -223,11 +223,11 @@ export const DistTagPanel: React.FC<DistTagPanelProps> = ({
             </div>
           </div>
         ) : (
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             No published versions to tag yet. Publish a version first.
           </p>
         )}
-        {formError && <p className="text-[11px] text-rose-700 dark:text-rose-400">{formError}</p>}
+        {formError && <p className="text-meta text-rose-700 dark:text-rose-400">{formError}</p>}
         <button
           type="submit"
           disabled={saving || publishedVersions.length === 0}

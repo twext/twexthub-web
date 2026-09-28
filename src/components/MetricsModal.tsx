@@ -57,10 +57,10 @@ const summarise = (family: MetricFamily): MetricFamily => {
 const FamilyTable: React.FC<{ family: MetricFamily }> = ({ family }) => (
   <div className="border border-line rounded-lg overflow-hidden">
     <div className="px-3 py-2 bg-wash dark:bg-raised border-b border-line flex items-center gap-2 flex-wrap">
-      <span className="font-mono text-[11px] text-ink">{family.name}</span>
+      <span className="font-mono text-meta text-ink">{family.name}</span>
       {family.type && (
         <span
-          className={`chip font-mono text-[10px] ${
+          className={`chip font-mono text-micro ${
             TYPE_CHIP[family.type] ?? 'bg-wash dark:bg-raised text-ink-3 border-line'
           }`}
         >
@@ -69,7 +69,7 @@ const FamilyTable: React.FC<{ family: MetricFamily }> = ({ family }) => (
       )}
     </div>
     {family.help && (
-      <p className="px-3 pt-2 text-[11px] text-ink-3 leading-relaxed">{family.help}</p>
+      <p className="px-3 pt-2 text-meta text-ink-3 leading-relaxed">{family.help}</p>
     )}
     <div className="p-3 space-y-1.5">
       {family.samples.map((sample, index) => {
@@ -77,7 +77,7 @@ const FamilyTable: React.FC<{ family: MetricFamily }> = ({ family }) => (
         return (
           <div
             key={`${labels}-${index}`}
-            className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 text-[11px]"
+            className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 text-meta"
           >
             <span className="font-mono text-ink-3 break-all">
               {labels ? labels : <em className="not-italic">no labels</em>}
@@ -165,7 +165,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             <Icon name="monitoring" className="text-amber-600 dark:text-amber-400" />
             Site statistics
           </h2>
-          <p className="text-[11px] text-ink-3">Live numbers from the server.</p>
+          <p className="text-meta text-ink-3">Live numbers from the server.</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
@@ -202,7 +202,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
               </div>
             </div>
             {unauthorized && (
-              <p className="text-[11px] text-ink-3 leading-relaxed max-w-2xl">
+              <p className="text-meta text-ink-3 leading-relaxed max-w-2xl">
                 Only administrators can view these numbers. Sign in with an administrator account
                 and try again.
               </p>
@@ -218,7 +218,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           />
         ) : parsed && parsed.families.length > 0 ? (
           <>
-            <p className="text-[11px] text-ink-3">
+            <p className="text-meta text-ink-3">
               {parsed.families.length} stats • {parsed.sampleCount} data points
             </p>
 
@@ -233,14 +233,14 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
                     const sample = family.samples[0];
                     return (
                       <div key={family.name} className="card p-3">
-                        <div className="font-mono text-[10px] text-ink-3 break-all">
+                        <div className="font-mono text-micro text-ink-3 break-all">
                           {family.name}
                         </div>
                         <div className="font-mono text-xl font-semibold text-ink tabular-nums mt-0.5">
                           {formatValue(sample.name, sample.value)}
                         </div>
                         {family.help && (
-                          <p className="text-[10px] text-ink-3 leading-relaxed mt-1">
+                          <p className="text-micro text-ink-3 leading-relaxed mt-1">
                             {family.help}
                           </p>
                         )}
@@ -263,11 +263,11 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             )}
           </>
         ) : (
-          <p className="text-[11px] text-ink-3">No statistics to show yet.</p>
+          <p className="text-meta text-ink-3">No statistics to show yet.</p>
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
+      <div className="flex items-center justify-between gap-3 px-5 py-2 border-t border-line bg-wash dark:bg-raised text-meta text-ink-3 font-mono">
         <div className="min-w-0">
           <span>
             {parsed ? `${parsed.sampleCount} readings` : 'no data'}

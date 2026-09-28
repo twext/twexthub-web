@@ -387,7 +387,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
               </button>
             </div>
             {extension.updatedAt && (
-              <span className="text-[11px] text-ink-3 flex items-center gap-1">
+              <span className="text-meta text-ink-3 flex items-center gap-1">
                 <Icon name="calendar_today" className="icon-xs" />
                 Updated {new Date(extension.updatedAt).toLocaleDateString()}
               </span>
@@ -439,7 +439,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                           <p className="text-xs text-ink-2 mt-1">{ver.changelog}</p>
                         )}
                         {ver.status === 'deprecated' && ver.deprecation && (
-                          <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 flex items-start gap-1">
+                          <p className="text-meta text-amber-700 dark:text-amber-400 mt-1 flex items-start gap-1">
                             <Icon name="warning" className="icon-xs shrink-0 mt-0.5" />
                             <span>{ver.deprecation}</span>
                           </p>
@@ -447,7 +447,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[11px] text-ink-3">
+                        <span className="text-meta text-ink-3">
                           {ver.createdAt
                             ? new Date(ver.createdAt).toLocaleDateString()
                             : 'Initial release'}
@@ -466,7 +466,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                             onClick={() => handleYankVersion(ver.version)}
                             disabled={yankingVersion === ver.version}
                             title={`Unpublish v${ver.version}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                           >
                             <Icon name="block" className="icon-xs" />
                             {yankingVersion === ver.version ? 'Unpublishing...' : 'Unpublish'}
@@ -485,7 +485,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                                   ? `Clear the deprecation on v${ver.version}`
                                   : `Mark v${ver.version} as deprecated`
                               }
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                             >
                               <Icon name="warning" className="icon-xs" />
                               {ver.status === 'deprecated' ? 'Undeprecate' : 'Deprecate'}
@@ -496,7 +496,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
 
                     {expandedVersion === ver.version && (
                       <div className="px-4 pb-4">
-                        <div className="border border-line rounded-lg bg-wash dark:bg-raised p-3 text-[11px] space-y-1.5">
+                        <div className="border border-line rounded-lg bg-wash dark:bg-raised p-3 text-meta space-y-1.5">
                           {loadingVersion ? (
                             <p className="text-ink-3">Loading version metadata...</p>
                           ) : versionDetailError ? (
@@ -579,13 +579,13 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-ink-3">Current version</span>
+                  <span className="text-meta text-ink-3">Current version</span>
                   {canManage && moderationStatus === 'published' && (
                     <button
                       onClick={() => handleYankVersion(latestVersion)}
                       disabled={yankingVersion === latestVersion}
                       title={`Unpublish v${latestVersion}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-meta font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                     >
                       <Icon name="block" className="icon-xs" />
                       {yankingVersion === latestVersion ? 'Unpublishing...' : 'Unpublish'}

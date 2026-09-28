@@ -105,7 +105,7 @@ export const DeprecateVersionModal: React.FC<DeprecateVersionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-3 hover:text-ink border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-meta font-medium text-ink-3 hover:text-ink border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
           >
             Cancel
           </button>

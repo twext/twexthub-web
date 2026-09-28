@@ -91,11 +91,11 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
             <span className="font-mono text-xs text-ink-3">
               @{ns}/{item.id}
             </span>
-            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-[11px]">
+            <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono text-meta">
               v{item.version}
             </span>
           </div>
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             Source review — inspect the compiled JavaScript before approving.
           </p>
         </div>
@@ -109,7 +109,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
       </div>
 
       {/* Metadata strip */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3 bg-wash dark:bg-raised border-b border-line text-[11px]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3 bg-wash dark:bg-raised border-b border-line text-meta">
         {item.description && (
           <span className="text-ink-2 line-clamp-1 max-w-xl">{item.description}</span>
         )}
@@ -167,7 +167,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
+      <div className="flex items-center justify-between px-5 py-2 border-t border-line bg-wash dark:bg-raised text-meta text-ink-3 font-mono">
         <div className="min-w-0">
           <span>
             extension.js • {lineCount} lines • {sizeKb} KB

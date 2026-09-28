@@ -87,15 +87,28 @@
     'Liberation Mono', monospace;
 
   /* Meta size: descriptions, timestamps, table rows, status bars. The app used
-     to reach for an arbitrary text-[10px]/text-[11px]; this puts it on the
+     to reach for an arbitrary text-micro/text-meta; this puts it on the
      scale so every piece of secondary text matches. */
   --text-meta: 0.6875rem;
   --text-meta--line-height: 1.5;
 
+  /* Micro size: chips, tags, kbd hints, uppercase captions. The smallest step
+     on the scale; anything smaller is a dot, not text. */
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.5;
+
   /* Two-step radius scale. Cards and modals take the large step, everything
-     else the small step. Nothing else should introduce a radius. */
+     else the small step. Nothing else should introduce a radius. The inherited
+     Tailwind steps collapse onto these two so a stray rounded-md/xl can never
+     re-introduce a third, off-brand corner. */
   --radius-panel: 0.5rem;
   --radius-control: 0.25rem;
+  --radius-xs: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-panel);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-panel);
 }
 
 .dark {
@@ -1035,4 +1048,15 @@
 
 :is(.code-highlight, .markdown-body) .token.entity {
   cursor: help;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

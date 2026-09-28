@@ -59,13 +59,13 @@ function isIdle(date?: string | null): boolean {
 const AuditList: React.FC<{ items: AuditItem[] }> = ({ items }) => (
   <ul className="mt-2 border border-line rounded-lg divide-y divide-line max-h-48 overflow-y-auto">
     {items.slice(0, MAX_ITEMS_SHOWN).map((item) => (
-      <li key={item.id} className="px-3 py-2 text-[11px] flex items-center justify-between gap-3">
+      <li key={item.id} className="px-3 py-2 text-meta flex items-center justify-between gap-3">
         <span className="font-mono text-ink-2 truncate">@{item.namespace}</span>
         <span className="text-ink-3 truncate">{item.label}</span>
       </li>
     ))}
     {items.length > MAX_ITEMS_SHOWN && (
-      <li className="px-3 py-2 text-[11px] text-ink-3">
+      <li className="px-3 py-2 text-meta text-ink-3">
         +{items.length - MAX_ITEMS_SHOWN} more...
       </li>
     )}
@@ -96,7 +96,7 @@ const FindingCard: React.FC<{
           <Icon name={icon} className={toneClass} />
           <span className="text-xs font-semibold text-ink">{title}</span>
           <span
-            className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+            className={`text-micro font-mono font-bold px-1.5 py-0.2 rounded-full ${
               count === 0
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                 : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
@@ -107,7 +107,7 @@ const FindingCard: React.FC<{
         </div>
         {count > 0 && action}
       </div>
-      <p className="text-[11px] text-ink-3 leading-relaxed">{description}</p>
+      <p className="text-meta text-ink-3 leading-relaxed">{description}</p>
       {count > 0 && children}
     </div>
   );
@@ -315,7 +315,7 @@ export const AuditPanel: React.FC = () => {
           <Icon name="gpp_maybe" className="text-lilac-600 dark:text-lilac-300 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-ink">Health check</h3>
-            <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
+            <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
               Scans every account for expired sign-ins, unused access keys, unaccepted terms, and
               dormant accounts. Findings are informational unless an action is offered.
             </p>
@@ -333,7 +333,7 @@ export const AuditPanel: React.FC = () => {
 
       {scanning && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-ink-3">
+          <div className="flex items-center justify-between text-meta text-ink-3">
             <span>
               Inspecting accounts... {progress.done} of {progress.total}
             </span>
@@ -357,7 +357,7 @@ export const AuditPanel: React.FC = () => {
 
       {report && !scanning && (
         <div className="space-y-3">
-          <div className="text-[11px] text-ink-3">
+          <div className="text-meta text-ink-3">
             Audited {report.scannedUsers} account(s) at{' '}
             {new Date(report.scannedAt).toLocaleTimeString()}.
           </div>
@@ -442,7 +442,7 @@ export const AuditPanel: React.FC = () => {
                 {report.pendingTerms.slice(0, MAX_ITEMS_SHOWN).map((item) => (
                   <li
                     key={item.namespace}
-                    className="px-3 py-2 text-[11px] flex items-center justify-between gap-3"
+                    className="px-3 py-2 text-meta flex items-center justify-between gap-3"
                   >
                     <span className="font-mono text-ink-2">@{item.namespace}</span>
                     <span className="text-ink-3">
@@ -465,7 +465,7 @@ export const AuditPanel: React.FC = () => {
                 {report.dormantUsers.slice(0, MAX_ITEMS_SHOWN).map((item) => (
                   <li
                     key={item.namespace}
-                    className="px-3 py-2 text-[11px] flex items-center justify-between gap-3"
+                    className="px-3 py-2 text-meta flex items-center justify-between gap-3"
                   >
                     <span className="font-mono text-ink-2">@{item.namespace}</span>
                     {item.hasPublished && <span className="text-ink-3">has published</span>}

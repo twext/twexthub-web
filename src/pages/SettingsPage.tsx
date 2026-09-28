@@ -768,17 +768,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                                 {sess.id.slice(0, 16)}...
                               </span>
                               {isCurrent ? (
-                                <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 text-[10px]">
+                                <span className="chip bg-lilac-50 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 text-micro">
                                   <Icon name="laptop" className="icon-xs" />
                                   This Device
                                 </span>
                               ) : (
-                                <span className="chip bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 text-[10px]">
+                                <span className="chip bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 text-micro">
                                   Active
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-ink-3 flex items-center gap-2">
+                            <div className="text-meta text-ink-3 flex items-center gap-2">
                               <span>Created: {new Date(sess.createdAt).toLocaleDateString()}</span>
                               <span>•</span>
                               <span>Expires: {new Date(sess.expiresAt).toLocaleDateString()}</span>
@@ -1051,14 +1051,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                                 {tok.scopes?.map((sc) => (
                                   <span
                                     key={sc}
-                                    className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-[10px]"
+                                    className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-micro"
                                   >
                                     {sc}
                                   </span>
                                 ))}
                               </div>
                             </div>
-                            <div className="text-[11px] text-ink-3">
+                            <div className="text-meta text-ink-3">
                               Created {new Date(tok.createdAt).toLocaleDateString()}
                               {tok.lastUsedAt &&
                                 ` • Last used ${new Date(tok.lastUsedAt).toLocaleDateString()}`}

@@ -197,7 +197,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
             <button
               type="button"
               onClick={() => setShowUrlInput((open) => !open)}
-              className="text-[11px] text-ink-3 hover:text-ink-2 underline inline-flex items-center gap-1"
+              className="text-meta text-ink-3 hover:text-ink-2 underline inline-flex items-center gap-1"
               data-testid={`${kind}-toggle-url`}
             >
               {showUrlInput ? (
@@ -209,14 +209,14 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
             </button>
           </div>
 
-          <p className="text-[11px] text-ink-3">
+          <p className="text-meta text-ink-3">
             PNG, JPEG, GIF, WebP, or AVIF, up to {formatBytes(MAX_IMAGE_BYTES)}. Uploaded images are
             stored and served by this site.
           </p>
 
           {showUrlInput && (
             <div className="space-y-1">
-              <label htmlFor={`${inputId}-url`} className="text-[11px] text-ink-3 block">
+              <label htmlFor={`${inputId}-url`} className="text-meta text-ink-3 block">
                 Image URL
               </label>
               <input
@@ -230,7 +230,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 autoComplete="off"
                 data-testid={`${kind}-url`}
               />
-              <p className="text-[11px] text-ink-3">
+              <p className="text-meta text-ink-3">
                 A link is referenced rather than uploaded, so it depends on another host staying up.
                 {isUpload
                   ? ' The uploaded image is used while it exists; this is the fallback if it is removed.'
@@ -242,7 +242,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
           {error && (
             <p
               role="alert"
-              className="text-[11px] text-rose-600 dark:text-rose-400 flex items-start gap-1"
+              className="text-meta text-rose-600 dark:text-rose-400 flex items-start gap-1"
               data-testid={`${kind}-error`}
             >
               <Icon name="error" className="icon-sm shrink-0 mt-px" />
