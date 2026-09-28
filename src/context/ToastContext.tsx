@@ -105,7 +105,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               role={toast.variant === 'error' ? 'alert' : 'status'}
               className={`pointer-events-auto card p-3 pr-2 flex items-start gap-2 text-xs border shadow-lg ${VARIANT_STYLES[toast.variant]}`}
             >
-              <Icon name={VARIANT_ICON[toast.variant]} className="mt-0.5 shrink-0" />
+              <Icon name={VARIANT_ICON[toast.variant]} className="shrink-0" />
               <div className="flex-1 min-w-0 leading-relaxed break-words">{toast.message}</div>
               <button
                 onClick={() => dismissToast(toast.id)}

@@ -183,7 +183,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
       {secret && (
         <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 p-3 rounded-lg text-xs space-y-2">
           <div className="flex items-start gap-2">
-            <Icon name="warning" className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <Icon name="warning" className="text-amber-600 dark:text-amber-400 shrink-0" />
             <div className="space-y-1">
               <strong className="font-semibold block">Copy this signing secret now</strong>
               <span>
@@ -254,9 +254,7 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
             ))}
           </div>
         </fieldset>
-        {createError && (
-          <p className="text-meta text-rose-700 dark:text-rose-400">{createError}</p>
-        )}
+        {createError && <p className="text-meta text-rose-700 dark:text-rose-400">{createError}</p>}
         <button type="submit" disabled={creating} className="btn btn-primary btn-sm">
           <Icon name="add" className="icon-sm" />
           <span>{creating ? 'Creating...' : 'Create webhook'}</span>

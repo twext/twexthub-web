@@ -137,7 +137,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           <div className="space-y-3">
             {codeUnavailable ? (
               <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <Icon name="gpp_maybe" className="text-amber-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-amber-600 shrink-0" />
                 <div>
                   <strong>extension.js is not available.</strong> The compiled output for this
                   version could not be loaded from the registry.
@@ -145,7 +145,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
               </div>
             ) : (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
-                <Icon name="gpp_maybe" className="text-rose-600 shrink-0 mt-0.5" />
+                <Icon name="gpp_maybe" className="text-rose-600 shrink-0" />
                 <div>
                   <strong>Unable to load extension.js:</strong> {codeError}
                 </div>

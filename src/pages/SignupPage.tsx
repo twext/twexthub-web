@@ -78,8 +78,8 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
         </div>
 
         {error && (
-          <div data-tone="danger" className="alert">
-            <Icon name="error" className="shrink-0 mt-0.5" />
+          <div data-tone="danger" className="alert items-center text-sm">
+            <Icon name="error" className="shrink-0" />
             <div className="leading-tight">{error}</div>
           </div>
         )}
@@ -90,7 +90,9 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onNavigate }) => {
               Username <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-sm text-ink-3 font-mono">@</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-3 font-mono">
+                @
+              </span>
               <input
                 id="signup-namespace"
                 name="namespace"

@@ -129,7 +129,10 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
       <div className="flex flex-col gap-2.5">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Icon name="search" className="text-ink-3 absolute left-3 top-3 pointer-events-none" />
+            <Icon
+              name="search"
+              className="text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
             <input
               type="text"
               value={query}
@@ -142,7 +145,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                 type="button"
                 onClick={handleClearSearch}
                 aria-label="Clear search"
-                className="absolute right-2.5 top-2.5 text-ink-3 hover:text-ink"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center text-ink-3 hover:text-ink"
               >
                 <Icon name="close" className="icon-sm" />
               </button>

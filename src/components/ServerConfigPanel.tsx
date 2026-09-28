@@ -187,7 +187,7 @@ export const ServerConfigPanel: React.FC = () => {
           role="alert"
           className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3"
         >
-          <Icon name="draft" className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <Icon name="draft" className="shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="space-y-1">
             <p className="text-sm font-semibold text-ink">This site cannot save its own settings</p>
             <p className="text-xs text-ink-2 leading-relaxed">
@@ -204,7 +204,7 @@ export const ServerConfigPanel: React.FC = () => {
 
       {config.editable && (
         <div className="flex gap-3 rounded-lg border border-ink-3/20 p-3">
-          <Icon name="gpp_maybe" className="shrink-0 mt-0.5 text-ink-3" />
+          <Icon name="gpp_maybe" className="shrink-0 text-ink-3" />
           <p className="text-xs text-ink-2 leading-relaxed">
             The database, address, port, and storage location are not editable here. Changing any of
             them can take the site offline, so they are changed only in the configuration file
@@ -308,10 +308,7 @@ export const ServerConfigPanel: React.FC = () => {
               )}
 
               {error && (
-                <p
-                  id={`${controlId}-error`}
-                  className="text-meta text-rose-600 dark:text-rose-400"
-                >
+                <p id={`${controlId}-error`} className="text-meta text-rose-600 dark:text-rose-400">
                   {error}
                 </p>
               )}

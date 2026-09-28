@@ -115,7 +115,7 @@ export const ExportPanel: React.FC = () => {
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-start gap-2">
-        <Icon name="download" className="text-lilac-600 dark:text-lilac-300 mt-0.5" />
+        <Icon name="download" className="text-lilac-600 dark:text-lilac-300" />
         <div>
           <h3 className="text-sm font-semibold text-ink">Download site data</h3>
           <p className="text-meta text-ink-3 max-w-xl leading-relaxed">
@@ -135,7 +135,7 @@ export const ExportPanel: React.FC = () => {
               className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="flex items-start gap-2.5 min-w-0">
-                <Icon name={dataset.icon} className="text-ink-3 mt-0.5 shrink-0" />
+                <Icon name={dataset.icon} className="text-ink-3 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-ink">{dataset.label}</div>
                   <div className="text-meta text-ink-3">{dataset.description}</div>

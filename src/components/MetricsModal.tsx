@@ -68,9 +68,7 @@ const FamilyTable: React.FC<{ family: MetricFamily }> = ({ family }) => (
         </span>
       )}
     </div>
-    {family.help && (
-      <p className="px-3 pt-2 text-meta text-ink-3 leading-relaxed">{family.help}</p>
-    )}
+    {family.help && <p className="px-3 pt-2 text-meta text-ink-3 leading-relaxed">{family.help}</p>}
     <div className="p-3 space-y-1.5">
       {family.samples.map((sample, index) => {
         const labels = formatLabels(sample.labels);
@@ -196,7 +194,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         ) : error ? (
           <div className="space-y-3">
             <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
-              <Icon name="gpp_maybe" className="text-rose-600 shrink-0 mt-0.5" />
+              <Icon name="gpp_maybe" className="text-rose-600 shrink-0" />
               <div>
                 <strong>Couldn't load the statistics:</strong> {error}
               </div>

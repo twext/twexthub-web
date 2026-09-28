@@ -65,9 +65,7 @@ const AuditList: React.FC<{ items: AuditItem[] }> = ({ items }) => (
       </li>
     ))}
     {items.length > MAX_ITEMS_SHOWN && (
-      <li className="px-3 py-2 text-meta text-ink-3">
-        +{items.length - MAX_ITEMS_SHOWN} more...
-      </li>
+      <li className="px-3 py-2 text-meta text-ink-3">+{items.length - MAX_ITEMS_SHOWN} more...</li>
     )}
   </ul>
 );
@@ -312,7 +310,7 @@ export const AuditPanel: React.FC = () => {
 
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <Icon name="gpp_maybe" className="text-lilac-600 dark:text-lilac-300 mt-0.5" />
+          <Icon name="gpp_maybe" className="text-lilac-600 dark:text-lilac-300" />
           <div>
             <h3 className="text-sm font-semibold text-ink">Health check</h3>
             <p className="text-meta text-ink-3 max-w-xl leading-relaxed">

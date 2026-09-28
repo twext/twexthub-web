@@ -309,9 +309,9 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
           }`}
         >
           {summary.failed.length > 0 ? (
-            <Icon name="warning" className="mt-0.5 shrink-0" />
+            <Icon name="warning" className="shrink-0" />
           ) : (
-            <Icon name="check_circle" className="mt-0.5 shrink-0" />
+            <Icon name="check_circle" className="shrink-0" />
           )}
           <div className="space-y-1 min-w-0">
             <p>

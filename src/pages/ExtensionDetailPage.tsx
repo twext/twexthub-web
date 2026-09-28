@@ -329,7 +329,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       {/* Moderation Warning if Pending */}
       {isPending && (
         <div data-tone="warn" className="alert">
-          <Icon name="schedule" className="icon-lg shrink-0 mt-0.5" />
+          <Icon name="schedule" className="icon-lg shrink-0" />
           <div>
             <strong className="font-semibold block text-sm">Pending Moderation Review</strong>
             <p className="mt-0.5 leading-relaxed">
@@ -440,7 +440,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                             data-tone="warn"
                             className="tone-text text-meta mt-1 flex items-start gap-1"
                           >
-                            <Icon name="warning" className="icon-xs shrink-0 mt-0.5" />
+                            <Icon name="warning" className="icon-xs shrink-0" />
                             <span>{ver.deprecation}</span>
                           </p>
                         )}

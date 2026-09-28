@@ -717,7 +717,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setCatalogSearch(e.target.value)}
                 className="input pl-8 pr-3 py-1.5 text-xs"
               />
-              <Icon name="search" className="icon-sm text-ink-3 absolute left-2.5 top-2.5" />
+              <Icon
+                name="search"
+                className="icon-sm text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              />
             </form>
 
             <button
@@ -822,7 +825,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 onChange={(e) => setUserSearch(e.target.value)}
                 className="input pl-8 pr-3 py-1.5 text-xs"
               />
-              <Icon name="search" className="icon-sm text-ink-3 absolute left-2.5 top-2.5" />
+              <Icon
+                name="search"
+                className="icon-sm text-ink-3 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              />
             </div>
 
             <button

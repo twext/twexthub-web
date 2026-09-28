@@ -245,7 +245,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               className="text-meta text-rose-600 dark:text-rose-400 flex items-start gap-1"
               data-testid={`${kind}-error`}
             >
-              <Icon name="error" className="icon-sm shrink-0 mt-px" />
+              <Icon name="error" className="icon-sm shrink-0" />
               {error}
             </p>
           )}
