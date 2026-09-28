@@ -5,9 +5,6 @@ import { api } from '../services/api';
 import { makeExtension, makeStats, paginated, noop } from '../test/testUtils';
 
 vi.mock('../services/api');
-vi.mock('../hooks/useCollections', () => ({
-  useRecentExtensions: () => ({ recent: [], clear: vi.fn() }),
-}));
 
 const apiMock = vi.mocked(api);
 

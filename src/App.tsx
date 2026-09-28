@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
+import { Sidebar } from './components/Sidebar';
 import { TermsBanner } from './components/TermsBanner';
 import { CommandPalette } from './components/CommandPalette';
 
@@ -131,22 +130,21 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          <div className="min-h-screen flex flex-col bg-canvas text-ink font-sans transition-colors duration-150">
-            {/* Navigation Bar */}
-            <Navbar
+          {/* Stacks under the mobile bar, and sits beside the column at lg. */}
+          <div className="flex min-h-screen flex-col bg-canvas text-ink font-sans transition-colors duration-150 lg:flex-row">
+            <Sidebar
               currentRoute={route}
               onNavigate={navigate}
               onOpenCommandPalette={() => setCommandPaletteOpen(true)}
             />
 
-            {/* Global Terms Acceptance Warning Banner */}
-            <TermsBanner onNavigate={navigate} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              {/* Global Terms Acceptance Warning Banner */}
+              <TermsBanner onNavigate={navigate} />
 
-            {/* Main Content Area */}
-            <main className="flex-1">{renderCurrentPage()}</main>
-
-            {/* Footer */}
-            <Footer onNavigate={navigate} />
+              {/* Main Content Area */}
+              <main className="flex-1">{renderCurrentPage()}</main>
+            </div>
 
             <CommandPalette
               open={commandPaletteOpen}

@@ -862,6 +862,80 @@
   }
 }
 
+/*
+ * Sidebar. One column, two widths: the full column, and the icon rail it
+ * collapses to. The width is a custom property so the transition animates a
+ * single value rather than two competing width utilities.
+ */
+.sidebar-rail {
+  width: 15rem;
+  transition: width 180ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] {
+  width: 3.5rem;
+}
+
+/*
+ * Expanded, the contents scroll inside the column. Collapsed, the rail is short
+ * enough to fit any laptop, and leaving it unclipped is what lets the label
+ * flyouts escape sideways instead of being cut off at the column edge.
+ */
+.sidebar-rail[data-collapsed='false'] .sidebar-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Icons carry `line-height: 1` so a large glyph never inflates the box it sits
+ * in. Beside a text run that leaves the two with different line heights, and
+ * flex centring lines the boxes up while leaving the glyphs visibly offset from
+ * the words they belong to. Handing the icon the run's line-height puts both
+ * baselines in the same place, which is what centres them optically.
+ */
+.sidebar-row .icon {
+  line-height: inherit;
+}
+
+/* Collapsed: icons stand in for the labels, which fly out on hover or focus. */
+.sidebar-rail[data-collapsed='true'] [data-tip] {
+  position: relative;
+}
+.sidebar-rail[data-collapsed='true'] [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 0.5rem);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 60;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-control);
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] [data-tip]:hover::after,
+.sidebar-rail[data-collapsed='true'] [data-tip]:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-rail {
+    transition: none;
+  }
+
+  .sidebar-rail[data-collapsed='true'] [data-tip]::after {
+    transition: none;
+  }
+}
+
 .markdown-body blockquote {
   border-left: 3px solid var(--color-lilac-500);
   padding-left: 1rem;

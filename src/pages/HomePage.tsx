@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { ExtensionSummary, InstanceStats } from '../types/api';
 import { TrendingPanel } from '../components/TrendingPanel';
-import { useRecentExtensions } from '../hooks/useCollections';
 import { Icon } from '../components/Icon';
 
 interface HomePageProps {
@@ -15,7 +14,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [recentExtensions, setRecentExtensions] = useState<ExtensionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { recent, clear: clearRecent } = useRecentExtensions();
 
   useEffect(() => {
     let isMounted = true;
@@ -79,18 +77,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     <div className="pb-16">
       {/* Masthead */}
       <section className="border-b border-line">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
           <div className="max-w-2xl">
-            <p className="label mb-4">This is TwextHub</p>
             <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-ink leading-tight text-balance">
               Twext-compiled extensions for TurboWarp
             </h1>
-            <p className="mt-3 text-[15px] text-ink-2 leading-relaxed">
-              Publish with the Twext CLI, search the catalog by author or keyword, and load
-              extensions straight into the TurboWarp editor.
+            <p className="mt-2.5 text-[15px] text-ink-2 leading-relaxed">
+              Publish with the Twext CLI, or load a community extension straight into the editor.
             </p>
 
-            <form onSubmit={handleSearchSubmit} className="mt-7 max-w-xl">
+            <form onSubmit={handleSearchSubmit} className="mt-6 max-w-xl">
               <div className="relative">
                 <Icon
                   name="search"
@@ -111,35 +107,31 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </form>
 
             {stats && (
-              <div className="mt-7 pt-6 border-t border-line">
-                <span className="label text-ink-3">This site</span>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-sm text-ink-2">
-                  <span>
-                    <strong className="text-ink font-semibold">{stats.published}</strong> published
-                  </span>
-                  <span aria-hidden="true" className="text-line">
-                    ·
-                  </span>
-                  <span>
-                    <strong className="text-ink font-semibold">{stats.authors}</strong> authors
-                  </span>
-                  <span aria-hidden="true" className="text-line">
-                    ·
-                  </span>
-                  <span>
-                    <strong className="text-ink font-semibold">{stats.pending}</strong> pending
-                    review
-                  </span>
-                  <span aria-hidden="true" className="text-line">
-                    ·
-                  </span>
-                  <span>
-                    <strong className="text-ink font-semibold">
-                      {stats.downloads.toLocaleString()}
-                    </strong>{' '}
-                    downloads
-                  </span>
-                </div>
+              <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[13px] text-ink-3">
+                <span>
+                  <strong className="text-ink font-semibold">{stats.published}</strong> published
+                </span>
+                <span aria-hidden="true" className="text-line">
+                  ·
+                </span>
+                <span>
+                  <strong className="text-ink font-semibold">{stats.authors}</strong> authors
+                </span>
+                <span aria-hidden="true" className="text-line">
+                  ·
+                </span>
+                <span>
+                  <strong className="text-ink font-semibold">{stats.pending}</strong> pending review
+                </span>
+                <span aria-hidden="true" className="text-line">
+                  ·
+                </span>
+                <span>
+                  <strong className="text-ink font-semibold">
+                    {stats.downloads.toLocaleString()}
+                  </strong>{' '}
+                  downloads
+                </span>
               </div>
             )}
           </div>
@@ -160,35 +152,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Recently Viewed (local to this browser) */}
-      {recent.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-          <div className="flex items-center justify-between gap-4 mb-3">
-            <h2 className="text-sm font-semibold text-ink flex items-center gap-1.5">
-              <Icon name="schedule" className="icon-sm text-ink-3" />
-              Recently viewed
-            </h2>
-            <button
-              onClick={clearRecent}
-              className="text-xs text-ink-3 hover:text-ink transition-colors"
-            >
-              Clear
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {recent.map((item) => (
-              <button
-                key={`${item.namespace}/${item.id}`}
-                onClick={() => onNavigate(`ext/${item.namespace}/${item.id}`)}
-                className="chip bg-surface dark:bg-surface border-line text-ink-2 hover:border-lilac-400 dark:hover:border-lilac-700 hover:text-ink transition-colors font-mono text-xs"
-              >
-                @{item.namespace}/{item.id}
-              </button>
-            ))}
-          </div>
-        </section>
       )}
 
       {/* Recently Published */}
