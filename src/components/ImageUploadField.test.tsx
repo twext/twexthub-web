@@ -117,6 +117,25 @@ describe('ImageUploadField', () => {
     expect(onUrlValueChange).toHaveBeenCalledWith('/v1/users/kane/avatar?v=0123456789abcdef');
   });
 
+  it('writes the banner URL into a banner upload, not the avatar it also carries', async () => {
+    const user = userEvent.setup();
+    // The server returns the whole user, so a banner upload comes back with
+    // whatever avatar the account already had.
+    apiMock.uploadProfileImage.mockResolvedValue({
+      ...USER,
+      avatarUrl: '/v1/users/kane/avatar?v=0123456789abcdef',
+      bannerUrl: '/v1/users/kane/banner?v=0123456789abcdef',
+    });
+    const { onUrlValueChange } = renderField({ kind: 'banner' });
+    const input = screen.getByTestId('banner-choose');
+    const fileInput = document.getElementById(input.getAttribute('for')!) as HTMLInputElement;
+
+    await user.upload(fileInput, imageFile());
+
+    await waitFor(() => expect(apiMock.uploadProfileImage).toHaveBeenCalledTimes(1));
+    expect(onUrlValueChange).toHaveBeenCalledWith('/v1/users/kane/banner?v=0123456789abcdef');
+  });
+
   it('shows the picked image immediately, before the request resolves', async () => {
     const user = userEvent.setup();
     // Held open so the optimistic preview can be asserted before the response

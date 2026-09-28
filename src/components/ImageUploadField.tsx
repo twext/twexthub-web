@@ -82,8 +82,9 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       try {
         const updated = await api.uploadProfileImage(namespace, kind, file);
         // Adopt the server's canonical URL so the form state and the saved
-        // profile agree even though the user never typed it.
-        onUrlValueChange(updated.avatarUrl ?? updated.bannerUrl ?? '');
+        // profile agree even though the user never typed it. The user object
+        // carries both images, so take the one this field owns.
+        onUrlValueChange((kind === 'avatar' ? updated.avatarUrl : updated.bannerUrl) ?? '');
         onUploaded(updated);
       } catch (err) {
         setLocalPreview(null);
