@@ -39,4 +39,12 @@ describe('HomePage instance stats', () => {
     expect(await screen.findByText('downloads')).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument();
   });
+
+  it('tolerates a response that omits part of the schema', async () => {
+    apiMock.getStats.mockResolvedValue(makeStats({ downloads: undefined }));
+    render(<HomePage onNavigate={noop} />);
+
+    expect(await screen.findByText('downloads')).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
 });

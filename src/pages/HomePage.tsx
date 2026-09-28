@@ -36,7 +36,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         ]);
 
         if (isMounted) {
-          setStats(statsData);
+          // The stats block reads every total, so a response that omits part of
+          // the schema must not take the page down with it.
+          const asNumber = (value: number | undefined) => (typeof value === 'number' ? value : 0);
+          setStats({
+            published: asNumber(statsData.published),
+            pending: asNumber(statsData.pending),
+            authors: asNumber(statsData.authors),
+            downloads: asNumber(statsData.downloads),
+          });
           setRecentExtensions(extensionsData.data || []);
           if (failure !== null) {
             setError(
