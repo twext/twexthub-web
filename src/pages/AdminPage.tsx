@@ -252,7 +252,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const handleYankVersion = async (ext: ExtensionSummary, version: string) => {
     const confirmed = await confirm({
       title: 'Unpublish version',
-      message: `Unpublish version ${version} of @${ext.namespace}/${ext.id}? It will be hidden from listings and can no longer been installed.`,
+      message: `Unpublish version ${version} of @${ext.namespace}/${ext.id}? It will be hidden from listings and can no longer be installed.`,
       confirmLabel: 'Unpublish version',
       variant: 'danger',
     });
