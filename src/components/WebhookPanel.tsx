@@ -49,14 +49,6 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
     load();
   }, [load]);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
   const toggleEvent = (event: WebhookEvent) => {
     setEvents((prev) =>
       prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event],
