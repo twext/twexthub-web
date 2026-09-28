@@ -80,18 +80,14 @@ export const TrendingPanel: React.FC<TrendingPanelProps> = ({ onNavigate, limit 
                     @{item.namespace}/{item.id}
                   </span>
                 </span>
-                <span className="font-mono text-micro text-ink-3 chip shrink-0">
-                  v{item.version}
-                </span>
+                <span className="font-mono text-micro text-ink-3 shrink-0">v{item.version}</span>
               </button>
             </li>
           ))}
         </ol>
       )}
 
-      {failed && (
-        <p className="text-micro text-ink-3 mt-3">Trending is temporarily unavailable.</p>
-      )}
+      {failed && <p className="text-micro text-ink-3 mt-3">Trending is temporarily unavailable.</p>}
     </section>
   );
 };

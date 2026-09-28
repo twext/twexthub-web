@@ -55,8 +55,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         </div>
 
         {error && (
-          <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-sm flex items-start gap-2">
-            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <div data-tone="danger" className="alert">
+            <Icon name="error" className="shrink-0 mt-0.5" />
             <div className="leading-tight">{error}</div>
           </div>
         )}

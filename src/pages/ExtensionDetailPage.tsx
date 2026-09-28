@@ -313,26 +313,23 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
 
       {/* Action notifications */}
       {actionError && (
-        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
+        <div data-tone="danger" className="alert items-center text-xs">
+          <Icon name="error" className="shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
 
       {actionSuccess && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 p-3 rounded-lg text-xs flex items-center gap-2">
-          <Icon name="check_circle" className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div data-tone="success" className="alert items-center text-xs">
+          <Icon name="check_circle" className="shrink-0" />
           <span>{actionSuccess}</span>
         </div>
       )}
 
       {/* Moderation Warning if Pending */}
       {isPending && (
-        <div className="bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3">
-          <Icon
-            name="schedule"
-            className="icon-lg text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-          />
+        <div data-tone="warn" className="alert">
+          <Icon name="schedule" className="icon-lg shrink-0 mt-0.5" />
           <div>
             <strong className="font-semibold block text-sm">Pending Moderation Review</strong>
             <p className="mt-0.5 leading-relaxed">
@@ -439,7 +436,10 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                           <p className="text-xs text-ink-2 mt-1">{ver.changelog}</p>
                         )}
                         {ver.status === 'deprecated' && ver.deprecation && (
-                          <p className="text-meta text-amber-700 dark:text-amber-400 mt-1 flex items-start gap-1">
+                          <p
+                            data-tone="warn"
+                            className="tone-text text-meta mt-1 flex items-start gap-1"
+                          >
                             <Icon name="warning" className="icon-xs shrink-0 mt-0.5" />
                             <span>{ver.deprecation}</span>
                           </p>

@@ -79,7 +79,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const registryUrl = `${api.getBaseUrl()}/@{namespace}/{id}/versions/{version}/download`;
+  // The install panel needs a real-looking address, otherwise a visitor copies
+  // a template. Use the most recent published package when there is one.
+  const newest = recentExtensions[0];
+  const exampleUrl = newest
+    ? `${api.getBaseUrl()}/@${newest.namespace}/${newest.id}/versions/${newest.version || '1.0.0'}/download`
+    : `${api.getBaseUrl()}/@your-namespace/your-extension/versions/1.0.0/download`;
 
   return (
     <div className="pb-16">
@@ -90,7 +95,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-ink leading-tight text-balance">
               Twext-compiled extensions for TurboWarp
             </h1>
-            <p className="mt-2.5 text-[15px] text-ink-2 leading-relaxed">
+            <p className="mt-2.5 text-ink-2 leading-relaxed">
               Publish with the Twext CLI, or load a community extension straight into the editor.
             </p>
 
@@ -105,7 +110,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, author, or tag…"
-                  className="input pl-10 pr-24 py-3 text-[15px]"
+                  className="input pl-10 pr-24 py-3"
                   aria-label="Search extensions"
                 />
                 <button type="submit" className="btn btn-primary absolute right-1.5 top-1.5">
@@ -115,7 +120,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </form>
 
             {stats && (
-              <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[13px] text-ink-3">
+              <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-sm text-ink-3">
                 <span>
                   <strong className="text-ink font-semibold">{stats.published}</strong> published
                 </span>
@@ -149,11 +154,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* Error state if server unreachable */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-4 rounded-lg text-sm flex items-start gap-2.5">
-            <Icon name="error" className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+          <div data-tone="danger" className="alert items-center text-sm">
+            <Icon name="error" className="shrink-0" />
             <div>
               <strong>Site notice:</strong> {error}
-              <p className="mt-1 text-rose-700 dark:text-rose-300">
+              <p className="mt-1">
                 The site couldn't reach its data source. Try again in a moment — if it keeps
                 happening, ask whoever runs this site to check the connection.
               </p>
@@ -268,10 +273,20 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 1. Open TurboWarp → <strong>Add Extension</strong> →{' '}
                 <strong>Custom Extension</strong>
               </div>
-              <div className="text-ink bg-surface dark:bg-surface p-2 border border-line rounded break-all select-all text-xs">
-                {registryUrl}
+              <div>
+                <div className="text-ink-2 font-sans text-xs">2. Paste the package's load URL:</div>
+                <div className="mt-1.5 text-ink bg-surface dark:bg-surface p-2 border border-line rounded break-all select-all text-xs">
+                  {exampleUrl}
+                </div>
               </div>
             </div>
+            <p className="mt-3 text-xs text-ink-3">
+              Every published package takes the same shape —{' '}
+              <code className="text-ink-2">
+                @namespace/id/versions/{'{'}version{'}'}/download
+              </code>{' '}
+              — and your package page shows the exact address to paste.
+            </p>
             <div className="mt-3">
               <a
                 href="https://turbowarp.org/editor"

@@ -377,6 +377,39 @@
     letter-spacing: 0.09em;
     color: var(--color-ink-3);
   }
+
+  /*
+   * Tone shapes. data-tone="neutral|info|success|warn|danger" picks the colour
+   * trio (--tone-fg/-bg/-border), and these shapes apply it. Prefer these over
+   * hand-rolled rose/amber pills with a dark: twin -- every status, alert, and
+   * badge in the app should route through one of them.
+   */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--tone-border);
+    border-radius: var(--radius-panel);
+    background: var(--tone-bg);
+    color: var(--tone-fg);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .tone-pill {
+    background: var(--tone-bg);
+    border-color: var(--tone-border);
+    color: var(--tone-fg);
+  }
+
+  .tone-text {
+    color: var(--tone-fg);
+  }
+
+  .tone-bar {
+    background: var(--tone-bg);
+  }
 }
 
 /* Markdown typography for Terms, Privacy, and Readmes */
