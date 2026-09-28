@@ -169,6 +169,30 @@ describe('Modal', () => {
     expect(onCloseOuter).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the stack order when a lower dialog re-renders with a new onClose', () => {
+    const onCloseOuter = vi.fn();
+    const onCloseInner = vi.fn();
+    const stacked = (outerOnClose: () => void) => (
+      <>
+        <Modal open onClose={outerOnClose} ariaLabel="Outer">
+          <button>Outer</button>
+        </Modal>
+        <Modal open onClose={onCloseInner} ariaLabel="Inner">
+          <button>Inner</button>
+        </Modal>
+      </>
+    );
+    const { rerender } = render(stacked(onCloseOuter));
+
+    // An inline arrow is a new function each render, and re-registering the
+    // token used to move the outer dialog back to the top of the stack.
+    rerender(stacked(vi.fn()));
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCloseInner).toHaveBeenCalledTimes(1);
+    expect(onCloseOuter).not.toHaveBeenCalled();
+  });
+
   it('stays open when it has no close handler', () => {
     render(
       <Modal open ariaLabel="Example">
