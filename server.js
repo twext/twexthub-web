@@ -143,6 +143,17 @@ function isApiPath(urlPath) {
   return urlPath === PUBLIC_API_PREFIX || urlPath.startsWith(`${PUBLIC_API_PREFIX}/`);
 }
 
+/**
+ * `new URL` collapses `..` segments, so a target built from a decoded path can
+ * land outside the upstream's own base path — `/api/v1/..%2f..%2fadmin` would
+ * reach `/admin` on the upstream host. Anything that resolves off the base is
+ * not a route this proxy owns, so it is refused rather than forwarded.
+ */
+export function isWithinUpstreamBase(target, baseUrl = upstreamApiBaseUrl) {
+  const basePath = new URL(baseUrl).pathname.replace(/\/+$/, '');
+  return target.pathname === basePath || target.pathname.startsWith(`${basePath}/`);
+}
+
 // Headers that describe a single connection, not the resource, and must be
 // renegotiated end to end rather than copied across the hop.
 const HOP_BY_HOP_HEADERS = new Set([
@@ -166,13 +177,19 @@ function filterHopByHop(headers) {
 
 const UPSTREAM_TIMEOUT_MS = 60_000;
 
-function proxyApi(req, res, urlPath) {
-  const search = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+function proxyApi(req, res, urlPath, parsedUrl) {
   let target;
   try {
-    target = new URL(proxyTargetFor(urlPath, search));
+    // Assembled from the raw pathname: a decoded path can still hold `%2e%2e`
+    // segments, which `new URL` resolves as `..` and walks out of the base.
+    target = new URL(proxyTargetFor(parsedUrl.pathname, parsedUrl.search));
   } catch {
     sendStatus(res, 502, 'Bad Gateway');
+    return;
+  }
+
+  if (!isWithinUpstreamBase(target)) {
+    sendStatus(res, 403, 'Forbidden');
     return;
   }
 
@@ -269,9 +286,11 @@ function sendStatus(res, status, message) {
 }
 
 const server = createServer((req, res) => {
+  let parsedUrl;
   let urlPath;
   try {
-    urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+    parsedUrl = new URL(req.url ?? '/', 'http://localhost');
+    urlPath = decodeURIComponent(parsedUrl.pathname);
   } catch {
     sendStatus(res, 400, 'Bad Request');
     return;
@@ -291,7 +310,7 @@ const server = createServer((req, res) => {
   // The API is the server's job now: forward any method, verbatim, and let
   // the upstream speak for itself.
   if (isApiPath(urlPath)) {
-    proxyApi(req, res, urlPath);
+    proxyApi(req, res, urlPath, parsedUrl);
     return;
   }
 
