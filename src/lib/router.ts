@@ -19,9 +19,10 @@ export function navigateToRoute(route: string): void {
 }
 
 // Links shared while routing was hash-based pointed at #/ext/...; turn those
-// into paths so old bookmarks keep working.
+// into paths so old bookmarks keep working. Other hashes are in-page anchors
+// that mean something to the page, so they are left where they are.
 export function migrateLegacyHash(): void {
-  if (!window.location.hash) return;
-  const route = window.location.hash.replace(/^#/, '').replace(/^\//, '');
-  window.history.replaceState(null, '', routeToPath(route));
+  const { hash } = window.location;
+  if (!hash.startsWith('#/')) return;
+  window.history.replaceState(null, '', routeToPath(hash.slice(2)));
 }

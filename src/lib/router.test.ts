@@ -87,4 +87,17 @@ describe('migrateLegacyHash', () => {
     migrateLegacyHash();
     expect(`${window.location.pathname}${window.location.search}`).toBe('/search?q=foo');
   });
+
+  it('leaves in-page anchors alone', () => {
+    window.history.replaceState(null, '', '/ext/ada/calc#readme');
+    migrateLegacyHash();
+    expect(window.location.pathname).toBe('/ext/ada/calc');
+    expect(window.location.hash).toBe('#readme');
+  });
+
+  it('leaves a bare trailing hash alone', () => {
+    window.history.replaceState(null, '', '/search?q=foo#');
+    migrateLegacyHash();
+    expect(`${window.location.pathname}${window.location.search}`).toBe('/search?q=foo');
+  });
 });
