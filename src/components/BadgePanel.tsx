@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 type BadgeField = 'version' | 'downloads' | 'license';
 
@@ -75,133 +76,127 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      size="xl"
+      ariaLabel={`Badge embed for @${namespace}/${id}`}
+      className="p-5 space-y-4"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Badge embed for @${namespace}/${id}`}
-        className="card max-w-xl w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Icon name="image" className="text-lilac-500 dark:text-lilac-300" />
-            Badges —{' '}
-            <span className="font-mono text-ink-2">
-              @{namespace}/{id}
-            </span>
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
-          >
-            <Icon name="close" />
-          </button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+          <Icon name="image" className="text-lilac-500 dark:text-lilac-300" />
+          Badges —{' '}
+          <span className="font-mono text-ink-2">
+            @{namespace}/{id}
+          </span>
+        </h2>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
+        >
+          <Icon name="close" />
+        </button>
+      </div>
 
-        <fieldset className="space-y-1.5">
-          <legend className="label mb-1">Facts</legend>
-          <div className="flex flex-wrap gap-1.5">
-            {SPLIT_FIELDS.map(({ field, label: fieldLabel }) => (
-              <label
-                key={field}
-                className={`chip cursor-pointer transition-colors ${
-                  selected.includes(field)
-                    ? 'bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-300 dark:border-lilac-700'
-                    : 'bg-wash dark:bg-raised border-line text-ink-3 hover:text-ink-2'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={selected.includes(field)}
-                  onChange={() => toggleField(field)}
-                />
-                {fieldLabel}
-              </label>
-            ))}
-          </div>
-          <p className="text-[11px] text-ink-3">
-            One fact renders that fact's compact ~90-140px badge. Two or more switches to the
-            combined badge, which packs all three facts into a single ~250px pill.
-          </p>
-        </fieldset>
-
-        <div>
-          <label htmlFor="badge-label" className="label">
-            Left-pill text (optional)
-          </label>
-          <input
-            id="badge-label"
-            type="text"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder="defaults to the extension id"
-            className="input text-xs"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="label">Preview</div>
-          <div className="flex flex-wrap items-center gap-2 p-3 border border-line rounded-lg bg-wash dark:bg-raised min-h-[44px]">
-            {selected.length > 0 ? (
-              <img
-                src={badgeUrl}
-                alt={`Badge for @${namespace}/${id}`}
-                className="h-6 align-middle"
+      <fieldset className="space-y-1.5">
+        <legend className="label mb-1">Facts</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {SPLIT_FIELDS.map(({ field, label: fieldLabel }) => (
+            <label
+              key={field}
+              className={`chip cursor-pointer transition-colors ${
+                selected.includes(field)
+                  ? 'bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-300 dark:border-lilac-700'
+                  : 'bg-wash dark:bg-raised border-line text-ink-3 hover:text-ink-2'
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={selected.includes(field)}
+                onChange={() => toggleField(field)}
               />
-            ) : (
-              <span className="text-[11px] text-ink-3">Select at least one fact to preview.</span>
-            )}
-          </div>
+              {fieldLabel}
+            </label>
+          ))}
         </div>
+        <p className="text-[11px] text-ink-3">
+          One fact renders that fact's compact ~90-140px badge. Two or more switches to the combined
+          badge, which packs all three facts into a single ~250px pill.
+        </p>
+      </fieldset>
 
-        <div className="space-y-2">
-          <div className="label">Markdown</div>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
-              {markdown}
-            </code>
-            <button
-              onClick={() => copy(markdown, 'markdown')}
-              disabled={selected.length === 0}
-              className="btn btn-secondary btn-sm shrink-0"
-            >
-              {copied === 'markdown' ? (
-                <Icon name="check" className="icon-xs" />
-              ) : (
-                <Icon name="content_copy" className="icon-xs" />
-              )}
-              <span>{copied === 'markdown' ? 'Copied' : 'Copy'}</span>
-            </button>
-          </div>
-        </div>
+      <div>
+        <label htmlFor="badge-label" className="label">
+          Left-pill text (optional)
+        </label>
+        <input
+          id="badge-label"
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="defaults to the extension id"
+          className="input text-xs"
+        />
+      </div>
 
-        <div className="space-y-2">
-          <div className="label">Direct image URL</div>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
-              {badgeUrl}
-            </code>
-            <button
-              onClick={() => copy(badgeUrl, 'url')}
-              disabled={selected.length === 0}
-              className="btn btn-secondary btn-sm shrink-0"
-            >
-              {copied === 'url' ? (
-                <Icon name="check" className="icon-xs" />
-              ) : (
-                <Icon name="content_copy" className="icon-xs" />
-              )}
-              <span>{copied === 'url' ? 'Copied' : 'Copy'}</span>
-            </button>
-          </div>
+      <div className="space-y-1.5">
+        <div className="label">Preview</div>
+        <div className="flex flex-wrap items-center gap-2 p-3 border border-line rounded-lg bg-wash dark:bg-raised min-h-[44px]">
+          {selected.length > 0 ? (
+            <img
+              src={badgeUrl}
+              alt={`Badge for @${namespace}/${id}`}
+              className="h-6 align-middle"
+            />
+          ) : (
+            <span className="text-[11px] text-ink-3">Select at least one fact to preview.</span>
+          )}
         </div>
       </div>
-    </div>
+
+      <div className="space-y-2">
+        <div className="label">Markdown</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
+            {markdown}
+          </code>
+          <button
+            onClick={() => copy(markdown, 'markdown')}
+            disabled={selected.length === 0}
+            className="btn btn-secondary btn-sm shrink-0"
+          >
+            {copied === 'markdown' ? (
+              <Icon name="check" className="icon-xs" />
+            ) : (
+              <Icon name="content_copy" className="icon-xs" />
+            )}
+            <span>{copied === 'markdown' ? 'Copied' : 'Copy'}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="label">Direct image URL</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 min-w-0 text-[11px] font-mono text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1.5 break-all">
+            {badgeUrl}
+          </code>
+          <button
+            onClick={() => copy(badgeUrl, 'url')}
+            disabled={selected.length === 0}
+            className="btn btn-secondary btn-sm shrink-0"
+          >
+            {copied === 'url' ? (
+              <Icon name="check" className="icon-xs" />
+            ) : (
+              <Icon name="content_copy" className="icon-xs" />
+            )}
+            <span>{copied === 'url' ? 'Copied' : 'Copy'}</span>
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 };

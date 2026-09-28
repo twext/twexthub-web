@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { MarkdownView } from './MarkdownView';
-import { useModalDialog } from '../hooks/useModalDialog';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 type EditorMode = 'write' | 'preview' | 'split';
 
@@ -29,10 +29,6 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
 
   // The hook owns Escape (preserving the existing close behavior), focus,
   // and Tab trapping.
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    labelledById: 'markdown-editor-title',
-    onClose,
-  });
 
   const handleSave = async () => {
     setSaveError(null);
@@ -65,10 +61,7 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
   );
 
   return (
-    <div
-      {...dialogProps}
-      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
-    >
+    <Modal variant="fullscreen" labelledById="markdown-editor-title" onClose={onClose}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
@@ -161,6 +154,6 @@ export const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
           <span>{isSaving ? 'Publishing...' : 'Publish Revision'}</span>
         </button>
       </div>
-    </div>
+    </Modal>
   );
 };

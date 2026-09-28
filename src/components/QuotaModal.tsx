@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Quota } from '../types/api';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes)) return '—';
@@ -85,120 +86,109 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
       : null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Storage quota for @${namespace}`}
-    >
-      <div
-        className="bg-surface dark:bg-surface border border-line rounded-lg w-full max-w-md shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-line">
-          <div>
-            <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-              <Icon name="storage" className="text-lilac-700 dark:text-lilac-300" />
-              Storage quota
-            </h2>
-            <p className="font-mono text-[11px] text-ink-3 mt-0.5">@{namespace}</p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close quota dialog"
-            className="p-1 text-ink-3 hover:text-ink rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
-          >
-            <Icon name="close" />
-          </button>
+    <Modal onClose={onClose} size="md" ariaLabel={`Storage quota for @${namespace}`}>
+      <div className="flex items-center justify-between p-4 border-b border-line">
+        <div>
+          <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+            <Icon name="storage" className="text-lilac-700 dark:text-lilac-300" />
+            Storage quota
+          </h2>
+          <p className="font-mono text-[11px] text-ink-3 mt-0.5">@{namespace}</p>
         </div>
-
-        <div className="p-4 space-y-4">
-          {loadError ? (
-            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-              <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
-              <span>{loadError}</span>
-            </div>
-          ) : loading ? (
-            <div className="h-16 bg-wash dark:bg-raised border border-line rounded-lg animate-pulse" />
-          ) : (
-            quota && (
-              <>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-ink-2">Used</span>
-                    <span className="font-mono text-ink">
-                      {formatBytes(quota.blobBytes)}
-                      {quota.maxBlobBytes != null && (
-                        <span className="text-ink-3"> / {formatBytes(quota.maxBlobBytes)}</span>
-                      )}
-                    </span>
-                  </div>
-                  {usedPercent !== null && (
-                    <div className="h-1.5 bg-wash dark:bg-raised rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          usedPercent >= 90
-                            ? 'bg-rose-500'
-                            : usedPercent >= 70
-                              ? 'bg-amber-500'
-                              : 'bg-lilac-500'
-                        }`}
-                        style={{ width: `${usedPercent}%` }}
-                      />
-                    </div>
-                  )}
-                  {quota.maxBlobBytes == null && (
-                    <p className="text-[10px] text-ink-3">
-                      No per-account limit set. This account uses the site default.
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="quota-mb" className="label text-ink-3">
-                    Override (MB)
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="quota-mb"
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={megabytes}
-                      onChange={(e) => {
-                        setMegabytes(e.target.value);
-                        setInputError(null);
-                      }}
-                      placeholder="site default"
-                      className="input flex-1"
-                    />
-                    <button
-                      onClick={handleSaveOverride}
-                      disabled={saving}
-                      className="btn btn-primary shrink-0"
-                    >
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
-                  {inputError && (
-                    <p className="text-[11px] text-rose-600 dark:text-rose-400">{inputError}</p>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => save(null)}
-                  disabled={saving || quota.maxBlobBytes == null}
-                  className="btn btn-secondary w-full"
-                >
-                  <Icon name="restart_alt" className="icon-sm" />
-                  <span>Use site default</span>
-                </button>
-              </>
-            )
-          )}
-        </div>
+        <button
+          onClick={onClose}
+          aria-label="Close quota dialog"
+          className="p-1 text-ink-3 hover:text-ink rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+        >
+          <Icon name="close" />
+        </button>
       </div>
-    </div>
+
+      <div className="p-4 space-y-4">
+        {loadError ? (
+          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
+            <span>{loadError}</span>
+          </div>
+        ) : loading ? (
+          <div className="h-16 bg-wash dark:bg-raised border border-line rounded-lg animate-pulse" />
+        ) : (
+          quota && (
+            <>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-ink-2">Used</span>
+                  <span className="font-mono text-ink">
+                    {formatBytes(quota.blobBytes)}
+                    {quota.maxBlobBytes != null && (
+                      <span className="text-ink-3"> / {formatBytes(quota.maxBlobBytes)}</span>
+                    )}
+                  </span>
+                </div>
+                {usedPercent !== null && (
+                  <div className="h-1.5 bg-wash dark:bg-raised rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        usedPercent >= 90
+                          ? 'bg-rose-500'
+                          : usedPercent >= 70
+                            ? 'bg-amber-500'
+                            : 'bg-lilac-500'
+                      }`}
+                      style={{ width: `${usedPercent}%` }}
+                    />
+                  </div>
+                )}
+                {quota.maxBlobBytes == null && (
+                  <p className="text-[10px] text-ink-3">
+                    No per-account limit set. This account uses the site default.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="quota-mb" className="label text-ink-3">
+                  Override (MB)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="quota-mb"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={megabytes}
+                    onChange={(e) => {
+                      setMegabytes(e.target.value);
+                      setInputError(null);
+                    }}
+                    placeholder="site default"
+                    className="input flex-1"
+                  />
+                  <button
+                    onClick={handleSaveOverride}
+                    disabled={saving}
+                    className="btn btn-primary shrink-0"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+                {inputError && (
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400">{inputError}</p>
+                )}
+              </div>
+
+              <button
+                onClick={() => save(null)}
+                disabled={saving || quota.maxBlobBytes == null}
+                className="btn btn-secondary w-full"
+              >
+                <Icon name="restart_alt" className="icon-sm" />
+                <span>Use site default</span>
+              </button>
+            </>
+          )
+        )}
+      </div>
+    </Modal>
   );
 };

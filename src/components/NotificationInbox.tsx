@@ -3,6 +3,7 @@ import { api, ApiError } from '../services/api';
 import { Notification, NotificationKind } from '../types/api';
 import { useDismissable } from '../hooks/useDismissable';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 const KIND_STYLES: Record<NotificationKind, string> = {
   'review.approved':
@@ -67,7 +68,9 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
   variant = 'popover',
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  useDismissable(ref, onClose, triggerRef);
+  // Only the popover needs this. The modal variant is dismissed by Modal, and
+  // its panel is not the element this ref points at.
+  useDismissable(ref, onClose, triggerRef, variant === 'popover');
 
   const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -139,18 +142,8 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
     onClose();
   };
 
-  const panel = (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-modal={variant === 'modal' || undefined}
-      aria-label="Notifications"
-      className={
-        variant === 'popover'
-          ? 'absolute right-0 top-full mt-2 w-[24rem] max-w-[calc(100vw-2rem)] card p-0 z-50 flex flex-col max-h-[70vh]'
-          : 'card max-w-xl w-full p-0 flex flex-col max-h-[85vh]'
-      }
-    >
+  const panelBody = (
+    <>
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
         <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
           <Icon name="notifications" className="text-lilac-500 dark:text-lilac-300" />
@@ -266,17 +259,25 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
           </p>
         )}
       </div>
+    </>
+  );
+
+  const panel = (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-label="Notifications"
+      className="absolute right-0 top-full mt-2 w-[24rem] max-w-[calc(100vw-2rem)] card p-0 z-50 flex flex-col max-h-[70vh]"
+    >
+      {panelBody}
     </div>
   );
 
   if (variant === 'modal') {
     return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-        onClick={onClose}
-      >
-        {panel}
-      </div>
+      <Modal onClose={onClose} size="xl" ariaLabel="Notifications" className="p-0 flex flex-col">
+        {panelBody}
+      </Modal>
     );
   }
 

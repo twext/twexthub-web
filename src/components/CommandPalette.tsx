@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
-import { useModalDialog } from '../hooks/useModalDialog';
 import { ExtensionSummary } from '../types/api';
 import { Icon, IconName } from './Icon';
+import { Modal } from './Modal';
 
 interface PaletteItem {
   id: string;
@@ -178,14 +178,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
     activeRef.current?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
-  // The palette stays mounted, so enable the dialog behavior only while open;
-  // the hook owns Escape, Tab trapping, initial focus, and focus restoration.
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    ariaLabel: 'Command palette',
-    onClose,
-    enabled: open,
-  });
-
   if (!open) return null;
 
   const select = (item: PaletteItem) => {
@@ -210,89 +202,88 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
   let lastGroup = '';
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-[65] flex items-start justify-center p-4 pt-[12vh] bg-black/50 backdrop-blur-xs"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Modal
+      onClose={onClose}
+      size="xl"
+      zIndex={65}
+      ariaLabel="Command palette"
+      initialFocusRef={inputRef}
+      className="p-0 overflow-hidden"
     >
-      <div {...dialogProps} className="card w-full max-w-xl p-0 overflow-hidden focus:outline-none">
-        <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
-          <Icon name="search" className="text-ink-3 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            role="combobox"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search extensions or jump to a page..."
-            aria-label="Command palette search"
-            aria-expanded
-            aria-controls="command-palette-results"
-            aria-activedescendant={
-              items.length > 0 ? `command-palette-option-${activeIndex}` : undefined
-            }
-            autoComplete="off"
-            spellCheck={false}
-            className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
-          />
-          {loading && (
-            <Icon name="progress_activity" className="icon-sm text-ink-3 animate-spin shrink-0" />
-          )}
-          <kbd className="hidden sm:inline-block text-[10px] font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
-            Esc
-          </kbd>
-        </div>
-
-        <div
-          id="command-palette-results"
-          role="listbox"
-          aria-label="Command palette results"
-          className="max-h-[55vh] overflow-y-auto py-1.5"
-        >
-          {items.length === 0 ? (
-            <p className="px-3.5 py-6 text-center text-xs text-ink-3">
-              {query.trim().length >= 2 && !loading
-                ? 'No matching extensions or commands.'
-                : 'Type at least two characters to search the registry.'}
-            </p>
-          ) : (
-            items.map((item, index) => {
-              const showGroup = item.group !== lastGroup;
-              lastGroup = item.group;
-              const isActive = index === activeIndex;
-              return (
-                <React.Fragment key={item.id}>
-                  {showGroup && (
-                    <div className="px-3.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
-                      {item.group}
-                    </div>
-                  )}
-                  <div
-                    id={`command-palette-option-${index}`}
-                    ref={isActive ? activeRef : undefined}
-                    role="option"
-                    aria-selected={isActive}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => select(item)}
-                    className={`mx-1.5 px-2.5 py-2 rounded-lg cursor-pointer flex items-center gap-2.5 text-sm ${
-                      isActive ? 'bg-wash dark:bg-raised text-ink' : 'text-ink-2'
-                    }`}
-                  >
-                    <Icon name={item.icon} className="text-ink-3 shrink-0" />
-                    <span className="flex-1 min-w-0 truncate">{item.label}</span>
-                    {item.hint && (
-                      <span className="text-[11px] font-mono text-ink-3 truncate">{item.hint}</span>
-                    )}
-                  </div>
-                </React.Fragment>
-              );
-            })
-          )}
-        </div>
+      <div className="flex items-center gap-2 px-3.5 py-3 border-b border-line">
+        <Icon name="search" className="text-ink-3 shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          role="combobox"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search extensions or jump to a page..."
+          aria-label="Command palette search"
+          aria-expanded
+          aria-controls="command-palette-results"
+          aria-activedescendant={
+            items.length > 0 ? `command-palette-option-${activeIndex}` : undefined
+          }
+          autoComplete="off"
+          spellCheck={false}
+          className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
+        />
+        {loading && (
+          <Icon name="progress_activity" className="icon-sm text-ink-3 animate-spin shrink-0" />
+        )}
+        <kbd className="hidden sm:inline-block text-[10px] font-mono text-ink-3 border border-line rounded px-1.5 py-0.5">
+          Esc
+        </kbd>
       </div>
-    </div>
+
+      <div
+        id="command-palette-results"
+        role="listbox"
+        aria-label="Command palette results"
+        className="max-h-[55vh] overflow-y-auto py-1.5"
+      >
+        {items.length === 0 ? (
+          <p className="px-3.5 py-6 text-center text-xs text-ink-3">
+            {query.trim().length >= 2 && !loading
+              ? 'No matching extensions or commands.'
+              : 'Type at least two characters to search the registry.'}
+          </p>
+        ) : (
+          items.map((item, index) => {
+            const showGroup = item.group !== lastGroup;
+            lastGroup = item.group;
+            const isActive = index === activeIndex;
+            return (
+              <React.Fragment key={item.id}>
+                {showGroup && (
+                  <div className="px-3.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+                    {item.group}
+                  </div>
+                )}
+                <div
+                  id={`command-palette-option-${index}`}
+                  ref={isActive ? activeRef : undefined}
+                  role="option"
+                  aria-selected={isActive}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => select(item)}
+                  className={`mx-1.5 px-2.5 py-2 rounded-lg cursor-pointer flex items-center gap-2.5 text-sm ${
+                    isActive ? 'bg-wash dark:bg-raised text-ink' : 'text-ink-2'
+                  }`}
+                >
+                  <Icon name={item.icon} className="text-ink-3 shrink-0" />
+                  <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                  {item.hint && (
+                    <span className="text-[11px] font-mono text-ink-3 truncate">{item.hint}</span>
+                  )}
+                </div>
+              </React.Fragment>
+            );
+          })
+        )}
+      </div>
+    </Modal>
   );
 };

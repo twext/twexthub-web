@@ -3,6 +3,7 @@ import { api, ApiError } from '../services/api';
 import { useConfirm } from '../hooks/useConfirm';
 import { WEBHOOK_EVENTS, Webhook, WebhookEvent } from '../types/api';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 const EVENT_LABELS: Record<WebhookEvent, string> = {
   'version.published': 'Version published',
@@ -149,186 +150,180 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      size="2xl"
+      ariaLabel={`Webhooks for @${namespace}/${id}`}
+      className="p-5 space-y-4"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Webhooks for @${namespace}/${id}`}
-        className="card max-w-2xl w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Icon name="webhook" className="text-lilac-500 dark:text-lilac-300" />
-            Webhooks —{' '}
-            <span className="font-mono text-ink-2">
-              @{namespace}/{id}
-            </span>
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
-          >
-            <Icon name="close" />
-          </button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+          <Icon name="webhook" className="text-lilac-500 dark:text-lilac-300" />
+          Webhooks —{' '}
+          <span className="font-mono text-ink-2">
+            @{namespace}/{id}
+          </span>
+        </h2>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
+        >
+          <Icon name="close" />
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
+          <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
+          <span>{error}</span>
         </div>
+      )}
 
-        {error && (
-          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {secret && (
-          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 p-3 rounded-lg text-xs space-y-2">
-            <div className="flex items-start gap-2">
-              <Icon name="warning" className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <strong className="font-semibold block">Copy this signing secret now</strong>
-                <span>
-                  It is shown exactly once. Store it in your CI secrets to verify the{' '}
-                  <code className="font-mono">X-TwextHub-Signature</code> HMAC-SHA256 header.
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 min-w-0 truncate text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1">
-                {secret.value}
-              </code>
-              <button onClick={handleCopySecret} className="btn btn-secondary btn-sm shrink-0">
-                {copied ? (
-                  <Icon name="check" className="icon-xs" />
-                ) : (
-                  <Icon name="content_copy" className="icon-xs" />
-                )}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </button>
-              <button
-                onClick={() => setSecret(null)}
-                aria-label="Dismiss secret"
-                className="btn btn-secondary btn-sm shrink-0"
-              >
-                <span>Dismiss</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleCreate} className="border border-line rounded-lg p-3 space-y-3">
-          <div className="label">Add a webhook</div>
-          <input
-            type="url"
-            required
-            placeholder="https://ci.example.com/hooks/twext"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            aria-label="Webhook URL"
-            className="input font-mono text-xs"
-          />
-          <label className="flex items-center gap-2 text-[11px] text-ink-2 cursor-pointer">
-            <input type="checkbox" checked={active} onChange={() => setActive((v) => !v)} />
-            <span>
-              Start active
-              <span className="text-ink-3">
-                {' '}
-                — a paused webhook is registered but receives no deliveries.
+      {secret && (
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 p-3 rounded-lg text-xs space-y-2">
+          <div className="flex items-start gap-2">
+            <Icon name="warning" className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <strong className="font-semibold block">Copy this signing secret now</strong>
+              <span>
+                It is shown exactly once. Store it in your CI secrets to verify the{' '}
+                <code className="font-mono">X-TwextHub-Signature</code> HMAC-SHA256 header.
               </span>
-            </span>
-          </label>
-          <fieldset className="space-y-1.5">
-            <legend className="text-[11px] text-ink-3 mb-1">Events</legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {WEBHOOK_EVENTS.map((event) => (
-                <label
-                  key={event}
-                  className="flex items-center gap-2 text-xs text-ink-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={events.includes(event)}
-                    onChange={() => toggleEvent(event)}
-                  />
-                  <span>{EVENT_LABELS[event]}</span>
-                </label>
-              ))}
             </div>
-          </fieldset>
-          {createError && (
-            <p className="text-[11px] text-rose-700 dark:text-rose-400">{createError}</p>
-          )}
-          <button type="submit" disabled={creating} className="btn btn-primary btn-sm">
-            <Icon name="add" className="icon-sm" />
-            <span>{creating ? 'Creating...' : 'Create webhook'}</span>
-          </button>
-        </form>
-
-        {loading ? (
-          <div className="space-y-2">
-            <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
-            <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
           </div>
-        ) : webhooks.length > 0 ? (
-          <div className="divide-y divide-line border border-line rounded-lg">
-            {webhooks.map((hook) => (
-              <div
-                key={hook.id}
-                className="p-3 flex items-start justify-between gap-3 text-xs bg-surface dark:bg-raised"
+          <div className="flex items-center gap-2">
+            <code className="flex-1 min-w-0 truncate text-ink bg-surface dark:bg-surface border border-line rounded px-2 py-1">
+              {secret.value}
+            </code>
+            <button onClick={handleCopySecret} className="btn btn-secondary btn-sm shrink-0">
+              {copied ? (
+                <Icon name="check" className="icon-xs" />
+              ) : (
+                <Icon name="content_copy" className="icon-xs" />
+              )}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            <button
+              onClick={() => setSecret(null)}
+              aria-label="Dismiss secret"
+              className="btn btn-secondary btn-sm shrink-0"
+            >
+              <span>Dismiss</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleCreate} className="border border-line rounded-lg p-3 space-y-3">
+        <div className="label">Add a webhook</div>
+        <input
+          type="url"
+          required
+          placeholder="https://ci.example.com/hooks/twext"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          aria-label="Webhook URL"
+          className="input font-mono text-xs"
+        />
+        <label className="flex items-center gap-2 text-[11px] text-ink-2 cursor-pointer">
+          <input type="checkbox" checked={active} onChange={() => setActive((v) => !v)} />
+          <span>
+            Start active
+            <span className="text-ink-3">
+              {' '}
+              — a paused webhook is registered but receives no deliveries.
+            </span>
+          </span>
+        </label>
+        <fieldset className="space-y-1.5">
+          <legend className="text-[11px] text-ink-3 mb-1">Events</legend>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {WEBHOOK_EVENTS.map((event) => (
+              <label
+                key={event}
+                className="flex items-center gap-2 text-xs text-ink-2 cursor-pointer"
               >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <code className="block truncate font-mono text-ink font-semibold">
-                      {hook.url}
-                    </code>
-                    {hook.active ? (
-                      <span className="chip bg-wash dark:bg-raised border-line text-ink-3 text-[10px] shrink-0">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="chip bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-[10px] shrink-0">
-                        Paused
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {hook.events.map((event) => (
-                      <span
-                        key={event}
-                        className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-[10px]"
-                      >
-                        {event}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={`text-[11px] ${deliveryClass(hook.lastDeliveryStatus)}`}>
-                    {hook.lastDeliveryAt
-                      ? `Last delivery ${new Date(hook.lastDeliveryAt).toLocaleString()}`
-                      : 'No deliveries yet'}
-                    {hook.lastDeliveryStatus ? ` — ${deliveryLabel(hook.lastDeliveryStatus)}` : ''}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDelete(hook)}
-                  disabled={deletingId === hook.id}
-                  title="Delete webhook"
-                  aria-label={`Delete webhook ${hook.url}`}
-                  className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <Icon name="delete" />
-                </button>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={events.includes(event)}
+                  onChange={() => toggleEvent(event)}
+                />
+                <span>{EVENT_LABELS[event]}</span>
+              </label>
             ))}
           </div>
-        ) : (
-          <p className="text-[11px] text-ink-3 py-2">No webhooks yet. Add one above.</p>
+        </fieldset>
+        {createError && (
+          <p className="text-[11px] text-rose-700 dark:text-rose-400">{createError}</p>
         )}
+        <button type="submit" disabled={creating} className="btn btn-primary btn-sm">
+          <Icon name="add" className="icon-sm" />
+          <span>{creating ? 'Creating...' : 'Create webhook'}</span>
+        </button>
+      </form>
 
-        {confirmDialog}
-      </div>
-    </div>
+      {loading ? (
+        <div className="space-y-2">
+          <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
+          <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
+        </div>
+      ) : webhooks.length > 0 ? (
+        <div className="divide-y divide-line border border-line rounded-lg">
+          {webhooks.map((hook) => (
+            <div
+              key={hook.id}
+              className="p-3 flex items-start justify-between gap-3 text-xs bg-surface dark:bg-raised"
+            >
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <code className="block truncate font-mono text-ink font-semibold">
+                    {hook.url}
+                  </code>
+                  {hook.active ? (
+                    <span className="chip bg-wash dark:bg-raised border-line text-ink-3 text-[10px] shrink-0">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="chip bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-[10px] shrink-0">
+                      Paused
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {hook.events.map((event) => (
+                    <span
+                      key={event}
+                      className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-[10px]"
+                    >
+                      {event}
+                    </span>
+                  ))}
+                </div>
+                <div className={`text-[11px] ${deliveryClass(hook.lastDeliveryStatus)}`}>
+                  {hook.lastDeliveryAt
+                    ? `Last delivery ${new Date(hook.lastDeliveryAt).toLocaleString()}`
+                    : 'No deliveries yet'}
+                  {hook.lastDeliveryStatus ? ` — ${deliveryLabel(hook.lastDeliveryStatus)}` : ''}
+                </div>
+              </div>
+              <button
+                onClick={() => handleDelete(hook)}
+                disabled={deletingId === hook.id}
+                title="Delete webhook"
+                aria-label={`Delete webhook ${hook.url}`}
+                className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50 shrink-0"
+              >
+                <Icon name="delete" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[11px] text-ink-3 py-2">No webhooks yet. Add one above.</p>
+      )}
+
+      {confirmDialog}
+    </Modal>
   );
 };

@@ -44,9 +44,7 @@ describe('QuotaModal', () => {
     apiMock.getUserQuota.mockResolvedValue(makeQuota({ maxBlobBytes: null }));
     renderModal();
     expect(
-      await screen.findByText(
-        'No per-account limit set. This account uses the site default.',
-      ),
+      await screen.findByText('No per-account limit set. This account uses the site default.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use site default' })).toBeDisabled();
   });
@@ -150,5 +148,18 @@ describe('QuotaModal', () => {
 
     await user.click(screen.getByRole('heading', { name: 'Storage quota' }));
     await waitFor(() => expect(onClose).not.toHaveBeenCalled());
+  });
+});
+
+describe('QuotaModal layout', () => {
+  it('locks the page while open and leaves the panel to scroll', () => {
+    const { unmount } = renderModal();
+
+    expect(document.body.style.overflow).toBe('hidden');
+    const dialog = screen.getByRole('dialog', { name: /Storage quota/ });
+    expect(dialog.className).toContain('modal-panel');
+
+    unmount();
+    expect(document.body.style.overflow).toBe('');
   });
 });

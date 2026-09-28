@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import type { ModerationStatus } from '../types/api';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 interface DeprecateVersionModalProps {
   namespace: string;
@@ -52,70 +53,64 @@ export const DeprecateVersionModal: React.FC<DeprecateVersionModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-      onClick={onClose}
+    <Modal
+      onClose={onClose}
+      size="lg"
+      ariaLabel={`Deprecate v${version}`}
+      className="p-5 space-y-4"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Deprecate v${version}`}
-        className="card max-w-lg w-full p-5 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Icon name="warning" className="text-amber-600 dark:text-amber-400" />
-            Deprecate v{version}
-          </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+          <Icon name="warning" className="text-amber-600 dark:text-amber-400" />
+          Deprecate v{version}
+        </h2>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
+        >
+          <Icon name="close" />
+        </button>
+      </div>
+
+      <p className="text-xs text-ink-2 leading-relaxed">
+        Deprecated versions stay installable and listed, so existing projects keep working, but
+        anyone inspecting this version sees your message.
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="deprecation-message" className="label">
+            Notice
+          </label>
+          <textarea
+            id="deprecation-message"
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Use 2.x instead; this version no longer receives fixes."
+            className="input text-xs"
+          />
+        </div>
+        {error && (
+          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
+            <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
+            <span>{saving ? 'Saving...' : 'Deprecate version'}</span>
+          </button>
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Close"
-            className="text-ink-3 hover:text-ink p-1 rounded-md hover:bg-wash transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-3 hover:text-ink border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
           >
-            <Icon name="close" />
+            Cancel
           </button>
         </div>
-
-        <p className="text-xs text-ink-2 leading-relaxed">
-          Deprecated versions stay installable and listed, so existing projects keep working, but
-          anyone inspecting this version sees your message.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label htmlFor="deprecation-message" className="label">
-              Notice
-            </label>
-            <textarea
-              id="deprecation-message"
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Use 2.x instead; this version no longer receives fixes."
-              className="input text-xs"
-            />
-          </div>
-          {error && (
-            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-              <Icon name="error" className="text-rose-600 dark:text-rose-400 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
-              <span>{saving ? 'Saving...' : 'Deprecate version'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-3 hover:text-ink border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };

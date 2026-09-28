@@ -26,6 +26,7 @@ import {
   UserRole,
 } from '../types/api';
 import { Icon } from '../components/Icon';
+import { Modal } from '../components/Modal';
 
 interface AdminPageProps {
   onNavigate: (route: string) => void;
@@ -1106,55 +1107,60 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       {/* Reject Modal */}
       {rejectModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="card max-w-md w-full p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
-                <Icon name="cancel" />
-                <span>Reject this version</span>
-              </div>
-              <button
-                onClick={() => setRejectModalItem(null)}
-                className="text-ink-3 hover:text-ink"
-                aria-label="Close rejection dialog"
-              >
-                ✕
-              </button>
+        <Modal
+          onClose={() => setRejectModalItem(null)}
+          size="md"
+          labelledById="reject-version-title"
+          className="p-5 space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
+              <Icon name="cancel" />
+              <h2 id="reject-version-title" className="font-display">
+                Reject this version
+              </h2>
             </div>
-
-            <p className="text-xs text-ink-2">
-              You are rejecting version{' '}
-              <strong className="text-ink">v{rejectModalItem.version}</strong> of{' '}
-              <strong className="text-ink">
-                @{rejectModalItem.ownerNamespace || rejectModalItem.namespace}/{rejectModalItem.id}
-              </strong>
-              . Provide feedback to the author so they know what needs improvement.
-            </p>
-
-            <div className="space-y-1.5">
-              <label htmlFor="reject-reason" className="label block">
-                Feedback for the author:
-              </label>
-              <textarea
-                id="reject-reason"
-                rows={4}
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="For example: the icon is missing, or the code reaches the network without saying so."
-                className="input font-mono p-2 text-xs"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button onClick={() => setRejectModalItem(null)} className="btn btn-ghost btn-sm">
-                Cancel
-              </button>
-              <button onClick={handleRejectConfirm} className="btn btn-danger btn-sm">
-                Reject version
-              </button>
-            </div>
+            <button
+              onClick={() => setRejectModalItem(null)}
+              className="text-ink-3 hover:text-ink"
+              aria-label="Close rejection dialog"
+            >
+              ✕
+            </button>
           </div>
-        </div>
+
+          <p className="text-xs text-ink-2">
+            You are rejecting version{' '}
+            <strong className="text-ink">v{rejectModalItem.version}</strong> of{' '}
+            <strong className="text-ink">
+              @{rejectModalItem.ownerNamespace || rejectModalItem.namespace}/{rejectModalItem.id}
+            </strong>
+            . Provide feedback to the author so they know what needs improvement.
+          </p>
+
+          <div className="space-y-1.5">
+            <label htmlFor="reject-reason" className="label block">
+              Feedback for the author:
+            </label>
+            <textarea
+              id="reject-reason"
+              rows={4}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="For example: the icon is missing, or the code reaches the network without saying so."
+              className="input font-mono p-2 text-xs"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button onClick={() => setRejectModalItem(null)} className="btn btn-ghost btn-sm">
+              Cancel
+            </button>
+            <button onClick={handleRejectConfirm} className="btn btn-danger btn-sm">
+              Reject version
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Detail / Source Review Modal */}

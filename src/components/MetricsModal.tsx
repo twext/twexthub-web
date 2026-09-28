@@ -8,8 +8,8 @@ import {
   parsePrometheusText,
 } from '../lib/prometheus';
 import { CodeEditor } from './CodeEditor';
-import { useModalDialog } from '../hooks/useModalDialog';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 const TYPE_CHIP: Record<string, string> = {
   gauge:
@@ -101,11 +101,6 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
 
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    labelledById: 'admin-metrics-title',
-    onClose,
-  });
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -160,10 +155,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   };
 
   return (
-    <div
-      {...dialogProps}
-      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
-    >
+    <Modal variant="fullscreen" labelledById="admin-metrics-title" onClose={onClose}>
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
           <h2
@@ -313,6 +305,6 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

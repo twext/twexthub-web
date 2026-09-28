@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { PendingVersion } from '../types/api';
 import { CodeEditor } from './CodeEditor';
-import { useModalDialog } from '../hooks/useModalDialog';
 import { Icon } from './Icon';
+import { Modal } from './Modal';
 
 interface SourceReviewModalProps {
   item: PendingVersion;
@@ -30,11 +30,6 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   const [codeUnavailable, setCodeUnavailable] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  const { dialogProps } = useModalDialog<HTMLDivElement>({
-    labelledById: 'source-review-title',
-    onClose,
-  });
 
   const ns = item.ownerNamespace || item.namespace;
 
@@ -82,10 +77,7 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
   };
 
   return (
-    <div
-      {...dialogProps}
-      className="fixed inset-0 z-50 flex flex-col bg-surface dark:bg-surface focus:outline-none"
-    >
+    <Modal variant="fullscreen" labelledById="source-review-title" onClose={onClose}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div className="space-y-0.5 min-w-0">
@@ -226,6 +218,6 @@ export const SourceReviewModal: React.FC<SourceReviewModalProps> = ({
           Approve & Publish
         </button>
       </div>
-    </div>
+    </Modal>
   );
 };

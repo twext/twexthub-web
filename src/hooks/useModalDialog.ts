@@ -16,6 +16,11 @@ interface UseModalDialogOptions {
    * that mount only while open; pass the open flag for persistent components.
    */
   enabled?: boolean;
+  /**
+   * Element to focus on open. Defaults to the first focusable child, which is
+   * usually the close button rather than what the dialog is actually for.
+   */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 /**
@@ -28,6 +33,7 @@ export function useModalDialog<T extends HTMLElement>({
   ariaLabel,
   onClose,
   enabled = true,
+  initialFocusRef,
 }: UseModalDialogOptions) {
   const dialogRef = useRef<T | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -38,12 +44,12 @@ export function useModalDialog<T extends HTMLElement>({
     const dialog = dialogRef.current;
     if (dialog) {
       const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-      (firstFocusable ?? dialog).focus();
+      (initialFocusRef?.current ?? firstFocusable ?? dialog).focus();
     }
     return () => {
       previouslyFocusedRef.current?.focus?.();
     };
-  }, [enabled]);
+  }, [enabled, initialFocusRef]);
 
   useEffect(() => {
     if (!enabled) return;
