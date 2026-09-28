@@ -87,11 +87,11 @@ function key_in(record: Record<string, unknown>, key: string): boolean {
 const save = () => screen.getByRole('button', { name: /Save changes/ });
 
 describe('ServerConfigPanel', () => {
-  it('reads the settings and the file they come from', async () => {
+  it('reads the settings and explains where they are written', async () => {
     renderWithProviders(<ServerConfigPanel />);
 
     expect(await screen.findByLabelText(/Profile image size/)).toHaveValue(2097152);
-    expect(screen.getByText('/etc/twexthub/config.yaml')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Site settings' })).toBeInTheDocument();
     expect(screen.getByText(/Applies to avatars and banners\./)).toBeInTheDocument();
   });
 

@@ -38,19 +38,20 @@ beforeEach(() => {
 });
 
 describe('OwnersPanel', () => {
-  it('lists owners with display name and role', async () => {
+  it('lists owners with their display name', async () => {
     renderPanel();
 
     expect(await screen.findByText('@kane')).toBeInTheDocument();
     expect(screen.getByText('@ada')).toBeInTheDocument();
     expect(screen.getByText('Ada L')).toBeInTheDocument();
-    expect(screen.getByText('admin')).toBeInTheDocument();
+    // Roles are not shown: every owner listed here can do the same things.
+    expect(screen.queryByText('admin')).toBeNull();
   });
 
   it('hides management controls from non-managers', async () => {
     renderPanel(false);
     await screen.findByText('@ada');
-    expect(screen.queryByLabelText('Add an owner by namespace')).toBeNull();
+    expect(screen.queryByLabelText('Add an owner by username')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Remove @ada' })).toBeNull();
   });
 
@@ -71,7 +72,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@kane');
 
-    await user.type(screen.getByLabelText('Add an owner by namespace'), 'bob');
+    await user.type(screen.getByLabelText('Add an owner by username'), 'bob');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(apiMock.addExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'bob');
@@ -83,7 +84,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@kane');
 
-    await user.type(screen.getByLabelText('Add an owner by namespace'), '  Grace  {Enter}');
+    await user.type(screen.getByLabelText('Add an owner by username'), '  Grace  {Enter}');
 
     expect(apiMock.addExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'grace');
   });
@@ -93,7 +94,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by namespace'), 'ada');
+    await user.type(screen.getByLabelText('Add an owner by username'), 'ada');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(await screen.findByText('ada is already an owner.')).toBeInTheDocument();
@@ -105,10 +106,10 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by namespace'), 'Not Valid!');
+    await user.type(screen.getByLabelText('Add an owner by username'), 'Not Valid!');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(await screen.findByText('Enter a valid namespace.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a valid username.')).toBeInTheDocument();
     expect(apiMock.addExtensionOwner).not.toHaveBeenCalled();
   });
 
@@ -118,7 +119,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by namespace'), 'ghost');
+    await user.type(screen.getByLabelText('Add an owner by username'), 'ghost');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect((await screen.findAllByText('account does not exist')).length).toBeGreaterThan(0);

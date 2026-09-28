@@ -227,8 +227,8 @@ describe('SettingsPage', () => {
   it('creates a token with an expiration', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci');
     await user.selectOptions(screen.getByRole('combobox'), '30');
     await user.click(screen.getByRole('button', { name: /Create Automation Token/ }));
@@ -245,8 +245,8 @@ describe('SettingsPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
 
     await user.click(screen.getByTitle('Edit Token'));
     const nameInput = screen.getByDisplayValue('ci-deploy');
@@ -300,8 +300,8 @@ describe('SettingsPage', () => {
   it('creates a token and reveals the one-time secret', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.type(screen.getByPlaceholderText(/github-actions-ci or release-bot/), 'ci-dev');
     await user.click(screen.getByRole('button', { name: /Create Automation Token/ }));
     expect(apiMock.createToken).toHaveBeenCalledWith({ name: 'ci-dev', scopes: ['publish'] });
@@ -312,8 +312,8 @@ describe('SettingsPage', () => {
   it('deletes an automation token after confirmation', async () => {
     const user = userEvent.setup();
     renderWithProviders(<SettingsPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: 'Automation Tokens' }));
-    await screen.findByText('Active Tokens (1)');
+    await user.click(screen.getByRole('button', { name: 'Access Tokens' }));
+    await screen.findByText('Access Tokens (1)');
     await user.click(screen.getByRole('button', { name: 'Revoke Token' }));
     await user.click(screen.getByRole('button', { name: 'Delete token' }));
     expect(apiMock.deleteToken).toHaveBeenCalledWith('tok-1');

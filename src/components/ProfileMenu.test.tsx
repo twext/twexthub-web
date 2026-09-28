@@ -81,13 +81,14 @@ describe('ProfileMenu', () => {
     }
   });
 
-  it('marks an admin account', () => {
+  it('does not label an administrator account with a role', () => {
     renderMenu();
-    expect(screen.getByText('Admin')).toBeInTheDocument();
+    expect(screen.queryByText('Admin')).toBeNull();
   });
 
-  it('omits the admin badge for a normal account', () => {
+  it('does not label a normal account with a role either', () => {
     renderMenu(makeUser({ role: 'normal' }));
+    expect(screen.queryByText('Normal')).toBeNull();
     expect(screen.queryByText('Admin')).toBeNull();
   });
 

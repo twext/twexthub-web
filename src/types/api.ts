@@ -28,7 +28,9 @@ export interface User {
 }
 
 export interface AuthSessionResponse {
+  session: Session;
   user: User;
+  /** Plaintext bearer token, shown once at creation and never again. */
   token: string;
 }
 
@@ -70,6 +72,8 @@ export interface Extension {
   namespace: string;
   id: string;
   name: string;
+  /** Latest published version, as the server spells it on detail and list rows. */
+  version?: string;
   description?: string;
   shortDescription?: string;
   author:
@@ -77,10 +81,14 @@ export interface Extension {
     | {
         namespace: string;
         displayName?: string;
-      };
+      }
+    | null;
+  /** Legacy local-storage spelling kept for previously saved items. */
   latestVersion?: string;
   status?: ModerationStatus;
   versions?: ExtensionVersion[];
+  license?: string;
+  publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   codeUrl?: string;
@@ -160,6 +168,11 @@ export interface Pagination {
 
 export interface PaginatedList<T> {
   data: T[];
+  /**
+   * Derived from the server's `_links` (next/prev as full URLs): `nextCursor`
+   * is the `cursor` inside `_links.next`, and `hasMore` reflects whether such a
+   * link exists.
+   */
   pagination: Pagination;
 }
 

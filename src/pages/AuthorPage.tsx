@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Extension, Pagination, User } from '../types/api';
+import { ExtensionSummary, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import {
   ArrowLeft,
@@ -23,7 +23,7 @@ interface AuthorPageProps {
 export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate }) => {
   const { user, latestTermsVersion } = useAuth();
   const [author, setAuthor] = useState<User | null>(null);
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [extensions, setExtensions] = useState<ExtensionSummary[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [loading, setLoading] = useState(true);
   const [loadingExtensions, setLoadingExtensions] = useState(true);
@@ -45,12 +45,9 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
       try {
         const res = await api.searchExtensions(namespace, cursor ? { cursor } : undefined);
         if (requestId !== loadExtensionsSeqRef.current) return;
-        const own = (res.data || []).filter(
-          (ext) =>
-            ext.namespace === namespace ||
-            (typeof ext.author === 'object' && ext.author?.namespace === namespace) ||
-            ext.author === namespace,
-        );
+        // List rows are addressed by their namespace; the spec's summary rows
+        // carry no author field to match against.
+        const own = (res.data || []).filter((ext) => ext.namespace === namespace);
         setExtensions((prev) => (cursor ? [...prev, ...own] : own));
         setPagination(res.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
@@ -125,7 +122,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         <AlertTriangle className="w-10 h-10 text-rose-600 dark:text-rose-400 mx-auto" />
         <h2 className="text-xl font-display font-semibold text-ink">Author Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
-          {error || `No account named @${namespace} exists on this Twext instance.`}
+          {error || `No account named @${namespace} exists here.`}
         </p>
         <div className="pt-2">
           <button onClick={() => onNavigate('search')} className="btn btn-secondary">
@@ -298,7 +295,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           <div className="border border-line rounded-lg bg-surface p-5 space-y-2">
             <p className="text-sm font-semibold text-ink">No published extensions</p>
             <p className="text-xs text-ink-3 max-w-lg leading-relaxed">
-              @{author.namespace} hasn't published any extensions to this registry yet.
+              @{author.namespace} hasn't published any extensions to this site yet.
             </p>
           </div>
         )}

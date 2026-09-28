@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from './AuthContext';
 import { api, ApiError } from '../services/api';
-import { makeUser } from '../test/testUtils';
+import { makeSession, makeUser } from '../test/testUtils';
 
 vi.mock('../services/api');
 
@@ -128,7 +128,11 @@ describe('AuthContext', () => {
   });
 
   it('login sets the user and token and refreshes terms', async () => {
-    apiMock.login.mockResolvedValue({ user: makeUser(), token: 'tok-1' });
+    apiMock.login.mockResolvedValue({
+      user: makeUser(),
+      token: 'tok-1',
+      session: makeSession(),
+    });
     renderProbe();
     await userEvent.click(screen.getByRole('button', { name: 'login' }));
     await waitFor(() => expect(screen.getByTestId('token')).toHaveTextContent('tok-1'));
@@ -167,7 +171,11 @@ describe('AuthContext', () => {
   });
 
   it('logout clears credentials and calls the api', async () => {
-    apiMock.login.mockResolvedValue({ user: makeUser(), token: 'tok-1' });
+    apiMock.login.mockResolvedValue({
+      user: makeUser(),
+      token: 'tok-1',
+      session: makeSession(),
+    });
     renderProbe();
     await userEvent.click(screen.getByRole('button', { name: 'login' }));
     await waitFor(() => expect(screen.getByTestId('token')).toHaveTextContent('tok-1'));
@@ -181,6 +189,7 @@ describe('AuthContext', () => {
     apiMock.login.mockResolvedValue({
       user: makeUser({ termsAcceptedVersion: 2 }),
       token: 'tok-1',
+      session: makeSession(),
     });
     renderProbe();
     await userEvent.click(screen.getByRole('button', { name: 'login' }));

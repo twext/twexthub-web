@@ -120,7 +120,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
             {isAccepted ? (
               <span className="chip bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Accepted by @{user?.namespace}</span>
+                <span>Accepted by {user?.displayName || user?.namespace}</span>
               </span>
             ) : (
               <span className="chip bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60">

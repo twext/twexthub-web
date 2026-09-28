@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { api, ApiError } from '../services/api';
-import { Extension, Pagination } from '../types/api';
+import { ExtensionSummary, Pagination } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { useSavedExtensions } from '../hooks/useCollections';
-import { extensionAuthor } from '../lib/collections';
 import {
   EXPLORE_LIMITS,
   ExploreSort,
@@ -35,7 +34,7 @@ interface ExplorePageProps {
 export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onNavigate }) => {
   const [query, setQuery] = useState(initialQuery);
   const [activeQuery, setActiveQuery] = useState(initialQuery);
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [extensions, setExtensions] = useState<ExtensionSummary[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
@@ -59,7 +58,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
     if (sort === 'newest') return list;
     return [...list].sort((a, b) => {
       if (sort === 'author') {
-        const byAuthor = extensionAuthor(a).localeCompare(extensionAuthor(b));
+        // List rows carry the owning namespace rather than an author object.
+        const byAuthor = a.namespace.localeCompare(b.namespace);
         if (byAuthor !== 0) return byAuthor;
       }
       return a.name.localeCompare(b.name);
@@ -289,16 +289,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
         ) : (
           <div className="card divide-y divide-line">
             {displayedExtensions.map((ext) => {
-              const authorNamespace =
-                typeof ext.author === 'object' && ext.author !== null
-                  ? ext.author.namespace
-                  : ext.author || ext.namespace;
-              const authorDisplayName =
-                typeof ext.author === 'object' && ext.author !== null
-                  ? ext.author.displayName || authorNamespace
-                  : authorNamespace;
-              const version =
-                ext.latestVersion || (ext.versions && ext.versions[0]?.version) || '1.0.0';
+              const version = ext.version;
 
               return (
                 <div
@@ -319,7 +310,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                       <span className="font-mono text-xs text-ink-3">
                         @{ext.namespace}/{ext.id}
                       </span>
-                      <StatusBadge status={ext.status || 'published'} size="sm" />
+                      <StatusBadge status="published" size="sm" />
                       <span className="chip bg-wash border-line text-ink-2 font-mono text-[11px]">
                         v{version}
                       </span>
@@ -328,14 +319,14 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                       {ext.name}
                     </h3>
                     <p className="text-xs text-ink-2 line-clamp-1">
-                      {ext.shortDescription || ext.description || 'No description provided.'}
+                      {ext.description || 'No description provided.'}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-4 text-xs text-ink-3 shrink-0">
                     <div className="flex items-center gap-1">
                       <UserIcon className="w-3.5 h-3.5 text-ink-3" />
-                      <span className="text-ink font-medium">{authorDisplayName}</span>
+                      <span className="text-ink font-medium">{ext.namespace}</span>
                     </div>
                     <span className="text-lilac-700 dark:text-lilac-300 font-medium hover:underline inline-flex items-center gap-0.5">
                       View <ArrowRight className="w-3 h-3" />

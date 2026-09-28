@@ -49,11 +49,11 @@ export const BroadcastPanel: React.FC = () => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Megaphone className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-        <h2 className="text-sm font-semibold text-ink">Broadcast Notification</h2>
+        <h2 className="text-sm font-semibold text-ink">Send an announcement</h2>
       </div>
       <p className="text-xs text-ink-2 leading-relaxed max-w-2xl">
-        Delivers a notice to the inboxes of every account on this registry — past and present at the
-        moment of sending. Use for maintenance windows or policy changes. This cannot be recalled.
+        Sends a notice to every account's inbox — everyone signed up at the moment of sending. Use
+        it for maintenance or policy changes. This cannot be recalled.
       </p>
 
       <div className="space-y-2">
@@ -72,7 +72,7 @@ export const BroadcastPanel: React.FC = () => {
           }}
           maxLength={MAX_LENGTH}
           rows={3}
-          placeholder="Registry maintenance on Sunday 02:00 UTC..."
+          placeholder="Scheduled maintenance on Sunday 02:00 UTC..."
           className="input resize-y"
         />
         {error && <p className="text-[11px] text-rose-600 dark:text-rose-400">{error}</p>}

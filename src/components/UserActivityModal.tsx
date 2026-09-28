@@ -77,7 +77,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Sessions and tokens for @${namespace}`}
+        aria-label={`Account activity for @${namespace}`}
         className="card max-w-2xl w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -111,7 +111,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-ink">
                 <Laptop className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
-                <span>Active Sessions ({sessions.length})</span>
+                <span>Active sessions ({sessions.length})</span>
               </div>
               {sessions.length > 0 ? (
                 <div className="divide-y divide-line border border-line rounded-lg">
@@ -148,7 +148,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-ink">
                 <Key className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
-                <span>Automation Tokens ({tokens.length})</span>
+                <span>Access tokens ({tokens.length})</span>
               </div>
               {tokens.length > 0 ? (
                 <div className="divide-y divide-line border border-line rounded-lg">
@@ -188,7 +188,7 @@ export const UserActivityModal: React.FC<UserActivityModalProps> = ({ namespace,
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-ink-3 py-2">No automation tokens.</p>
+                <p className="text-[11px] text-ink-3 py-2">No access tokens.</p>
               )}
             </div>
           </>

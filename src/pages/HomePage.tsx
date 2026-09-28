@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../services/api';
-import { Extension, InstanceStats } from '../types/api';
+import { ExtensionSummary, InstanceStats } from '../types/api';
 import { TrendingPanel } from '../components/TrendingPanel';
 import { useRecentExtensions } from '../hooks/useCollections';
 import {
@@ -20,7 +20,7 @@ interface HomePageProps {
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState<InstanceStats | null>(null);
-  const [recentExtensions, setRecentExtensions] = useState<Extension[]>([]);
+  const [recentExtensions, setRecentExtensions] = useState<ExtensionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { recent, clear: clearRecent } = useRecentExtensions();
@@ -105,9 +105,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, namespace, author, or tag…"
+                  placeholder="Search by name, author, or tag…"
                   className="input pl-10 pr-24 py-3 text-[15px]"
-                  aria-label="Search the registry"
+                  aria-label="Search extensions"
                 />
                 <button type="submit" className="btn btn-primary absolute right-1.5 top-1.5">
                   Search
@@ -117,7 +117,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             {stats && (
               <div className="mt-7 pt-6 border-t border-line">
-                <span className="label text-ink-3">This instance</span>
+                <span className="label text-ink-3">This site</span>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-sm text-ink-2">
                   <span>
                     <strong className="text-ink font-semibold">{stats.published}</strong> published
@@ -157,11 +157,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="bg-rose-50 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 p-4 rounded-lg text-sm flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
             <div>
-              <strong>Registry status notice:</strong> {error}
+              <strong>Site notice:</strong> {error}
               <p className="mt-1 text-rose-700 dark:text-rose-300">
-                Check that the registry server is reachable, or ask the operator to verify the API
-                endpoint configured via <code className="font-mono">config.yml</code> or{' '}
-                <code className="font-mono">TWEXTHUB_API_URL</code>.
+                The site couldn't reach its data source. Try again in a moment — if it keeps
+                happening, ask whoever runs this site to check the connection.
               </p>
             </div>
           </div>
@@ -203,7 +202,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div>
             <h2 className="text-lg font-display font-semibold text-ink">Recently published</h2>
             <p className="text-sm text-ink-3 mt-0.5">
-              Latest releases verified on this registry instance.
+              Latest releases verified on this site.
             </p>
           </div>
           <button
@@ -224,12 +223,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         ) : recentExtensions.length > 0 ? (
           <div className="border border-line rounded-lg bg-surface divide-y divide-line overflow-hidden">
             {recentExtensions.map((ext) => {
-              const authorNamespace =
-                typeof ext.author === 'object' && ext.author !== null
-                  ? ext.author.namespace
-                  : ext.author || ext.namespace;
-              const version =
-                ext.latestVersion || (ext.versions && ext.versions[0]?.version) || '1.0.0';
+              const version = ext.version;
 
               return (
                 <button
@@ -246,7 +240,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="font-mono text-xs text-ink-3">v{version}</span>
                     <span className="hidden sm:inline text-ink-3 font-medium">
-                      by {authorNamespace}
+                      by {ext.namespace}
                     </span>
                   </div>
                 </button>
@@ -257,7 +251,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="border border-line rounded-lg bg-surface px-5 py-6">
             <h3 className="text-base font-semibold text-ink">No extensions published yet</h3>
             <p className="mt-1 text-sm text-ink-3 leading-relaxed max-w-lg">
-              Be the first to publish a Twext TurboWarp extension on this instance using the Twext
+              Be the first to publish a Twext TurboWarp extension on this site using the Twext
               CLI.
             </p>
             <div className="mt-3.5 flex items-center gap-2">

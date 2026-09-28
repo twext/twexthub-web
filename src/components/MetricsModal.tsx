@@ -22,6 +22,38 @@ const TYPE_CHIP: Record<string, string> = {
     'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800',
 };
 
+/**
+ * Labels the rendered view never shows, so the numbers stay about the whole
+ * site rather than breaking down individual accounts or roles. The raw-text
+ * view still shows everything the server sent.
+ */
+const HIDDEN_LABELS = new Set(['role', 'namespace']);
+
+/**
+ * Strips the hidden labels, then folds samples that become identical into a
+ * single total so hiding the labels never leaves duplicate rows behind.
+ */
+const summarise = (family: MetricFamily): MetricFamily => {
+  const rows = new Map<string, { labels: Record<string, string>; value: number }>();
+  for (const sample of family.samples) {
+    const labels = Object.fromEntries(
+      Object.entries(sample.labels).filter(([key]) => !HIDDEN_LABELS.has(key)),
+    );
+    const key = JSON.stringify(labels);
+    const row = rows.get(key);
+    if (row) row.value += sample.value;
+    else rows.set(key, { labels, value: sample.value });
+  }
+  return {
+    ...family,
+    samples: [...rows.values()].map((row) => ({
+      name: family.samples[0].name,
+      labels: row.labels,
+      value: row.value,
+    })),
+  };
+};
+
 const FamilyTable: React.FC<{ family: MetricFamily }> = ({ family }) => (
   <div className="border border-line rounded-lg overflow-hidden">
     <div className="px-3 py-2 bg-wash dark:bg-raised border-b border-line flex items-center gap-2 flex-wrap">
@@ -82,7 +114,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       setText(await api.getAdminMetrics());
     } catch (err: unknown) {
       setUnauthorized(err instanceof ApiError && (err.status === 401 || err.status === 403));
-      setError(err instanceof ApiError ? err.message : 'Failed to load registry metrics.');
+      setError(err instanceof ApiError ? err.message : "Couldn't load the statistics.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +130,10 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   );
 
   const labelled = useMemo(
-    () => parsed?.families.filter((f) => Object.keys(f.samples[0]?.labels ?? {}).length > 0) ?? [],
+    () =>
+      parsed?.families
+        .filter((f) => Object.keys(f.samples[0]?.labels ?? {}).length > 0)
+        .map(summarise) ?? [],
     [parsed],
   );
   const unlabelled = useMemo(
@@ -136,12 +171,9 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             className="text-base font-display font-semibold text-ink flex items-center gap-2"
           >
             <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            Registry Metrics
+            Site statistics
           </h2>
-          <p className="text-[11px] text-ink-3">
-            Prometheus exposition from <span className="font-mono">/admin/metrics</span>, fetched
-            with your admin session.
-          </p>
+          <p className="text-[11px] text-ink-3">Live numbers from the server.</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
@@ -174,21 +206,19 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
               <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <strong>Unable to load metrics:</strong> {error}
+                <strong>Couldn't load the statistics:</strong> {error}
               </div>
             </div>
             {unauthorized && (
               <p className="text-[11px] text-ink-3 leading-relaxed max-w-2xl">
-                <span className="font-mono">/admin/metrics</span> is an admin-only route and this
-                view loads it through the authenticated API client. Opening the URL directly in a
-                new tab returns <span className="font-mono">401</span> because a browser navigation
-                cannot send the bearer token — use this panel instead.
+                Only administrators can view these numbers. Sign in with an administrator account
+                and try again.
               </p>
             )}
           </div>
         ) : showRaw ? (
           <CodeEditor
-            label="Prometheus metrics (read-only)"
+            label="Raw statistics (read-only)"
             language="bash"
             value={text}
             onChange={() => {}}
@@ -197,14 +227,14 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         ) : parsed && parsed.families.length > 0 ? (
           <>
             <p className="text-[11px] text-ink-3">
-              {parsed.families.length} metric families • {parsed.sampleCount} samples
+              {parsed.families.length} stats • {parsed.sampleCount} data points
             </p>
 
             {unlabelled.length > 0 && (
               <div className="space-y-2">
                 <h3 className="label text-ink-3 flex items-center gap-1.5">
                   <Gauge className="w-3 h-3" />
-                  Gauges
+                  Current values
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {unlabelled.map((family) => {
@@ -231,7 +261,7 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
             {labelled.length > 0 && (
               <div className="space-y-2">
-                <h3 className="label text-ink-3">Labelled series</h3>
+                <h3 className="label text-ink-3">Breakdown</h3>
                 <div className="space-y-3">
                   {labelled.map((family) => (
                     <FamilyTable key={family.name} family={family} />
@@ -241,14 +271,14 @@ export const MetricsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             )}
           </>
         ) : (
-          <p className="text-[11px] text-ink-3">The registry reported no metrics.</p>
+          <p className="text-[11px] text-ink-3">No statistics to show yet.</p>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-3 px-5 py-2 border-t border-line bg-wash dark:bg-raised text-[11px] text-ink-3 font-mono">
         <div className="min-w-0">
           <span>
-            {parsed ? `${parsed.sampleCount} samples` : 'no data'}
+            {parsed ? `${parsed.sampleCount} readings` : 'no data'}
             {copyError && (
               <span role="alert" className="ml-3 text-rose-600 dark:text-rose-400 font-sans">
                 {copyError}

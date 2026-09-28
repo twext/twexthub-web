@@ -41,7 +41,7 @@ describe('MetricsModal', () => {
   it('renders labelled series as a table', async () => {
     render(<MetricsModal onClose={noop} />);
 
-    expect(await screen.findByText('Labelled series')).toBeInTheDocument();
+    expect(await screen.findByText('Breakdown')).toBeInTheDocument();
     const labelCell = await screen.findByText(/method="GET"/);
     expect(labelCell).toHaveTextContent('method="GET", route="/v1/extensions", status="200"');
     expect(screen.getByText('4,213')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('MetricsModal', () => {
 
   it('summarises family and sample counts', async () => {
     render(<MetricsModal onClose={noop} />);
-    expect(await screen.findByText('3 metric families • 3 samples')).toBeInTheDocument();
+    expect(await screen.findByText('3 stats • 3 data points')).toBeInTheDocument();
   });
 
   it('switches to a raw read-only view and back', async () => {
@@ -59,18 +59,20 @@ describe('MetricsModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Raw text' }));
     expect(screen.getByRole('button', { name: 'Rendered view' })).toBeInTheDocument();
-    expect(screen.queryByText('Gauges')).toBeNull();
+    expect(screen.queryByText('Current values')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Rendered view' }));
-    expect(screen.getByText('Gauges')).toBeInTheDocument();
+    expect(screen.getByText('Current values')).toBeInTheDocument();
   });
 
   it('explains the 401 on an unauthorized response', async () => {
     apiMock.getAdminMetrics.mockRejectedValue(new ApiError('Unauthorized', 401));
     render(<MetricsModal onClose={noop} />);
 
-    expect(await screen.findByText(/Unable to load metrics:/)).toBeInTheDocument();
-    expect(screen.getByText(/browser navigation cannot send the bearer token/)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn't load the statistics:/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Only administrators can view these numbers/),
+    ).toBeInTheDocument();
   });
 
   it('reports a non-auth failure without the 401 explanation', async () => {
@@ -78,13 +80,13 @@ describe('MetricsModal', () => {
     render(<MetricsModal onClose={noop} />);
 
     expect(await screen.findByText(/Upstream exploded/)).toBeInTheDocument();
-    expect(screen.queryByText(/browser navigation cannot send the bearer token/)).toBeNull();
+    expect(screen.queryByText(/Only administrators can view these numbers/)).toBeNull();
   });
 
   it('handles an empty exposition', async () => {
     apiMock.getAdminMetrics.mockResolvedValue('');
     render(<MetricsModal onClose={noop} />);
-    expect(await screen.findByText('The registry reported no metrics.')).toBeInTheDocument();
+    expect(await screen.findByText('No statistics to show yet.')).toBeInTheDocument();
   });
 
   it('refetches on refresh', async () => {
@@ -113,7 +115,7 @@ describe('MetricsModal', () => {
   it('disables copy when there is no data', async () => {
     apiMock.getAdminMetrics.mockResolvedValue('');
     render(<MetricsModal onClose={noop} />);
-    await screen.findByText('The registry reported no metrics.');
+    await screen.findByText('No statistics to show yet.');
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
   });
 });

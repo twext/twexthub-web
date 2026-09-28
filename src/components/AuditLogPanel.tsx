@@ -33,6 +33,24 @@ const ACTION_STYLES: Record<string, string> = {
     'bg-rose-50 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60',
 };
 
+/** Plain-language names for the audit actions the server records. */
+const ACTION_LABELS: Record<string, string> = {
+  'version.publish': 'Published',
+  'version.approve': 'Approved',
+  'version.reject': 'Changes requested',
+  'version.yank': 'Unpublished',
+  'version.deprecate': 'Deprecated',
+  'tag.set': 'Tag set',
+  'tag.remove': 'Tag removed',
+  'owner.add': 'Owner added',
+  'owner.remove': 'Owner removed',
+  'access.grant': 'Access given',
+  'access.revoke': 'Access removed',
+  'quota.set': 'Storage changed',
+  'role.change': 'Permissions changed',
+  'extension.delete': 'Extension deleted',
+};
+
 const targetLabel = (entry: AuditEntry) => {
   const { namespace, id, version } = entry.target || {};
   if (!namespace || !id) return null;
@@ -86,11 +104,11 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
         <div>
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
             <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            Privileged Action Log
+            Site activity
           </h2>
           <p className="text-[11px] text-ink-3 mt-0.5 max-w-2xl">
-            Append-only record of publishes, review decisions, yanks, deprecations, tag and owner
-            changes, quota and role changes, and access grants. Newest first.
+            A record of publishes, review decisions, unpublishes, deprecations, tag and owner
+            changes, storage limits, and access changes. Newest first.
           </p>
         </div>
         <button
@@ -133,9 +151,9 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
                         className={`chip ${
                           ACTION_STYLES[entry.action] ??
                           'bg-wash dark:bg-raised text-ink-2 border-line'
-                        } font-mono`}
+                        }`}
                       >
-                        {entry.action}
+                        {ACTION_LABELS[entry.action] ?? entry.action}
                       </span>
                       <span className="font-mono text-ink-2">
                         {entry.actor === 'system' ? 'system' : `@${entry.actor}`}
@@ -177,7 +195,7 @@ export const AuditLogPanel: React.FC<AuditLogPanelProps> = ({ onNavigate }) => {
           )}
         </>
       ) : (
-        <p className="text-[11px] text-ink-3 py-2">No privileged actions recorded yet.</p>
+        <p className="text-[11px] text-ink-3 py-2">Nothing recorded yet.</p>
       )}
     </div>
   );

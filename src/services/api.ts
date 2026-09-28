@@ -34,6 +34,15 @@ import {
 const STORAGE_KEY_TOKEN = 'twexthub_auth_token';
 const STORAGE_KEY_USER = 'twexthub_auth_user';
 
+/** snake_case spellings some endpoints answer with, mapped to the camelCase the client reads. */
+const SNAKE_FIELDS: Record<string, string> = {
+  display_name: 'displayName',
+  added_at: 'addedAt',
+  created_at: 'createdAt',
+  last_delivery_status: 'lastDeliveryStatus',
+  last_delivery_at: 'lastDeliveryAt',
+};
+
 export class ApiError extends Error {
   status: number;
   problem?: ProblemDetails;
@@ -181,11 +190,63 @@ class ApiService {
     }
 
     if (isJson) {
-      return (await response.json()) as T;
+      return this.withPagination(await response.json()) as T;
     }
 
     const text = await response.text();
     return text as unknown as T;
+  }
+
+  /**
+   * List responses carry `_links` (self/next/prev), while the app pages with a
+   * cursor. Derive the `pagination` shape the UI expects from `_links.next`:
+   * `nextCursor` is the `cursor` inside the next-page URL, and `hasMore` is
+   * simply whether there is a next page.
+   *
+   * The link may be absolute or root-relative (the server rebuilds the request
+   * URL, which keeps the path but not the origin), so it is resolved against a
+   * placeholder base: only the query string matters here.
+   */
+  private withPagination(body: unknown): unknown {
+    if (!body || typeof body !== 'object') return body;
+    const record = body as Record<string, unknown>;
+    if (!('_links' in record) || 'pagination' in record) return body;
+    const links = record._links as { next?: string | null } | null;
+    const next = typeof links?.next === 'string' && links.next.length > 0 ? links.next : null;
+    let nextCursor: string | null = null;
+    if (next) {
+      try {
+        nextCursor = new URL(next, 'http://twexthub.invalid').searchParams.get('cursor');
+      } catch {
+        nextCursor = null;
+      }
+    }
+    return { ...record, pagination: { nextCursor, hasMore: next !== null } };
+  }
+
+  /**
+   * The owners and webhooks endpoints answer with rows taken straight from the
+   * database, so those arrive snake_case while the rest of the API is
+   * camelCase. Fold the spelling the rest of the client reads onto them; a row
+   * that is already camelCase (what the spec documents for webhooks) passes
+   * through untouched.
+   */
+  private normalizeRow<T>(row: unknown): T {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return row as T;
+    const source = row as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...source };
+    for (const [snake, camel] of Object.entries(SNAKE_FIELDS)) {
+      if (snake in out && !(camel in out)) {
+        out[camel] = out[snake];
+        delete out[snake];
+      }
+    }
+    return out as T;
+  }
+
+  private normalizeRows<T>(rows: unknown): T[] {
+    if (!Array.isArray(rows)) return rows as T[];
+    return rows.map((row) => this.normalizeRow<T>(row));
   }
 
   // --- Public Registry & Info Endpoints ---
@@ -201,24 +262,24 @@ class ApiService {
   async getExtensions(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<PaginatedList<Extension>> {
+  }): Promise<PaginatedList<ExtensionSummary>> {
     const query = new URLSearchParams();
     if (params?.cursor) query.set('cursor', params.cursor);
     if (params?.limit) query.set('limit', String(params.limit));
     const qs = query.toString();
-    return this.request<PaginatedList<Extension>>(`/extensions${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedList<ExtensionSummary>>(`/extensions${qs ? `?${qs}` : ''}`);
   }
 
   async searchExtensions(
     searchQuery: string,
     params?: { cursor?: string; limit?: number },
-  ): Promise<PaginatedList<Extension>> {
+  ): Promise<PaginatedList<ExtensionSummary>> {
     const query = new URLSearchParams();
     if (searchQuery) query.set('query', searchQuery);
     if (params?.cursor) query.set('cursor', params.cursor);
     if (params?.limit) query.set('limit', String(params.limit));
     const qs = query.toString();
-    return this.request<PaginatedList<Extension>>(`/search${qs ? `?${qs}` : ''}`);
+    return this.request<PaginatedList<ExtensionSummary>>(`/search${qs ? `?${qs}` : ''}`);
   }
 
   async getExtension(namespace: string, id: string): Promise<Extension> {
@@ -260,7 +321,7 @@ class ApiService {
     const res = await this.request<{ data: ExtensionOwner[] }>(
       `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners`,
     );
-    return res.data;
+    return this.normalizeRows<ExtensionOwner>(res.data);
   }
 
   async addExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
@@ -281,7 +342,7 @@ class ApiService {
     const res = await this.request<{ data: Webhook[] }>(
       `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
     );
-    return res.data;
+    return this.normalizeRows<Webhook>(res.data);
   }
 
   /** The returned secret is shown once and cannot be recovered. */
@@ -290,13 +351,14 @@ class ApiService {
     id: string,
     payload: CreateWebhookPayload,
   ): Promise<WebhookCreated> {
-    return this.request<WebhookCreated>(
+    const created = await this.request<WebhookCreated>(
       `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/webhooks`,
       {
         method: 'POST',
         body: JSON.stringify(payload),
       },
     );
+    return this.normalizeRow<WebhookCreated>(created);
   }
 
   async deleteWebhook(namespace: string, id: string, webhookId: number): Promise<void> {
@@ -314,10 +376,10 @@ class ApiService {
     message: string | null,
   ): Promise<VersionInfo> {
     return this.request<VersionInfo>(
-      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/deprecate`,
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}`,
       {
         method: 'PATCH',
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ deprecationMessage: message }),
       },
     );
   }
@@ -344,8 +406,10 @@ class ApiService {
 
   // --- Auth Endpoints ---
 
+  // Signing in is creating a session (`POST /sessions`): the response carries
+  // the session, its owner, and the one-time bearer token.
   async login(credentials: { namespace: string; password: string }): Promise<AuthSessionResponse> {
-    const res = await this.request<AuthSessionResponse>('/auth/login', {
+    const res = await this.request<AuthSessionResponse>('/sessions', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -354,12 +418,13 @@ class ApiService {
     return res;
   }
 
+  // Creating the account and signing in are the same act (`POST /users`).
   async signup(payload: {
     namespace: string;
     password: string;
     displayName?: string;
   }): Promise<AuthSessionResponse> {
-    const res = await this.request<AuthSessionResponse>('/auth/signup', {
+    const res = await this.request<AuthSessionResponse>('/users', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -371,7 +436,9 @@ class ApiService {
   async logout(): Promise<void> {
     try {
       if (this.token) {
-        await this.request<void>('/auth/logout', { method: 'POST' });
+        // `current` is the session that authenticated the request, so the
+        // client can sign itself out without having kept the session's id.
+        await this.request<void>('/sessions/current', { method: 'DELETE' });
       }
     } finally {
       this.setToken(null);
@@ -379,25 +446,31 @@ class ApiService {
     }
   }
 
-  // GET /v1/auth/me - returns the caller's own authenticated account
+  // GET /me - returns the caller's own authenticated account
   async getMe(): Promise<User> {
-    const me = await this.request<User>('/auth/me');
+    const me = await this.request<User>('/me');
     this.setStoredUser(me);
     return me;
   }
 
   // --- Authenticated User Operations ---
 
+  /**
+   * Acceptance is recorded on the account itself: a PATCH of
+   * `termsAcceptedVersion` carrying nothing else, since the spec does not let
+   * an acceptance travel alongside any other edit.
+   */
   async acceptTerms(version: number): Promise<void> {
-    await this.request<void>('/terms/accept', {
-      method: 'POST',
-      body: JSON.stringify({ version }),
-    });
     const current = this.getStoredUser();
-    if (current) {
-      current.termsAcceptedVersion = version;
-      this.setStoredUser(current);
+    if (!current) {
+      throw new ApiError('No signed-in account to record the terms acceptance for', 401);
     }
+    await this.request<void>(`/users/${encodeURIComponent(current.namespace)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ termsAcceptedVersion: version }),
+    });
+    current.termsAcceptedVersion = version;
+    this.setStoredUser(current);
   }
 
   async updateUser(namespace: string, data: UpdateUserPayload): Promise<User> {
@@ -698,13 +771,17 @@ class ApiService {
   }
 
   /**
-   * Send either `ids` or `all: true`, never both. Idempotent.
-   * Ids are sent as the strings the list endpoint returns; the API coerces them.
+   * Read state is patched onto the collection: send either `ids` (up to 100)
+   * or `all: true`, never both. Idempotent; `updated` counts only rows that
+   * were not already read. Ids are digits-only strings, and the spec types the
+   * array as integers, so they are sent as numbers.
    */
   async markNotificationsRead(payload: { ids: string[] } | { all: true }): Promise<number> {
-    const res = await this.request<MarkNotificationsReadResult>('/notifications/read', {
-      method: 'POST',
-      body: JSON.stringify(payload),
+    const body =
+      'ids' in payload ? { ids: payload.ids.map((id) => Number(id)) } : { all: true as const };
+    const res = await this.request<MarkNotificationsReadResult>('/notifications', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     });
     return res.updated;
   }

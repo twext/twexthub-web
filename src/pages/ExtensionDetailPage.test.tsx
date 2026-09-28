@@ -88,16 +88,16 @@ describe('ExtensionDetailPage', () => {
     expect(onNavigate).toHaveBeenCalledWith('search');
   });
 
-  it('lets the owner yank a published version', async () => {
+  it('lets the owner unpublish a published version', async () => {
     const user = userEvent.setup();
     render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
     await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
 
-    await user.click(screen.getAllByRole('button', { name: 'Yank' })[0]);
-    await user.click(screen.getByRole('button', { name: 'Yank version' }));
+    await user.click(screen.getAllByRole('button', { name: 'Unpublish' })[0]);
+    await user.click(screen.getByRole('button', { name: 'Unpublish version' }));
     expect(apiMock.yankVersion).toHaveBeenCalledWith('kane', 'demo', '1.2.0');
-    expect(await screen.findByText('Version 1.2.0 has been yanked.')).toBeInTheDocument();
-    expect(screen.getByText('Yanked')).toBeInTheDocument();
+    expect(await screen.findByText('Version 1.2.0 has been unpublished.')).toBeInTheDocument();
+    expect(screen.getByText('Unpublished')).toBeInTheDocument();
   });
 
   it('lets the owner delete the extension', async () => {
@@ -120,7 +120,7 @@ describe('ExtensionDetailPage', () => {
     await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
 
     expect(screen.queryByText('Manage Extension')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Yank/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Unpublish/ })).not.toBeInTheDocument();
   });
 
   it('shows management controls to admins who are not the owner', async () => {

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { Extension } from '../types/api';
+import { ExtensionSummary } from '../types/api';
 import {
   Bookmark,
   Compass,
@@ -40,7 +40,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, o
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Extension[]>([]);
+  const [results, setResults] = useState<ExtensionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { Notification, NotificationKind } from '../types/api';
+import { useDismissable } from '../hooks/useDismissable';
 import { AlertCircle, Bell, CheckCheck, ExternalLink, X } from 'lucide-react';
 
 const KIND_STYLES: Record<NotificationKind, string> = {
@@ -22,6 +23,18 @@ const KIND_STYLES: Record<NotificationKind, string> = {
     'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
 };
 
+/** Plain-language names for the kinds the server sends, so the list reads like words, not codes. */
+const KIND_LABELS: Record<NotificationKind, string> = {
+  'review.approved': 'Approved',
+  'review.rejected': 'Changes requested',
+  'terms.bumped': 'Terms updated',
+  'tokens.revoked': 'Access removed',
+  'role.changed': 'Permissions changed',
+  broadcast: 'Announcement',
+  'extension.owner.added': 'Added as owner',
+  'extension.owner.removed': 'Removed as owner',
+};
+
 /** Notifications that point at a package link straight to its detail page. */
 const extensionRef = (payload: Record<string, unknown>) => {
   const namespace = payload.namespace;
@@ -34,13 +47,28 @@ interface NotificationInboxProps {
   onClose: () => void;
   onNavigate: (route: string) => void;
   onUnreadChange: (count: number) => void;
+  /**
+   * The bell that opened the menu. Treated as part of the popover so pressing
+   * the trigger again toggles instead of dismissing and reopening.
+   */
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
+  /**
+   * `popover` drops down under the bell in the top bar; `modal` is the
+   * full-screen sheet used from the mobile menu.
+   */
+  variant?: 'popover' | 'modal';
 }
 
 export const NotificationInbox: React.FC<NotificationInboxProps> = ({
   onClose,
   onNavigate,
   onUnreadChange,
+  triggerRef,
+  variant = 'popover',
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useDismissable(ref, onClose, triggerRef);
+
   const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -58,7 +86,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
         setUnreadCount(res.unreadCount || 0);
         onUnreadChange(res.unreadCount || 0);
       } catch (err: unknown) {
-        setError(err instanceof ApiError ? err.message : 'Failed to load notifications');
+        setError(err instanceof ApiError ? err.message : "Couldn't load notifications.");
       } finally {
         setLoading(false);
       }
@@ -69,14 +97,6 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
 
   const applyRead = (updated: number) => {
     setUnreadCount((prev) => Math.max(0, prev - updated));
@@ -94,7 +114,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
         onUnreadChange(0);
       }
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : 'Failed to mark notifications read');
+      setError(err instanceof ApiError ? err.message : "Couldn't mark everything as read.");
     } finally {
       setMarking(false);
     }
@@ -108,7 +128,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
       setItems((prev) => prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)));
       if (updated > 0) applyRead(updated);
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : 'Failed to mark notification read');
+      setError(err instanceof ApiError ? err.message : "Couldn't mark that as read.");
     }
   };
 
@@ -119,28 +139,29 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
     onClose();
   };
 
-  return (
+  const panel = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-      onClick={onClose}
+      ref={ref}
+      role="dialog"
+      aria-modal={variant === 'modal' || undefined}
+      aria-label="Notifications"
+      className={
+        variant === 'popover'
+          ? 'absolute right-0 top-full mt-2 w-[24rem] max-w-[calc(100vw-2rem)] card p-0 z-50 flex flex-col max-h-[70vh]'
+          : 'card max-w-xl w-full p-0 flex flex-col max-h-[85vh]'
+      }
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Notifications"
-        className="card max-w-xl w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
-            <Bell className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
-            Notifications
-            {unreadCount > 0 && (
-              <span className="chip bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono">
-                {unreadCount} unread
-              </span>
-            )}
-          </h2>
+      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+        <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+          <Bell className="w-4 h-4 text-lilac-500 dark:text-lilac-300" />
+          Notifications
+          {unreadCount > 0 && (
+            <span className="chip bg-lilac-100 dark:bg-lilac-900 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800 font-mono">
+              {unreadCount} unread
+            </span>
+          )}
+        </h2>
+        {variant === 'modal' && (
           <button
             onClick={onClose}
             aria-label="Close"
@@ -148,35 +169,37 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
           >
             <X className="w-4 h-4" />
           </button>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <label className="flex items-center gap-2 text-xs text-ink-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={unreadOnly}
-              onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="rounded accent-lilac-500"
-            />
-            Unread only
-          </label>
-          <button
-            onClick={handleMarkAll}
-            disabled={marking || unreadCount === 0}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
-          >
-            <CheckCheck className="w-3.5 h-3.5" />
-            {marking ? 'Marking...' : 'Mark all read'}
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-            <span>{error}</span>
-          </div>
         )}
+      </div>
 
+      <div className="flex items-center justify-between gap-2 px-4 pt-3">
+        <label className="flex items-center gap-2 text-xs text-ink-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={unreadOnly}
+            onChange={(e) => setUnreadOnly(e.target.checked)}
+            className="rounded accent-lilac-500"
+          />
+          Unread only
+        </label>
+        <button
+          onClick={handleMarkAll}
+          disabled={marking || unreadCount === 0}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
+        >
+          <CheckCheck className="w-3.5 h-3.5" />
+          {marking ? 'Marking...' : 'Mark all read'}
+        </button>
+      </div>
+
+      {error && (
+        <div className="mx-4 mt-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 p-3 rounded-lg text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="mt-3 flex-1 min-h-0 overflow-y-auto border-t border-line p-3">
         {loading ? (
           <div className="space-y-2">
             <div className="h-14 bg-wash dark:bg-raised rounded animate-pulse" />
@@ -198,7 +221,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className={`chip ${KIND_STYLES[notification.kind]}`}>
-                        {notification.kind}
+                        {KIND_LABELS[notification.kind] ?? notification.kind}
                       </span>
                       {!notification.read && (
                         <span
@@ -245,4 +268,17 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
       </div>
     </div>
   );
+
+  if (variant === 'modal') {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        onClick={onClose}
+      >
+        {panel}
+      </div>
+    );
+  }
+
+  return panel;
 };

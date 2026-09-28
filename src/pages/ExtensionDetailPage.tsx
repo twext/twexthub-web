@@ -167,9 +167,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const handleYankVersion = async (version: string) => {
     if (!extension) return;
     const confirmed = await confirm({
-      title: 'Yank version',
-      message: `Yank version ${version} of @${extension.namespace}/${extension.id}? It will be hidden from the registry and can no longer be installed.`,
-      confirmLabel: 'Yank version',
+      title: 'Unpublish version',
+      message: `Unpublish version ${version} of @${extension.namespace}/${extension.id}? It will be hidden from the site and can no longer be installed.`,
+      confirmLabel: 'Unpublish version',
       variant: 'danger',
     });
     if (!confirmed) return;
@@ -192,9 +192,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
             }
           : prev,
       );
-      setActionSuccess(`Version ${version} has been yanked.`);
+      setActionSuccess(`Version ${version} has been unpublished.`);
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to yank version';
+      const msg = err instanceof ApiError ? err.message : 'Could not remove the version';
       setActionError(msg);
     } finally {
       setYankingVersion(null);
@@ -308,7 +308,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
         <h2 className="text-xl font-display font-semibold text-ink">Extension Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
           {error ||
-            `The extension @${namespace}/${id} could not be located on this Twext instance.`}
+            `The extension @${namespace}/${id} could not be found on this site.`}
         </p>
         <div className="pt-2">
           <button onClick={() => onNavigate('search')} className="btn btn-secondary">
@@ -483,11 +483,11 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                           <button
                             onClick={() => handleYankVersion(ver.version)}
                             disabled={yankingVersion === ver.version}
-                            title={`Yank v${ver.version} from the registry`}
+                            title={`Unpublish v${ver.version}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                           >
                             <Ban className="w-3 h-3" />
-                            {yankingVersion === ver.version ? 'Yanking...' : 'Yank'}
+                            {yankingVersion === ver.version ? 'Unpublishing...' : 'Unpublish'}
                           </button>
                         )}
                         {canManage &&
@@ -602,11 +602,11 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                     <button
                       onClick={() => handleYankVersion(latestVersion)}
                       disabled={yankingVersion === latestVersion}
-                      title={`Yank v${latestVersion} from the registry`}
+                      title={`Unpublish v${latestVersion}`}
                       className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors disabled:opacity-50"
                     >
                       <Ban className="w-3 h-3" />
-                      {yankingVersion === latestVersion ? 'Yanking...' : 'Yank'}
+                      {yankingVersion === latestVersion ? 'Unpublishing...' : 'Unpublish'}
                     </button>
                   )}
                 </div>
@@ -695,8 +695,8 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
               </div>
               <p className="text-xs text-ink-2 leading-relaxed">
                 {isOwner ? 'You own' : 'You administer'} @{extension.namespace}/{extension.id}.
-                Yanking a version hides it from new installs; deleting the extension permanently
-                removes every version and its compiled code.
+                Unpublishing a version hides it from new installs; deleting the extension
+                permanently removes every version and its compiled code.
               </p>
               <div className="flex flex-wrap gap-2">
                 <button

@@ -68,7 +68,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
   const handleSaveOverride = async () => {
     const trimmed = megabytes.trim();
     if (trimmed === '') {
-      setInputError('Enter a size in MB, or use "Use instance default".');
+      setInputError('Enter a size in MB, or press "Use site default".');
       return;
     }
     const parsed = Number(trimmed);
@@ -150,7 +150,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                   )}
                   {quota.maxBlobBytes == null && (
                     <p className="text-[10px] text-ink-3">
-                      No per-account override. This account follows the instance default.
+                      No per-account limit set. This account uses the site default.
                     </p>
                   )}
                 </div>
@@ -170,7 +170,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                         setMegabytes(e.target.value);
                         setInputError(null);
                       }}
-                      placeholder="instance default"
+                      placeholder="site default"
                       className="input flex-1"
                     />
                     <button
@@ -192,7 +192,7 @@ export const QuotaModal: React.FC<QuotaModalProps> = ({ namespace, onClose, onSa
                   className="btn btn-secondary w-full"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Use instance default</span>
+                  <span>Use site default</span>
                 </button>
               </>
             )

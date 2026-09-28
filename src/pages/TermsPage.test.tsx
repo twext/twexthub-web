@@ -58,7 +58,7 @@ describe('TermsPage', () => {
   it('shows an accepted confirmation to users already in compliance', async () => {
     useAuthMock.mockReturnValue(makeAuthState({ hasAcceptedCurrentTerms: true }));
     render(<TermsPage onNavigate={noop} />);
-    expect(await screen.findByText(/Accepted by @kane/)).toBeInTheDocument();
+    expect(await screen.findByText(/Accepted by Kane/)).toBeInTheDocument();
   });
 
   it('explains that nothing has been published instead of demanding acceptance', async () => {

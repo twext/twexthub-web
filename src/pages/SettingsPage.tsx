@@ -50,7 +50,7 @@ type SettingsTab = 'account' | 'sessions' | 'tokens';
 const TABS: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
   { id: 'account', label: 'Account', icon: UserIcon },
   { id: 'sessions', label: 'Sessions', icon: Laptop },
-  { id: 'tokens', label: 'Automation Tokens', icon: Key },
+  { id: 'tokens', label: 'Access Tokens', icon: Key },
 ];
 
 // Each section's heading is described once, next to the navigation entry it
@@ -553,7 +553,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-3">
                   <span className="font-mono text-ink-2">@{user.namespace}</span>
-                  <span>Role: {user.role || 'author'}</span>
                   <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
                   {hasTerms && (
                     <span className="flex items-center gap-1">
@@ -933,8 +932,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                           className="rounded accent-lilac-500"
                         />
                         <span>
-                          <strong className="font-mono">yank</strong> — Allow retracting/yanking bad
-                          releases
+                          <strong className="font-mono">yank</strong> — Allow removing bad releases
+                          from the site
                         </span>
                       </label>
                     </div>
@@ -970,8 +969,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
                 </form>
               </div>
 
-              <div className="card p-5 space-y-3">
-                <h2 className="label">Active Tokens ({tokens.length})</h2>
+              <div className="card p-5 space-y-3">                  <h2 className="label">Access Tokens ({tokens.length})</h2>
 
                 {loadingTokens ? (
                   <div className="space-y-2">

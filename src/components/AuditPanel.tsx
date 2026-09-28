@@ -238,7 +238,7 @@ export const AuditPanel: React.FC = () => {
       }
     } catch (err: unknown) {
       if (mountedRef.current) {
-        setError(err instanceof ApiError ? err.message : 'Failed to run the registry audit');
+        setError(err instanceof ApiError ? err.message : 'Failed to run the health check');
       }
     } finally {
       if (mountedRef.current) setScanning(false);
@@ -325,10 +325,10 @@ export const AuditPanel: React.FC = () => {
         <div className="flex items-start gap-2">
           <ShieldAlert className="w-4 h-4 text-lilac-600 dark:text-lilac-300 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-ink">Registry Health Audit</h3>
+            <h3 className="text-sm font-semibold text-ink">Health check</h3>
             <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
-              Scan every account for expired sessions and tokens, stale sign-ins, unaccepted terms,
-              and dormant accounts. Findings are informational unless an action is offered.
+              Scans every account for expired sign-ins, unused access keys, unaccepted terms, and
+              dormant accounts. Findings are informational unless an action is offered.
             </p>
           </div>
         </div>
@@ -338,7 +338,7 @@ export const AuditPanel: React.FC = () => {
           className="btn btn-primary btn-sm shrink-0 disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${scanning ? 'animate-spin' : ''}`} />
-          <span>{scanning ? 'Auditing...' : 'Run Audit'}</span>
+          <span>{scanning ? 'Checking...' : 'Check now'}</span>
         </button>
       </div>
 

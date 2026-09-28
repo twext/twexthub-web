@@ -39,12 +39,14 @@ describe('AuditLogPanel', () => {
     );
     render(<AuditLogPanel onNavigate={noop} />);
 
-    expect(await screen.findByText('version.yank')).toBeInTheDocument();
+    expect(await screen.findByText('Unpublished')).toBeInTheDocument();
     expect(screen.getByText('@kane')).toBeInTheDocument();
     expect(screen.getByText('@kane/demo@1.0.0')).toBeInTheDocument();
     expect(screen.getByText('system')).toBeInTheDocument();
-    expect(screen.getByText('extension.delete')).toBeInTheDocument();
+    expect(screen.getByText('Extension deleted')).toBeInTheDocument();
     expect(screen.getByText('@ada/gone')).toBeInTheDocument();
+    // Actions are described in words rather than the codes the server records.
+    expect(screen.queryByText('version.yank')).toBeNull();
   });
 
   it('shows the system actor without an @ prefix', async () => {
@@ -69,7 +71,7 @@ describe('AuditLogPanel', () => {
 
   it('shows an empty state', async () => {
     render(<AuditLogPanel onNavigate={noop} />);
-    expect(await screen.findByText('No privileged actions recorded yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing recorded yet.')).toBeInTheDocument();
   });
 
   it('navigates to the target extension', async () => {
@@ -100,8 +102,8 @@ describe('AuditLogPanel', () => {
 
     await user.click(await screen.findByRole('button', { name: /Load older entries/ }));
 
-    expect(await screen.findByText('version.deprecate')).toBeInTheDocument();
-    expect(screen.getByText('version.yank')).toBeInTheDocument();
+    expect(await screen.findByText('Deprecated')).toBeInTheDocument();
+    expect(screen.getByText('Unpublished')).toBeInTheDocument();
     expect(apiMock.getAuditLog).toHaveBeenLastCalledWith({ cursor: 'cursor-2', limit: 50 });
     expect(screen.queryByRole('button', { name: /Load older entries/ })).toBeNull();
   });

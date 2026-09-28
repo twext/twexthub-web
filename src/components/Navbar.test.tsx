@@ -83,11 +83,12 @@ describe('Navbar notifications', () => {
 });
 
 describe('Navbar navigation styling', () => {
-  /** Every header destination is signalled with a fill, never an underline. */
-  const filled = (element: HTMLElement) => {
-    expect(element.className).toMatch(/rounded-md/);
-    expect(element.className).not.toMatch(/border-b-2/);
-    expect(element.className).not.toMatch(/-mb-px/);
+  /** Every header destination is signalled with an underline, never a fill. */
+  const underlined = (element: HTMLElement) => {
+    expect(element.className).toMatch(/border-b-2/);
+    expect(element.className).toMatch(/-mb-px/);
+    expect(element.className).not.toMatch(/rounded-md/);
+    expect(element.className).not.toMatch(/bg-(amber|lilac)-500\/15/);
   };
 
   const navTargets = (route: string) => {
@@ -106,7 +107,7 @@ describe('Navbar navigation styling', () => {
     };
   };
 
-  it('fills Explore, Saved and Settings in the lilac accent', () => {
+  it('underlines Explore, Saved and Settings in the lilac accent', () => {
     const active = [
       ['search', 'explore'],
       ['saved', 'saved'],
@@ -114,25 +115,25 @@ describe('Navbar navigation styling', () => {
     ] as const;
 
     for (const [route, key] of active) {
-      // Only the destination matching the current route is filled.
+      // Only the destination matching the current route takes the accent.
       const target = navTargets(route)[key];
-      filled(target);
-      expect(target.className).toMatch(/bg-lilac-500\/15/);
+      underlined(target);
+      expect(target.className).toMatch(/border-lilac-500(?!\/)/);
     }
   });
 
-  it('fills Admin in the amber accent rather than the lilac one', () => {
+  it('underlines Admin in the amber accent rather than the lilac one', () => {
     const { admin } = navTargets('admin');
-    filled(admin);
-    expect(admin.className).toMatch(/bg-amber-500\/15/);
-    expect(admin.className).not.toMatch(/bg-lilac-500\/15/);
+    underlined(admin);
+    expect(admin.className).toMatch(/border-amber-500(?!\/)/);
+    expect(admin.className).not.toMatch(/border-lilac-500(?!\/)/);
   });
 
-  it('gives inactive destinations no fill of their own', () => {
+  it('gives inactive destinations no accent underline of their own', () => {
     const targets = navTargets('home');
     for (const target of Object.values(targets)) {
-      filled(target);
-      expect(target.className).not.toMatch(/bg-(amber|lilac)-500\/15/);
+      underlined(target);
+      expect(target.className).not.toMatch(/border-(amber|lilac)-500(?!\/)/);
     }
   });
 });

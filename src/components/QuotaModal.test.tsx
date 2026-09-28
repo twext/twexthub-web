@@ -45,10 +45,10 @@ describe('QuotaModal', () => {
     renderModal();
     expect(
       await screen.findByText(
-        'No per-account override. This account follows the instance default.',
+        'No per-account limit set. This account uses the site default.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Use instance default/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use site default' })).toBeDisabled();
   });
 
   it('saves a megabyte override as bytes', async () => {
@@ -98,7 +98,7 @@ describe('QuotaModal', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(
-      await screen.findByText('Enter a size in MB, or use "Use instance default".'),
+      await screen.findByText('Enter a size in MB, or press "Use site default".'),
     ).toBeInTheDocument();
     expect(apiMock.setUserQuota).not.toHaveBeenCalled();
   });
@@ -108,7 +108,7 @@ describe('QuotaModal', () => {
     const { onSaved } = renderModal();
     await screen.findByLabelText('Override (MB)');
 
-    await user.click(screen.getByRole('button', { name: /Use instance default/ }));
+    await user.click(screen.getByRole('button', { name: 'Use site default' }));
 
     expect(apiMock.setUserQuota).toHaveBeenCalledWith('kane', null);
     expect(onSaved).toHaveBeenCalled();

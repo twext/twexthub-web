@@ -86,10 +86,12 @@ describe('ApiService', () => {
   });
 
   it('login POSTs JSON and persists token + user to localStorage', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ token: 'tok-123', user: makeUser() }));
+    fetchMock.mockResolvedValue(
+      jsonResponse({ token: 'tok-123', user: makeUser(), session: { id: 's1' } }),
+    );
     const res = await api.login({ namespace: 'kane', password: 'secret' });
     expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/auth/login`,
+      `${baseUrl}/sessions`,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ namespace: 'kane', password: 'secret' }),
@@ -137,9 +139,17 @@ describe('ApiService', () => {
     await expect(api.getStats()).rejects.toThrow(/Unable to reach the TwextHub API/);
   });
 
-  it('resolves undefined for 204 No Content responses', async () => {
+  it('records terms acceptance on the account, and resolves undefined for 204', async () => {
+    api.setStoredUser(makeUser());
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     await expect(api.acceptTerms(2)).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${baseUrl}/users/kane`,
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ termsAcceptedVersion: 2 }),
+      }),
+    );
   });
 
   it('logout revokes the session server-side then clears local credentials', async () => {
@@ -148,8 +158,8 @@ describe('ApiService', () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     await api.logout();
     expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/auth/logout`,
-      expect.objectContaining({ method: 'POST' }),
+      `${baseUrl}/sessions/current`,
+      expect.objectContaining({ method: 'DELETE' }),
     );
     expect(api.getToken()).toBeNull();
     expect(localStorage.getItem('twexthub_auth_token')).toBeNull();
@@ -266,6 +276,42 @@ describe('ApiService', () => {
     ]);
   });
 
+  it('folds the snake_case owner rows the spec documents onto the camelCase shape', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          { namespace: 'ada', display_name: 'Ada', role: 'admin', added_at: '2026-01-01T00:00:00Z' },
+        ],
+      }),
+    );
+    await expect(api.getExtensionOwners('kane', 'demo')).resolves.toEqual([
+      { namespace: 'ada', displayName: 'Ada', role: 'admin', addedAt: '2026-01-01T00:00:00Z' },
+    ]);
+  });
+
+  it('derives pagination from a root-relative _links.next', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [makeExtension()],
+        _links: {
+          self: '/api/v1/extensions',
+          next: '/api/v1/extensions?limit=20&cursor=abc123',
+          prev: null,
+        },
+      }),
+    );
+    const res = await api.getExtensions();
+    expect(res.pagination).toEqual({ nextCursor: 'abc123', hasMore: true });
+  });
+
+  it('reports the end of the list when _links.next is null', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: [], _links: { self: '/api/v1/extensions', next: null, prev: null } }),
+    );
+    const res = await api.getExtensions();
+    expect(res.pagination).toEqual({ nextCursor: null, hasMore: false });
+  });
+
   it('addExtensionOwner and removeExtensionOwner use PUT and DELETE on the owner path', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     await api.addExtensionOwner('kane', 'demo', 'ada');
@@ -348,15 +394,18 @@ describe('ApiService', () => {
       ),
     );
     const res = await api.deprecateVersion('kane', 'demo', '1.0.0', 'Use 2.x');
-    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/versions/1.0.0/deprecate`);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/versions/1.0.0`);
     expect(fetchMock.mock.calls[0][1]).toEqual(
-      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ message: 'Use 2.x' }) }),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ deprecationMessage: 'Use 2.x' }),
+      }),
     );
     expect(res.status).toBe('deprecated');
 
     await api.deprecateVersion('kane', 'demo', '1.0.0', null);
     expect(fetchMock.mock.calls[1][1]).toEqual(
-      expect.objectContaining({ body: JSON.stringify({ message: null }) }),
+      expect.objectContaining({ body: JSON.stringify({ deprecationMessage: null }) }),
     );
   });
 
@@ -418,9 +467,12 @@ describe('ApiService', () => {
   it('markNotificationsRead returns the updated count and accepts ids or all', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ updated: 2 })));
     await expect(api.markNotificationsRead({ ids: ['1', '2'] })).resolves.toBe(2);
-    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications/read`);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/notifications`);
     expect(fetchMock.mock.calls[0][1]).toEqual(
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ ids: ['1', '2'] }) }),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ ids: [1, 2] }),
+      }),
     );
 
     await api.markNotificationsRead({ all: true });

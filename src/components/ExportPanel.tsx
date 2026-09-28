@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { downloadFile, timestampedFilename, toCsv } from '../lib/csv';
 import { useToast } from '../context/ToastContext';
-import { Extension, PaginatedList, PendingVersion, User } from '../types/api';
+import { ExtensionSummary, PaginatedList, PendingVersion, User } from '../types/api';
 import { Download, FileJson, FileSpreadsheet, Package, ShieldCheck, Users } from 'lucide-react';
 
 async function collectAll<T>(
@@ -20,20 +20,16 @@ async function collectAll<T>(
   return all;
 }
 
-const extensionRows = (items: Extension[]) =>
+const extensionRows = (items: ExtensionSummary[]) =>
   items.map((ext) => ({
     namespace: ext.namespace,
     id: ext.id,
     name: ext.name,
-    description: ext.shortDescription || ext.description || '',
-    author:
-      typeof ext.author === 'object' && ext.author !== null
-        ? ext.author.displayName || ext.author.namespace
-        : ext.author,
-    latestVersion: ext.latestVersion || '',
-    status: ext.status || 'published',
-    createdAt: ext.createdAt || '',
-    updatedAt: ext.updatedAt || '',
+    description: ext.description || '',
+    author: ext.namespace,
+    latestVersion: ext.version || '',
+    status: 'published',
+    publishedAt: ext.publishedAt || '',
   }));
 
 const userRows = (items: User[]) =>
@@ -72,21 +68,22 @@ export const ExportPanel: React.FC = () => {
   }> = [
     {
       key: 'extensions',
-      label: 'Extension Catalog',
+      label: 'Extensions',
       description: 'Every published extension with metadata.',
       icon: Package,
-      load: async () => extensionRows(await collectAll<Extension>((p) => api.getExtensions(p))),
+      load: async () =>
+        extensionRows(await collectAll<ExtensionSummary>((p) => api.getExtensions(p))),
     },
     {
       key: 'users',
       label: 'Accounts',
-      description: 'All registered accounts and roles.',
+      description: 'All registered accounts.',
       icon: Users,
       load: async () => userRows(await collectAll<User>((p) => api.getUsers(p))),
     },
     {
       key: 'queue',
-      label: 'Moderation Queue',
+      label: 'Pending versions',
       description: 'Versions currently awaiting review.',
       icon: ShieldCheck,
       load: async () =>
@@ -120,9 +117,10 @@ export const ExportPanel: React.FC = () => {
       <div className="flex items-start gap-2">
         <Download className="w-4 h-4 text-lilac-600 dark:text-lilac-300 mt-0.5" />
         <div>
-          <h3 className="text-sm font-semibold text-ink">Registry Data Export</h3>
+          <h3 className="text-sm font-semibold text-ink">Download site data</h3>
           <p className="text-[11px] text-ink-3 max-w-xl leading-relaxed">
-            Download registry data compiled in your browser. Nothing is stored on the server.
+            Download a copy of the site's data, compiled right in your browser. Nothing is stored
+            on the server.
           </p>
         </div>
       </div>

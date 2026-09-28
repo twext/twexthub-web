@@ -89,7 +89,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   onClick={() => onNavigate('sessions-tokens')}
                   className="text-ink-2 hover:text-lilac-700 dark:hover:text-lilac-300 transition-colors"
                 >
-                  CI Automation Tokens
+                  Access Tokens
                 </button>
               </li>
             </ul>

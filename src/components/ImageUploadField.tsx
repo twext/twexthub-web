@@ -201,7 +201,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
 
           <p className="text-[11px] text-ink-3">
             PNG, JPEG, GIF, WebP, or AVIF, up to {formatBytes(MAX_IMAGE_BYTES)}. Uploaded images are
-            stored and served by this instance.
+            stored and served by this site.
           </p>
 
           {showUrlInput && (

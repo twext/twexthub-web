@@ -45,7 +45,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
   const handleAdd = async () => {
     const target = candidate.trim().toLowerCase();
     if (!NAMESPACE_RE.test(target)) {
-      setCandidateError('Enter a valid namespace.');
+      setCandidateError('Enter a valid username.');
       return;
     }
     if (owners.some((owner) => owner.namespace === target)) {
@@ -71,7 +71,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
   const handleRemove = async (ownerNamespace: string) => {
     const ok = await confirm({
       title: 'Remove owner',
-      message: `Remove @${ownerNamespace} from @${namespace}/${id}? They lose publish and settings access immediately.`,
+      message: `Remove @${ownerNamespace} from @${namespace}/${id}? They will lose the ability to publish immediately.`,
       confirmLabel: 'Remove',
       variant: 'danger',
     });
@@ -128,7 +128,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                 className="label text-ink-3 flex items-center gap-1.5"
               >
                 <Plus className="w-3 h-3" />
-                Add an owner by namespace
+                Add an owner by username
               </label>
               <div className="flex gap-2">
                 <input
@@ -145,7 +145,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                       handleAdd();
                     }
                   }}
-                  placeholder="namespace"
+                  placeholder="username"
                   autoComplete="off"
                   className="input flex-1"
                 />
@@ -158,7 +158,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                 </button>
               </div>
               <p className="text-[10px] text-ink-3">
-                The new owner is notified. Removing the extension's own namespace is not possible.
+                The new owner is notified. The extension's own account cannot be removed.
               </p>
               {candidateError && (
                 <p className="text-[11px] text-rose-600 dark:text-rose-400">{candidateError}</p>
@@ -205,9 +205,6 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="chip bg-wash dark:bg-raised text-ink-2 font-mono">
-                        {owner.role ?? 'normal'}
-                      </span>
                       {canManage && !isSelf && (
                         <button
                           onClick={() => handleRemove(owner.namespace)}

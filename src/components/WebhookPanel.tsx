@@ -15,7 +15,7 @@ import {
 
 const EVENT_LABELS: Record<WebhookEvent, string> = {
   'version.published': 'Version published',
-  'version.yanked': 'Version yanked',
+  'version.yanked': 'Version unpublished',
   'version.deprecated': 'Version deprecated',
   'version.rejected': 'Version rejected',
   'owners.changed': 'Owners changed',

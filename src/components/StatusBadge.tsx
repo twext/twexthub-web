@@ -16,12 +16,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status = 'published', 
     },
     pending: {
       cls: 'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
-      label: 'Pending Review',
+      label: 'Awaiting review',
       icon: <Clock className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
     },
     yanked: {
       cls: 'bg-rose-50 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60',
-      label: 'Yanked',
+      label: 'Unpublished',
       icon: <Ban className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
     },
     rejected: {
@@ -36,7 +36,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status = 'published', 
     },
     staging: {
       cls: 'bg-wash dark:bg-raised text-ink-2 dark:text-ink-2 border-line',
-      label: 'Staging',
+      label: 'Draft',
       icon: <Clock className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />,
     },
   };

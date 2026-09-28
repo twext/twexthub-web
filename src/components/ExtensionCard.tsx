@@ -1,11 +1,13 @@
 import React from 'react';
-import { Extension } from '../types/api';
+import { ModerationStatus } from '../types/api';
+import { ExtensionIdentity } from '../lib/collections';
 import { StatusBadge } from './StatusBadge';
 import { useSavedExtensions } from '../hooks/useCollections';
 import { User as UserIcon, ArrowUpRight, Bookmark } from 'lucide-react';
 
 interface ExtensionCardProps {
-  extension: Extension;
+  /** Detail payloads, list/search rows, and saved items all fit. */
+  extension: ExtensionIdentity & { status?: ModerationStatus };
   onClick?: () => void;
 }
 
@@ -24,7 +26,10 @@ export const ExtensionCard: React.FC<ExtensionCardProps> = ({ extension, onClick
       : authorNamespace;
 
   const version =
-    extension.latestVersion || (extension.versions && extension.versions[0]?.version) || '1.0.0';
+    extension.version ||
+    extension.latestVersion ||
+    (extension.versions && extension.versions[0]?.version) ||
+    '1.0.0';
   const status = extension.status || 'published';
 
   return (

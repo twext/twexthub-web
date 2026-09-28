@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Extension } from '../types/api';
+import { ExtensionSummary } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { WebhookPanel } from '../components/WebhookPanel';
 import { Settings, Webhook } from 'lucide-react';
@@ -12,7 +12,7 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [userExtensions, setUserExtensions] = useState<Extension[]>([]);
+  const [userExtensions, setUserExtensions] = useState<ExtensionSummary[]>([]);
   const [loadingExts, setLoadingExts] = useState(true);
   const [webhooksFor, setWebhooksFor] = useState<{ namespace: string; id: string } | null>(null);
 
@@ -60,10 +60,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
   }
 
-  const publishedCount = userExtensions.filter(
-    (e) => e.status !== 'pending' && e.status !== 'yanked',
-  ).length;
-  const pendingCount = userExtensions.filter((e) => e.status === 'pending').length;
+  // Search only ever returns published versions, so every row counts as
+  // published and none of them are waiting on review.
+  const publishedCount = userExtensions.length;
+  const pendingCount = 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -84,8 +84,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1">
-                <span>Role: {user.role || 'author'}</span>
-                <span>•</span>
                 <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
@@ -154,9 +152,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               Webhooks
             </h2>
             <p className="text-xs text-ink-3 mt-1 max-w-2xl leading-relaxed">
-              Webhooks are registered per extension. TwextHub POSTs a signed event to your URL on
-              publish, yank, deprecate, reject, and owner changes. The signing secret is shown once
-              when the webhook is created.
+              Each extension gets its own webhooks. TwextHub sends a signed event to your URL when
+              a version is published, unpublished, deprecated, rejected, or changes owner. The
+              signing secret is shown once when the webhook is created.
             </p>
           </div>
           <div className="divide-y divide-line border border-line rounded-lg">

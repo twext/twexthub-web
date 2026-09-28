@@ -69,11 +69,6 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         <div className="min-w-0">
           <div className="text-sm font-semibold text-ink truncate">{displayName}</div>
           <div className="text-[11px] font-mono text-ink-3 truncate">@{user.namespace}</div>
-          {user.role === 'admin' && (
-            <span className="inline-block mt-1 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
-              Admin
-            </span>
-          )}
         </div>
       </button>
 

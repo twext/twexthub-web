@@ -50,19 +50,17 @@ describe('AdminPage', () => {
   it('restricts access to administrators', () => {
     useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ role: 'normal' }) }));
     renderWithProviders(<AdminPage onNavigate={noop} />);
-    expect(
-      screen.getByRole('heading', { name: 'Administrator Access Required' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Administrators only' })).toBeInTheDocument();
   });
 
   it('renders the admin console and its tabs', async () => {
     renderWithProviders(<AdminPage onNavigate={noop} />);
-    expect(screen.getByRole('heading', { name: 'Registry Administration' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Moderation Queue/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Extension Catalog/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /User Accounts/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Platform Policies/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Maintenance/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Administration' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Awaiting review/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Extensions' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accounts' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Policies' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Maintenance' })).toBeInTheDocument();
   });
 
   it('opens the maintenance tab with the prune tool', async () => {
@@ -100,9 +98,9 @@ describe('AdminPage', () => {
     renderWithProviders(<AdminPage onNavigate={noop} />);
     await screen.findByText('Demo Extension');
     await user.click(screen.getByRole('button', { name: 'Reject' }));
-    expect(screen.getByText('Reject Extension Submission')).toBeInTheDocument();
-    await user.type(screen.getByPlaceholderText(/Manifest icon is missing/), 'Missing icon asset.');
-    await user.click(screen.getByRole('button', { name: 'Confirm Rejection' }));
+    expect(screen.getByText('Reject this version')).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText(/the icon is missing/), 'Missing icon asset.');
+    await user.click(screen.getByRole('button', { name: 'Reject version' }));
     expect(apiMock.reviewVersion).toHaveBeenCalledWith('kane', 'demo', '1.0.0', {
       status: 'rejected',
       reason: 'Missing icon asset.',
@@ -110,15 +108,15 @@ describe('AdminPage', () => {
     expect(
       await screen.findByText('Version v1.0.0 of @kane/demo was rejected.'),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Reject Extension Submission')).not.toBeInTheDocument();
+    expect(screen.queryByText('Reject this version')).not.toBeInTheDocument();
   });
 
   it('filters the catalog via search', async () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={noop} />);
     await screen.findByText('Demo Extension');
-    await user.click(screen.getByRole('button', { name: /Extension Catalog/ }));
-    await user.type(screen.getByPlaceholderText(/Search extensions in catalog/), 'physics');
+    await user.click(screen.getByRole('button', { name: 'Extensions' }));
+    await user.type(screen.getByPlaceholderText(/Search extensions/), 'physics');
     await user.keyboard('{Enter}');
     expect(apiMock.searchExtensions).toHaveBeenCalledWith('physics', { limit: 50 });
   });
@@ -132,7 +130,7 @@ describe('AdminPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: /User Accounts/ }));
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
     await user.click(await screen.findByTitle('Permanently delete @ada'));
 
     const confirmButton = screen.getByRole('button', { name: 'Permanently delete' });
@@ -155,7 +153,7 @@ describe('AdminPage', () => {
     );
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={noop} />);
-    await user.click(screen.getByRole('button', { name: /User Accounts/ }));
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
     await user.click(await screen.findByTitle('Permanently delete @ada'));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -188,13 +186,13 @@ describe('AdminPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={noop} />);
 
-    await user.click(screen.getByRole('button', { name: /User Accounts/ }));
-    await user.click(await screen.findByTitle('Sessions & tokens for @ada'));
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
+    await user.click(await screen.findByTitle('Account activity for @ada'));
 
     expect(apiMock.getSessions).toHaveBeenCalledWith({ namespace: 'ada' });
     expect(apiMock.getTokens).toHaveBeenCalledWith({ namespace: 'ada' });
-    expect(await screen.findByText('Active Sessions (1)')).toBeInTheDocument();
-    expect(screen.getByText('Automation Tokens (1)')).toBeInTheDocument();
+    expect(await screen.findByText('Active sessions (1)')).toBeInTheDocument();
+    expect(screen.getByText('Access tokens (1)')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -206,13 +204,11 @@ describe('AdminPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={onNavigate} />);
 
-    await user.click(screen.getByRole('button', { name: /User Accounts/ }));
-    expect(screen.queryByTitle('Sessions & tokens for @kane')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
+    expect(screen.queryByTitle('Account activity for @kane')).not.toBeInTheDocument();
 
     await user.click(
-      await screen.findByRole('button', {
-        name: 'Manage your own sessions and tokens in Settings',
-      }),
+      await screen.findByRole('button', { name: 'Manage your account in Settings' }),
     );
     expect(onNavigate).toHaveBeenCalledWith('settings');
     expect(apiMock.getSessions).not.toHaveBeenCalled();
@@ -227,7 +223,7 @@ describe('AdminPage', () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage onNavigate={noop} />);
 
-    await user.click(screen.getByRole('button', { name: /Platform Policies/ }));
+    await user.click(screen.getByRole('button', { name: 'Policies' }));
     const openButtons = await screen.findAllByRole('button', { name: /Open Editor/ });
     await user.click(openButtons[0]);
 

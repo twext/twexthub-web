@@ -18,7 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namespace.trim() || !password) {
-      setError('Please provide both your namespace username and password.');
+      setError('Please enter your username and password.');
       return;
     }
 
@@ -34,7 +34,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred during login.');
+        setError('Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </div>
           <h1 className="text-2xl font-display font-semibold text-ink">Sign in to Twext</h1>
           <p className="text-sm text-ink-3">
-            Enter your namespace and account password to manage your extensions and tokens.
+            Enter your username and password to manage your extensions.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="login-namespace" className="label block mb-1.5">
-              Namespace Username
+              Username
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-sm text-ink-3 font-mono">@</span>
@@ -76,7 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 autoComplete="username"
                 value={namespace}
                 onChange={(e) => setNamespace(e.target.value)}
-                placeholder="your-namespace"
+                placeholder="your-username"
                 className="input font-mono pl-7"
               />
             </div>
@@ -108,13 +108,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             className="btn btn-primary w-full py-2.5 text-sm disabled:opacity-50"
           >
             <LogIn className="w-4 h-4" />
-            <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+            <span>{loading ? 'Signing in...' : 'Sign in'}</span>
           </button>
         </form>
 
         <div className="pt-4 border-t border-line text-center">
           <p className="text-sm text-ink-2">
-            Don't have an author namespace yet?{' '}
+            Don't have an account yet?{' '}
             <button
               onClick={() => onNavigate('signup')}
               className="text-lilac-700 dark:text-lilac-300 font-semibold hover:underline underline-offset-4 inline-flex items-center gap-0.5"

@@ -57,9 +57,11 @@ describe('NotificationInbox', () => {
     renderInbox();
 
     expect(await screen.findByText('Your version 1.0.0 was approved.')).toBeInTheDocument();
-    expect(screen.getByText('review.approved')).toBeInTheDocument();
+    // Kinds are shown as words, never as the codes the server sends.
+    expect(screen.getByText('Approved')).toBeInTheDocument();
+    expect(screen.queryByText('review.approved')).toBeNull();
     expect(screen.getByText('Scheduled maintenance.')).toBeInTheDocument();
-    expect(screen.getByText('broadcast')).toBeInTheDocument();
+    expect(screen.getByText('Announcement')).toBeInTheDocument();
   });
 
   it('shows an empty state', async () => {
@@ -129,7 +131,7 @@ describe('NotificationInbox', () => {
   it('surfaces a load failure', async () => {
     apiMock.getNotifications.mockRejectedValue(new Error('boom'));
     renderInbox();
-    expect(await screen.findByText('Failed to load notifications')).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't load notifications.")).toBeInTheDocument();
   });
 
   it('closes on Escape', async () => {

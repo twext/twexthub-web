@@ -8,6 +8,7 @@ import { TermsBanner } from './components/TermsBanner';
 import { CommandPalette } from './components/CommandPalette';
 
 // Pages
+import { getRouteFromLocation, navigateToRoute } from './lib/router';
 import { HomePage } from './pages/HomePage';
 import { ExplorePage } from './pages/ExplorePage';
 import { ExtensionDetailPage } from './pages/ExtensionDetailPage';
@@ -22,24 +23,20 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { AdminPage } from './pages/AdminPage';
 
 export const App: React.FC = () => {
-  // Hash-based routing keeps deep links working on a static host without server rewrites.
-  const getHashRoute = () => {
-    const raw = window.location.hash.replace(/^#\/?/, '');
-    return raw || 'home';
-  };
-
-  const [route, setRoute] = useState<string>(getHashRoute());
+  // History-based routing: URLs are real paths (/ext/ns/id), served with an
+  // index.html fallback on the server side.
+  const [route, setRoute] = useState<string>(getRouteFromLocation());
   const [configRefreshKey] = useState(0);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(getHashRoute());
+    const handlePopState = () => {
+      setRoute(getRouteFromLocation());
       window.scrollTo(0, 0);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
@@ -54,7 +51,7 @@ export const App: React.FC = () => {
   }, []);
 
   const navigate = useCallback((targetRoute: string) => {
-    window.location.hash = targetRoute;
+    navigateToRoute(targetRoute);
     setRoute(targetRoute);
     window.scrollTo(0, 0);
   }, []);

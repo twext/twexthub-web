@@ -86,7 +86,7 @@ export const ServerConfigPanel: React.FC = () => {
       setConfig(next);
       setDrafts(Object.fromEntries(next.settings.map((s) => [s.key, toDraft(s)])));
     } catch (err: unknown) {
-      setLoadError(describeError(err, 'Failed to read the instance settings'));
+      setLoadError(describeError(err, 'Failed to read the site settings'));
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +144,7 @@ export const ServerConfigPanel: React.FC = () => {
         toastError(`${labels} only takes effect after a restart.`);
       }
     } catch (err: unknown) {
-      toastError(describeError(err, 'Failed to save the instance settings'));
+      toastError(describeError(err, 'Failed to save the site settings'));
     } finally {
       setIsSaving(false);
     }
@@ -154,7 +154,7 @@ export const ServerConfigPanel: React.FC = () => {
     return (
       <div className="flex items-center gap-2 text-sm text-ink-2">
         <RefreshCw className="w-4 h-4 animate-spin" />
-        Reading the instance settings
+        Reading the site settings
       </div>
     );
   }
@@ -175,15 +175,11 @@ export const ServerConfigPanel: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Server className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-        <h2 className="text-sm font-semibold text-ink">Instance settings</h2>
+        <h2 className="text-sm font-semibold text-ink">Site settings</h2>
       </div>
       <p className="text-xs text-ink-2 leading-relaxed max-w-2xl">
-        These are read from the instance&rsquo;s own configuration file
-        <code className="mx-1 px-1 py-0.5 rounded bg-ink-3/10 text-[11px]">
-          {config.configPath}
-        </code>
-        A change is written to the file and applied to the running instance, so it holds across a
-        restart. Settings the file does not set yet are left showing the interface defaults.
+        Changes are written to the site&rsquo;s configuration file and take effect right away, so
+        they survive a restart. Settings the file does not set yet show the built-in defaults.
       </p>
 
       {!config.editable && (
@@ -194,11 +190,11 @@ export const ServerConfigPanel: React.FC = () => {
           <FileWarning className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <div className="space-y-1">
             <p className="text-sm font-semibold text-ink">
-              This instance cannot save its own settings
+              This site cannot save its own settings
             </p>
             <p className="text-xs text-ink-2 leading-relaxed">
               {config.reason ??
-                'The configuration file is not on a volume, so a change written to it would be lost when the instance is recreated.'}
+                'The configuration file is not stored anywhere permanent, so changes would be lost when the site is rebuilt.'}
             </p>
             <p className="text-xs text-ink-3 leading-relaxed">
               An operator has to mount the file as a volume. Until then the values below are
@@ -212,9 +208,9 @@ export const ServerConfigPanel: React.FC = () => {
         <div className="flex gap-3 rounded-lg border border-ink-3/20 p-3">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-ink-3" />
           <p className="text-xs text-ink-2 leading-relaxed">
-            The database, the API root, the port and the blob store location are not editable here.
-            A change to any of those can stop the instance answering, and changing the API root from
-            inside the instance would break the very request carrying it.
+            The database, address, port, and storage location are not editable here. Changing any
+            of them can take the site offline, so they are changed only in the configuration file
+            itself.
           </p>
         </div>
       )}

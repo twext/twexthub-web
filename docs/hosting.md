@@ -75,7 +75,7 @@ Everything configurable fits on one page: [configuration.md](configuration.md). 
 
 ## Behind a reverse proxy
 
-Routing is hash-based (`/#/ext/…`), so a proxy needs no rewrite rules for the app's links. Point the proxy at the UI's port. `server.js` already handles unknown paths by serving `index.html`, so there is nothing else to configure; if you front a plain static file server instead, make it fall back to `index.html` for non-asset paths. Publishes go from the `twext` CLI straight to the registry, never through the UI's host, so the proxy in front of the UI needs no raised request-body limit either.
+Routing is path-based (`/ext/…`), so the app needs unknown paths to fall back to `index.html`. `server.js` does this already; point a reverse proxy at the UI's port. If you front a plain static file server instead, make it fall back to `index.html` for non-asset paths. Publishes go from the `twext` CLI straight to the registry, never through the UI's host, so the proxy in front of the UI needs no raised request-body limit either.
 
 ## Browser access and CORS
 
@@ -89,7 +89,7 @@ The build output in `dist/` is plain static files, so the app also runs on GitHu
 VITE_TWEXTHUB_API_URL=https://registry.example.com/api/v1 npm run build
 ```
 
-Deploy the contents of `dist/`. Without `VITE_TWEXTHUB_API_URL`, the build points at the default public registry. Because links are hash-based, hosting under a subpath works without configuration.
+Deploy the contents of `dist/`. Without `VITE_TWEXTHUB_API_URL`, the build points at the default public registry. The app relies on an `index.html` fallback for unknown paths (for example GitHub Pages has no such fallback; use a host that supports one, or a 404 page that rewrites to `index.html`).
 
 ## Upgrades
 

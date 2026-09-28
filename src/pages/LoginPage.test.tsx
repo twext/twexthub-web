@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 
 describe('LoginPage', () => {
-  const namespaceInput = () => screen.getByPlaceholderText('your-namespace');
+  const namespaceInput = () => screen.getByPlaceholderText('your-username');
   const passwordInput = () => screen.getByLabelText('Password');
 
   it('renders the sign-in form', () => {
@@ -35,7 +35,7 @@ describe('LoginPage', () => {
     expect(form).not.toBeNull();
     fireEvent.submit(form!);
     expect(
-      screen.getByText('Please provide both your namespace username and password.'),
+      screen.getByText('Please enter your username and password.'),
     ).toBeInTheDocument();
     expect(authState.login).not.toHaveBeenCalled();
   });
@@ -46,7 +46,7 @@ describe('LoginPage', () => {
     render(<LoginPage onNavigate={onNavigate} />);
     await user.type(namespaceInput(), 'Kane');
     await user.type(passwordInput(), 'secret');
-    await user.click(screen.getByRole('button', { name: /^Sign In$/ }));
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(authState.login).toHaveBeenCalledWith('kane', 'secret');
     expect(onNavigate).toHaveBeenCalledWith('dashboard');
   });
@@ -57,7 +57,7 @@ describe('LoginPage', () => {
     render(<LoginPage onNavigate={noop} />);
     await user.type(namespaceInput(), 'kane');
     await user.type(passwordInput(), 'wrong');
-    await user.click(screen.getByRole('button', { name: /^Sign In$/ }));
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Invalid credentials.')).toBeInTheDocument();
   });
 
