@@ -10,4 +10,4 @@ symbols:
   bullet: '•'
 defaults:
   port: 3000
-  fallbackColor: '#7b42bc'
+  fallbackColor: '#9a81c4'
