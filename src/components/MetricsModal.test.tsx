@@ -70,9 +70,7 @@ describe('MetricsModal', () => {
     render(<MetricsModal onClose={noop} />);
 
     expect(await screen.findByText(/Couldn't load the statistics:/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Only administrators can view these numbers/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Only administrators can view these numbers/)).toBeInTheDocument();
   });
 
   it('reports a non-auth failure without the 401 explanation', async () => {
