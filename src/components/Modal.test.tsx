@@ -170,3 +170,50 @@ describe('Modal', () => {
     expect(dialog.closest('.modal-overlay')).toBeNull();
   });
 });
+
+describe('useBodyScrollLock gutter compensation', () => {
+  // Headless browsers draw overlay scrollbars, so the width the lock has to
+  // compensate for is stubbed here rather than measured in a real viewport.
+  function withGutter(width: number, run: () => void) {
+    const original = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1000 });
+    const clientWidth = vi
+      .spyOn(document.documentElement, 'clientWidth', 'get')
+      .mockReturnValue(1000 - width);
+    try {
+      run();
+    } finally {
+      clientWidth.mockRestore();
+      if (original) Object.defineProperty(window, 'innerWidth', original);
+    }
+  }
+
+  it('adds the scrollbar width as padding so the page does not shift', () => {
+    withGutter(15, () => {
+      const { unmount } = render(
+        <Modal open ariaLabel="Example">
+          <button>Inside</button>
+        </Modal>,
+      );
+
+      expect(document.body.style.paddingRight).toBe('15px');
+
+      unmount();
+      expect(document.body.style.paddingRight).toBe('');
+    });
+  });
+
+  it('leaves padding alone when the browser has no scrollbar gutter', () => {
+    withGutter(0, () => {
+      const { unmount } = render(
+        <Modal open ariaLabel="Example">
+          <button>Inside</button>
+        </Modal>,
+      );
+
+      expect(document.body.style.paddingRight).toBe('');
+
+      unmount();
+    });
+  });
+});
