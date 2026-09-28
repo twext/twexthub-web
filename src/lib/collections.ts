@@ -99,8 +99,7 @@ function toSaved(extension: ExtensionIdentity): SavedExtension {
     name: extension.name,
     description: extension.shortDescription || extension.description,
     author: extensionAuthor(extension),
-    latestVersion:
-      extension.version || extension.latestVersion || extension.versions?.[0]?.version,
+    latestVersion: extension.version || extension.latestVersion || extension.versions?.[0]?.version,
     savedAt: new Date().toISOString(),
   };
 }

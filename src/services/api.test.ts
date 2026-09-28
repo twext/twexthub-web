@@ -280,7 +280,12 @@ describe('ApiService', () => {
     fetchMock.mockResolvedValue(
       jsonResponse({
         data: [
-          { namespace: 'ada', display_name: 'Ada', role: 'admin', added_at: '2026-01-01T00:00:00Z' },
+          {
+            namespace: 'ada',
+            display_name: 'Ada',
+            role: 'admin',
+            added_at: '2026-01-01T00:00:00Z',
+          },
         ],
       }),
     );

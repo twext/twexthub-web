@@ -34,9 +34,7 @@ describe('LoginPage', () => {
     const form = document.querySelector('form');
     expect(form).not.toBeNull();
     fireEvent.submit(form!);
-    expect(
-      screen.getByText('Please enter your username and password.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Please enter your username and password.')).toBeInTheDocument();
     expect(authState.login).not.toHaveBeenCalled();
   });
 
