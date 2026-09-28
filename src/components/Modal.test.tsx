@@ -133,6 +133,42 @@ describe('Modal', () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
+  it('closes only the topmost of several stacked modals on Escape', () => {
+    const onCloseOuter = vi.fn();
+    const onCloseInner = vi.fn();
+    const { rerender } = render(
+      <>
+        <Modal open onClose={onCloseOuter} ariaLabel="Outer">
+          <button>Outer</button>
+        </Modal>
+        <Modal open onClose={onCloseInner} ariaLabel="Inner">
+          <button>Inner</button>
+        </Modal>
+      </>,
+    );
+
+    // Every dialog listens on document in the capture phase, so a keypress
+    // reaches the one underneath as well unless the stack filters it out.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCloseInner).toHaveBeenCalledTimes(1);
+    expect(onCloseOuter).not.toHaveBeenCalled();
+
+    // With the inner dialog gone the outer one takes the keypress again.
+    rerender(
+      <>
+        <Modal open onClose={onCloseOuter} ariaLabel="Outer">
+          <button>Outer</button>
+        </Modal>
+        <Modal open={false} onClose={onCloseInner} ariaLabel="Inner">
+          <button>Inner</button>
+        </Modal>
+      </>,
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCloseOuter).toHaveBeenCalledTimes(1);
+  });
+
   it('stays open when it has no close handler', () => {
     render(
       <Modal open ariaLabel="Example">

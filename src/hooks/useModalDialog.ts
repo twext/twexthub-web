@@ -3,6 +3,14 @@ import React, { useEffect, useRef } from 'react';
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Enabled dialogs in the order they opened, so the last entry is the one on
+ * top. Every dialog listens on `document` in the capture phase, and siblings on
+ * the same target all run even once one calls `stopPropagation`, so without this
+ * a single Escape would dismiss a confirm dialog and the panel beneath it.
+ */
+const openDialogs: symbol[] = [];
+
 interface UseModalDialogOptions {
   /** id of the element (usually the h2) naming the dialog. */
   labelledById?: string;
@@ -53,7 +61,11 @@ export function useModalDialog<T extends HTMLElement>({
 
   useEffect(() => {
     if (!enabled) return;
+    const token = Symbol();
+    openDialogs.push(token);
+    const isTopmost = () => openDialogs.at(-1) === token;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isTopmost()) return;
       if (e.key === 'Escape' && onClose) {
         e.stopPropagation();
         onClose();
@@ -81,7 +93,11 @@ export function useModalDialog<T extends HTMLElement>({
       }
     };
     document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      const at = openDialogs.indexOf(token);
+      if (at !== -1) openDialogs.splice(at, 1);
+    };
   }, [enabled, onClose]);
 
   const dialogProps = {
