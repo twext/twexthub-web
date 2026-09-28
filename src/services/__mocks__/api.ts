@@ -15,6 +15,7 @@ export class ApiError extends Error {
 
 export const api = {
   getBaseUrl: vi.fn(() => 'http://localhost:3000/api/v1'),
+  getPublicBaseUrl: vi.fn(() => 'http://localhost:3000/api/v1'),
   setBaseUrl: vi.fn(),
   resetBaseUrl: vi.fn(),
   getToken: vi.fn(() => null),

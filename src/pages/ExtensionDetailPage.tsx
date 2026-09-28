@@ -101,7 +101,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     .map((v) => v.version);
   const loadUrl =
     moderationStatus === 'published' && publishedVersion
-      ? `${api.getBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
+      ? `${api.getPublicBaseUrl()}/@${namespace}/${id}/versions/${encodeURIComponent(publishedVersion)}/download`
       : null;
 
   const handleCopy = async (text: string) => {

@@ -72,6 +72,21 @@ class ApiService {
     return this.baseUrl;
   }
 
+  /**
+   * The base as an absolute URL, for anything that leaves the page: a copied
+   * install command, a Markdown badge, a feed advertised to readers. The
+   * configured base is normally root-relative, which resolves against whatever
+   * host the reader happens to be on — `turbowarp.org` handed `/api/v1/...`
+   * would look for the API on TurboWarp's own origin. Same-origin calls stay on
+   * `getBaseUrl()`.
+   */
+  getPublicBaseUrl(): string {
+    const base = this.getBaseUrl();
+    if (/^https?:\/\//i.test(base)) return base;
+    if (typeof window === 'undefined' || !window.location?.origin) return base;
+    return `${window.location.origin}${base.startsWith('/') ? base : `/${base}`}`;
+  }
+
   configure(config: { apiBaseUrl?: string }) {
     if (config.apiBaseUrl && isValidApiBaseUrl(config.apiBaseUrl)) {
       this.baseUrl = normalizeApiBaseUrl(config.apiBaseUrl);
@@ -751,7 +766,7 @@ class ApiService {
 
   /** Atom feed of newly published versions. */
   getAtomFeedUrl(): string {
-    return `${this.getBaseUrl()}/feed.atom`;
+    return `${this.getPublicBaseUrl()}/feed.atom`;
   }
 
   // --- Notifications ---

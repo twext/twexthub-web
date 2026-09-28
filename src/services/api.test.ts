@@ -46,6 +46,15 @@ describe('ApiService', () => {
     expect(api.getBaseUrl()).toBe(DEFAULT_API_BASE_URL);
   });
 
+  it('resolves the public base against the page origin, for URLs that leave the page', () => {
+    expect(api.getPublicBaseUrl()).toBe(`${window.location.origin}${DEFAULT_API_BASE_URL}`);
+  });
+
+  it('leaves an already absolute base alone in the public base', () => {
+    api.configure({ apiBaseUrl: 'https://hub.example.com/api/v1' });
+    expect(api.getPublicBaseUrl()).toBe('https://hub.example.com/api/v1');
+  });
+
   it('GETs a JSON endpoint and parses the payload', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ published: 12, pending: 3, authors: 5 }));
     await expect(api.getStats()).resolves.toEqual({ published: 12, pending: 3, authors: 5 });

@@ -83,8 +83,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // a template. Use the most recent published package when there is one.
   const newest = recentExtensions[0];
   const exampleUrl = newest
-    ? `${api.getBaseUrl()}/@${newest.namespace}/${newest.id}/versions/${newest.version || '1.0.0'}/download`
-    : `${api.getBaseUrl()}/@your-namespace/your-extension/versions/1.0.0/download`;
+    ? `${api.getPublicBaseUrl()}/@${newest.namespace}/${newest.id}/versions/${newest.version || '1.0.0'}/download`
+    : `${api.getPublicBaseUrl()}/@your-namespace/your-extension/versions/1.0.0/download`;
 
   return (
     <div className="pb-16">

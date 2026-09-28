@@ -36,7 +36,7 @@ export const BadgePanel: React.FC<BadgePanelProps> = ({ namespace, id, onClose }
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  const base = api.getBaseUrl();
+  const base = api.getPublicBaseUrl();
   const encNs = encodeURIComponent(namespace);
   const encId = encodeURIComponent(id);
 

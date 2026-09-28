@@ -10,10 +10,13 @@ vi.mock('../services/api');
 
 const apiMock = vi.mocked(api);
 
-const base = DEFAULT_API_BASE_URL;
+// The badge URL is copied into Markdown and rendered on other sites, so it has
+// to be absolute rather than relative to whoever is reading the README.
+const base = `${window.location.origin}${DEFAULT_API_BASE_URL}`;
 
 beforeEach(() => {
-  apiMock.getBaseUrl.mockReturnValue(base);
+  apiMock.getBaseUrl.mockReturnValue(DEFAULT_API_BASE_URL);
+  apiMock.getPublicBaseUrl.mockReturnValue(base);
 });
 
 describe('BadgePanel', () => {
