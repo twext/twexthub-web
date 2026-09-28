@@ -121,8 +121,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
         <div>
           <h1 className="text-2xl font-display font-semibold text-ink">Explore Twext Extensions</h1>
           <p className="text-sm text-ink-3 mt-1">
-            Browse published packages, search community authors, or discover newly submitted
-            TurboWarp plugins.
+            Packages published with the Twext CLI load straight into the TurboWarp editor, with
+            source and security checks listed below.
           </p>
         </div>
 
@@ -298,7 +298,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ initialQuery = '', onN
                         @{ext.namespace}/{ext.id}
                       </span>
                       <StatusBadge status="published" size="sm" />
-                      <span className="chip bg-wash border-line text-ink-2 font-mono text-[11px]">
+                      <span className="chip bg-wash border-line text-ink-2 font-mono text-meta">
                         v{version}
                       </span>
                     </div>
