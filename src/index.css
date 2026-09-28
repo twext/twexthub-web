@@ -481,7 +481,13 @@
   font-family: 'Material Symbols Rounded';
   font-weight: normal;
   font-style: normal;
-  font-size: 1rem;
+  /*
+   * Track whatever the surrounding text is set at, so an icon next to 11px
+   * metadata is 11px too. A fixed size here left unsized icons a full 16px
+   * inside text-xs labels and buttons. The .icon-* steps below still win,
+   * since they come later in the cascade.
+   */
+  font-size: inherit;
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
