@@ -257,7 +257,7 @@ describe('ImageUploadField', () => {
     renderField();
     expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
       'src',
-      'https://api.test/v1/users/kane/avatar?v=0123456789abcdef',
+      '/api/v1/users/kane/avatar?v=0123456789abcdef',
     );
     expect(screen.queryByTestId('avatar-empty')).toBeNull();
   });
@@ -293,7 +293,7 @@ describe('ImageUploadField', () => {
     await waitFor(() =>
       expect(screen.getByTestId('avatar-preview')).toHaveAttribute(
         'src',
-        '/v1/users/kane/avatar?v=0123456789abcdef',
+        '/api/v1/users/kane/avatar?v=0123456789abcdef',
       ),
     );
   });

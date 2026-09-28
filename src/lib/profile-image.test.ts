@@ -59,12 +59,27 @@ describe('toSameOriginImageUrl', () => {
     ).toBe('/api/v1/users/kane/avatar?v=0123456789abcdef');
   });
 
-  it('does not guess when a relative base cannot vouch for a foreign origin', () => {
+  it('reads the API base back off an upload address when the page base is relative', () => {
     expect(
       toSameOriginImageUrl(
-        'https://reg.example/v1/users/kane/avatar?v=0123456789abcdef',
+        'http://localhost:3000/v1/users/kane/avatar?v=f2b793f29742e826',
         '/api/v1',
       ),
-    ).toBe('https://reg.example/v1/users/kane/avatar?v=0123456789abcdef');
+    ).toBe('/api/v1/users/kane/avatar?v=f2b793f29742e826');
+    expect(
+      toSameOriginImageUrl(
+        'https://reg.example/api/v1/users/kane/avatar?v=0123456789abcdef',
+        '/api/v1',
+      ),
+    ).toBe('/api/v1/users/kane/avatar?v=0123456789abcdef');
+  });
+
+  it('keeps a foreign upload address when an absolute base is set', () => {
+    expect(
+      toSameOriginImageUrl(
+        'https://other.example/api/v1/users/kane/avatar?v=0123456789abcdef',
+        'https://api.test/v1',
+      ),
+    ).toBe('https://other.example/api/v1/users/kane/avatar?v=0123456789abcdef');
   });
 });

@@ -76,11 +76,16 @@ export function looksLikeOwnUploadUrl(url: string | null | undefined) {
  *
  * The server reports an upload relative to its API base, so with an absolute
  * base the reported address alone is absolute too and points the browser at
- * the API host. When that address lives on the API origin (or is the public
- * `/api/v1` prefix, which this site's server proxies), it is rewritten to
- * that prefix plus the rest. Addresses on any other origin are left as they
- * are: a link is someone else's host by design, and no request to it should
- * be forced through this site.
+ * the API host. When that address lives on the API origin it is rewritten to
+ * the public `/api/v1` prefix the site proxies. Addresses on any other origin
+ * are left as they are: a link is someone else's host by design, and no
+ * request to it should be forced through this site.
+ *
+ * A page served through the proxy sees only the relative prefix, so there is
+ * no origin to compare against. There the upload path itself carries the
+ * address's API base (`/v1`, `/api/v1`, ...) ahead of `/users/...`, which is
+ * read back and swapped for the public prefix. That keeps the browser on the
+ * site's origin even though the registered address names the API host.
  */
 export function toSameOriginImageUrl(value: string | null | undefined, apiBaseUrl: string) {
   if (!value) return value;
@@ -100,11 +105,12 @@ export function toSameOriginImageUrl(value: string | null | undefined, apiBaseUr
         return parsed.pathname + parsed.search;
       }
     }
-  } else if (looksLikeOwnUploadUrl(value)) {
+    return value;
+  }
+  if (looksLikeOwnUploadUrl(value)) {
     const parsed = parseUrl(value);
-    if (parsed?.pathname.startsWith('/api/v1')) {
-      return parsed.pathname + parsed.search;
-    }
+    const addressBase = parsed!.pathname.replace(/\/users\/[^/]+\/(?:avatar|banner)$/, '');
+    return '/api/v1' + parsed!.pathname.slice(addressBase.length) + parsed!.search;
   }
   return value;
 }
