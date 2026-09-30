@@ -3,15 +3,19 @@ import {
   AuditEntry,
   AuthSessionResponse,
   AutomationToken,
+  CreateOrganizationPayload,
   CreateWebhookPayload,
   DistTags,
   Extension,
   ExtensionSummary,
   ExtensionOwner,
+  ExtensionOwnerInvite,
   InstanceStats,
   MarkNotificationsReadResult,
   Meta,
   NotificationList,
+  Organization,
+  OrganizationOwner,
   PaginatedList,
   PendingVersion,
   PrivacyDoc,
@@ -23,6 +27,7 @@ import {
   ServerSetting,
   Session,
   TermsDoc,
+  UpdateOrganizationPayload,
   UpdateUserPayload,
   User,
   UserRole,
@@ -39,6 +44,7 @@ const SNAKE_FIELDS: Record<string, string> = {
   display_name: 'displayName',
   added_at: 'addedAt',
   created_at: 'createdAt',
+  invited_by: 'invitedBy',
   last_delivery_status: 'lastDeliveryStatus',
   last_delivery_at: 'lastDeliveryAt',
 };
@@ -346,6 +352,38 @@ class ApiService {
     );
   }
 
+  /**
+   * The invitations this caller can accept for an extension: the ones addressed
+   * to their own account, plus any addressed to an organization they own. An
+   * organization holds no inbox of its own, so an account acting for one has to
+   * find them here.
+   */
+  async getPendingExtensionOwnerInvites(
+    namespace: string,
+    id: string,
+  ): Promise<ExtensionOwnerInvite[]> {
+    const res = await this.request<{ data: ExtensionOwnerInvite[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/pending`,
+    );
+    return this.normalizeRows<ExtensionOwnerInvite>(res.data);
+  }
+
+  /**
+   * The second half of a co-ownership grant. An account accepts its own
+   * invitation; any account on an invited organization's owner list may accept
+   * for the whole organization, and one accepting speaks for the rest.
+   */
+  async acceptExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}/accept`,
+      { method: 'POST' },
+    );
+  }
+
+  /**
+   * Withdraws a pending invitation, or removes an accepted owner; the server
+   * checks the invitation first, so one call covers both directions.
+   */
   async removeExtensionOwner(namespace: string, id: string, ownerNamespace: string): Promise<void> {
     await this.request<void>(
       `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
@@ -417,6 +455,154 @@ class ApiService {
 
   async getUser(namespace: string): Promise<User> {
     return this.request<User>(`/users/${encodeURIComponent(namespace)}`);
+  }
+
+  // --- Organizations ---
+
+  /**
+   * An organization is a pseudo-account: it owns a namespace, a profile and an
+   * extension collection, but has no password and cannot sign in. The caller
+   * becomes its first owner, so it can be changed afterwards at all.
+   *
+   * The namespace is shared with accounts, so a name already in use is a `409`,
+   * and creation is rate limited like a signup and needs the current Terms of
+   * Service accepted.
+   */
+  async createOrganization(payload: CreateOrganizationPayload): Promise<Organization> {
+    return this.request<Organization>('/orgs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getOrganizations(params?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<PaginatedList<Organization>> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<PaginatedList<Organization>>(`/orgs${qs ? `?${qs}` : ''}`);
+  }
+
+  async getOrganization(namespace: string): Promise<Organization> {
+    return this.request<Organization>(`/orgs/${encodeURIComponent(namespace)}`);
+  }
+
+  /** Only the profile fields exist here; members change through the owner list. */
+  async updateOrganization(
+    namespace: string,
+    data: UpdateOrganizationPayload,
+  ): Promise<Organization> {
+    return this.request<Organization>(`/orgs/${encodeURIComponent(namespace)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /** Cascades to every extension, version, image and webhook under the namespace. */
+  async deleteOrganization(namespace: string): Promise<void> {
+    await this.request<void>(`/orgs/${encodeURIComponent(namespace)}`, { method: 'DELETE' });
+  }
+
+  async getOrganizationOwners(namespace: string): Promise<OrganizationOwner[]> {
+    const res = await this.request<{ data: OrganizationOwner[] }>(
+      `/orgs/${encodeURIComponent(namespace)}/owners`,
+    );
+    return this.normalizeRows<OrganizationOwner>(res.data);
+  }
+
+  /** Idempotent: an account that is already an owner is a `204`, not an error. */
+  async addOrganizationOwner(namespace: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/orgs/${encodeURIComponent(namespace)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'PUT' },
+    );
+  }
+
+  /** The last owner cannot be removed: an organization nobody owns has no way back. */
+  async removeOrganizationOwner(namespace: string, ownerNamespace: string): Promise<void> {
+    await this.request<void>(
+      `/orgs/${encodeURIComponent(namespace)}/owners/${encodeURIComponent(ownerNamespace)}`,
+      { method: 'DELETE' },
+    );
+  }
+
+  /**
+   * The registry listing scoped to the organization. An owner of it sees its
+   * private extensions; everyone else sees only the public ones.
+   */
+  async getOrganizationExtensions(
+    namespace: string,
+    params?: { cursor?: string; limit?: number },
+  ): Promise<PaginatedList<ExtensionSummary>> {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set('cursor', params.cursor);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<PaginatedList<ExtensionSummary>>(
+      `/orgs/${encodeURIComponent(namespace)}/extensions${qs ? `?${qs}` : ''}`,
+    );
+  }
+
+  /**
+   * A webhook on an organization watches every extension in its namespace
+   * instead of one `id`. The per-extension collection is separate and unaffected:
+   * an id belonging to one of those is a `404` here.
+   */
+  async getOrganizationWebhooks(namespace: string): Promise<Webhook[]> {
+    const res = await this.request<{ data: Webhook[] }>(
+      `/orgs/${encodeURIComponent(namespace)}/webhooks`,
+    );
+    return this.normalizeRows<Webhook>(res.data);
+  }
+
+  async createOrganizationWebhook(
+    namespace: string,
+    payload: CreateWebhookPayload,
+  ): Promise<WebhookCreated> {
+    const created = await this.request<WebhookCreated>(
+      `/orgs/${encodeURIComponent(namespace)}/webhooks`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
+    return this.normalizeRow<WebhookCreated>(created);
+  }
+
+  async deleteOrganizationWebhook(namespace: string, webhookId: number): Promise<void> {
+    await this.request<void>(`/orgs/${encodeURIComponent(namespace)}/webhooks/${webhookId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Uploads an organization's avatar or banner. Same raw-bytes body and same
+   * limits as for an account; the response is the whole updated organization,
+   * which keeps the form in step with the new canonical image URL.
+   */
+  async uploadOrganizationImage(
+    namespace: string,
+    kind: 'avatar' | 'banner',
+    file: Blob,
+    contentType = file.type,
+  ): Promise<Organization> {
+    return this.request<Organization>(`/orgs/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': contentType || 'application/octet-stream' },
+    });
+  }
+
+  async deleteOrganizationImage(
+    namespace: string,
+    kind: 'avatar' | 'banner',
+  ): Promise<Organization> {
+    return this.request<Organization>(`/orgs/${encodeURIComponent(namespace)}/${kind}`, {
+      method: 'DELETE',
+    });
   }
 
   // --- Auth Endpoints ---

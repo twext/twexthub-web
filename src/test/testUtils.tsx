@@ -7,8 +7,11 @@ import { useAuth } from '../context/AuthContext';
 import type {
   AutomationToken,
   Extension,
+  ExtensionOwnerInvite,
   ExtensionSummary,
   InstanceStats,
+  Organization,
+  OrganizationOwner,
   PaginatedList,
   PendingVersion,
   Session,
@@ -28,6 +31,46 @@ export const makeUser = (overrides: Partial<User> = {}): User => ({
 
 export const makeAdminUser = (overrides: Partial<User> = {}) =>
   makeUser({ role: 'admin', ...overrides });
+
+export const makeOrganization = (overrides: Partial<Organization> = {}): Organization => ({
+  namespace: 'acme',
+  displayName: 'Acme Inc',
+  bio: 'Extensions for people who make things.',
+  website: null,
+  github: null,
+  avatarUrl: null,
+  bannerUrl: null,
+  createdAt: '2026-01-05T00:00:00Z',
+  _links: {
+    self: '/orgs/acme',
+    extensions: '/orgs/acme/extensions',
+    owners: '/orgs/acme/owners',
+    avatar: '/orgs/acme/avatar',
+    banner: '/orgs/acme/banner',
+  },
+  ...overrides,
+});
+
+export const makeOrganizationOwner = (
+  overrides: Partial<OrganizationOwner> = {},
+): OrganizationOwner => ({
+  namespace: 'kane',
+  displayName: 'Kane',
+  avatarUrl: null,
+  addedAt: '2026-01-05T00:00:00Z',
+  ...overrides,
+});
+
+export const makeExtensionOwnerInvite = (
+  overrides: Partial<ExtensionOwnerInvite> = {},
+): ExtensionOwnerInvite => ({
+  namespace: 'ada',
+  displayName: 'Ada L',
+  kind: 'user',
+  createdAt: '2026-03-01T00:00:00Z',
+  invitedBy: 'mallory',
+  ...overrides,
+});
 
 /**
  * A detail-shaped extension that is also a valid list/search row, so fixtures
