@@ -396,6 +396,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => go('saved')}
             testId="sidebar-saved"
           />
+          {/* An organization is not an account, so it gets its own row rather
+              than a page hanging off Settings. */}
+          <NavRow
+            icon="group"
+            label="Organizations"
+            collapsed={collapsed}
+            active={isActive('organizations') || isActive('org')}
+            onClick={() => go('organizations')}
+            testId="sidebar-organizations"
+          />
         </div>
 
         {!isAuthenticated ? (

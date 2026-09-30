@@ -175,6 +175,36 @@ describe('Sidebar navigation', () => {
     ).toHaveAttribute('aria-current', 'page');
   });
 
+  it('marks the organizations row for the directory and for an organization', () => {
+    useAuthMock.mockReturnValue(signedOut());
+    const { container: directory } = renderWithTheme(
+      <Sidebar currentRoute="organizations" onNavigate={noop} />,
+    );
+    expect(column(directory).getByRole('button', { name: /Organizations/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+
+    const { container: profile } = renderWithTheme(
+      <Sidebar currentRoute="org/acme" onNavigate={noop} />,
+    );
+    expect(column(profile).getByRole('button', { name: /Organizations/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('navigates to the organizations directory', async () => {
+    const user = userEvent.setup();
+    useAuthMock.mockReturnValue(signedIn());
+    const onNavigate = vi.fn();
+    const { container } = renderWithTheme(<Sidebar currentRoute="home" onNavigate={onNavigate} />);
+
+    await user.click(column(container).getByTestId('sidebar-organizations'));
+
+    expect(onNavigate).toHaveBeenCalledWith('organizations');
+  });
+
   it('marks only one row current when the two live inside one page', () => {
     useAuthMock.mockReturnValue(signedIn());
     const { container } = renderWithTheme(
