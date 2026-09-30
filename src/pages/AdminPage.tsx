@@ -13,8 +13,10 @@ import { QuotaModal } from '../components/QuotaModal';
 import { BroadcastPanel } from '../components/BroadcastPanel';
 import { MetricsModal } from '../components/MetricsModal';
 import { ExportPanel } from '../components/ExportPanel';
+import { OrganizationsPanel } from '../components/OrganizationsPanel';
 import { ServerConfigPanel } from '../components/ServerConfigPanel';
 import { useConfirm } from '../hooks/useConfirm';
+import { toSameOriginImageUrl } from '../lib/profile-image';
 import {
   PendingVersion,
   ExtensionSummary,
@@ -33,7 +35,14 @@ interface AdminPageProps {
 }
 
 type AdminTab =
-  'moderation' | 'catalog' | 'users' | 'policies' | 'audit' | 'maintenance' | 'server';
+  | 'moderation'
+  | 'catalog'
+  | 'users'
+  | 'organizations'
+  | 'policies'
+  | 'audit'
+  | 'maintenance'
+  | 'server';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const { user, isAuthenticated, isAdmin, isLoading: isAuthLoading } = useAuth();
@@ -154,7 +163,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       else setIsLoadingUsers(true);
       try {
         const res = await api.getUsers(cursor ? { cursor, limit: 50 } : { limit: 50 });
-        const page = res?.data || [];
+        // The registry lists organizations through `/users` too, since a
+        // namespace is either. They have no role, Terms, sessions or quota, so
+        // the account controls mean nothing for them; they are on their own tab.
+        const page = (res?.data || []).filter((row) => row.kind !== 'organization');
         setUsersList((prev) => (cursor ? [...prev, ...page] : page));
         setUsersPagination(res?.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
@@ -389,6 +401,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     }
   };
 
+  // The listing endpoint takes no query, so the search narrows what has been
+  // loaded. The organizations tab searches the same way, and says nothing
+  // false about it.
+  const userNeedle = userSearch.trim().toLowerCase();
+  const visibleUsers = userNeedle
+    ? usersList.filter(
+        (u) =>
+          u.namespace.toLowerCase().includes(userNeedle) ||
+          (u.displayName || '').toLowerCase().includes(userNeedle),
+      )
+    : usersList;
+
   // Permission check
   if (!isAuthLoading && (!isAuthenticated || !isAdmin)) {
     return (
@@ -525,6 +549,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         >
           <Icon name="group" />
           <span>Accounts</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('organizations')}
+          className={`pb-3 px-3 text-xs font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'organizations'
+              ? 'border-lilac-500 dark:border-lilac-300 text-lilac-700 dark:text-lilac-300'
+              : 'border-transparent text-ink-3 hover:text-ink'
+          }`}
+        >
+          <Icon name="business" />
+          <span>Organizations</span>
         </button>
 
         <button
@@ -845,73 +881,91 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div className="h-14 card animate-pulse" />
               <div className="h-14 card animate-pulse" />
             </div>
+          ) : visibleUsers.length === 0 ? (
+            <div className="card p-6 text-center text-xs text-ink-3">
+              {userSearch.trim()
+                ? `No account here is called ${userSearch.trim()}.`
+                : 'No accounts on this registry yet.'}
+            </div>
           ) : (
             <div className="card divide-y divide-line overflow-hidden">
-              {usersList
-                .filter(
-                  (u) =>
-                    !userSearch ||
-                    u.namespace.toLowerCase().includes(userSearch.toLowerCase()) ||
-                    (u.displayName &&
-                      u.displayName.toLowerCase().includes(userSearch.toLowerCase())),
-                )
-                .map((u) => {
-                  const isTargetAdmin = u.role === 'admin';
-                  const isMe = u.namespace === user?.namespace;
-                  const isUpdating = updatingUserNamespace === u.namespace;
+              {visibleUsers.map((u) => {
+                const isTargetAdmin = u.role === 'admin';
+                const isMe = u.namespace === user?.namespace;
+                const isUpdating = updatingUserNamespace === u.namespace;
 
-                  return (
-                    <div
-                      key={u.namespace}
-                      className="p-3.5 flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-ink">@{u.namespace}</span>
-                          {u.displayName && <span className="text-ink-2">({u.displayName})</span>}
-                          {isTargetAdmin && (
-                            <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
-                              Admin
+                return (
+                  <div key={u.namespace} className="p-3.5 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={
+                            toSameOriginImageUrl(
+                              u.avatarUrl || `${api.getBaseUrl()}/users/${u.namespace}/avatar`,
+                              api.getBaseUrl(),
+                            ) ?? undefined
+                          }
+                          alt={`Avatar for @${u.namespace}`}
+                          className="w-8 h-8 rounded-lg object-cover bg-wash dark:bg-raised border border-line shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-ink">@{u.namespace}</span>
+                            {u.displayName && <span className="text-ink-2">({u.displayName})</span>}
+                            {isTargetAdmin && (
+                              <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
+                                Admin
+                              </span>
+                            )}
+                            {isMe && <span className="text-micro text-ink-3 italic">(You)</span>}
+                          </div>
+                          <div className="text-meta text-ink-3">
+                            <span
+                              className={
+                                u.termsAcceptedVersion
+                                  ? undefined
+                                  : 'text-amber-700 dark:text-amber-300'
+                              }
+                            >
+                              {u.termsAcceptedVersion
+                                ? `Terms accepted (v${u.termsAcceptedVersion})`
+                                : 'Terms not accepted'}
                             </span>
-                          )}
-                          {isMe && <span className="text-micro text-ink-3 italic">(You)</span>}
-                        </div>
-                        <div className="text-meta text-ink-3 flex items-center gap-2">
-                          <span>
-                            {u.termsAcceptedVersion
-                              ? `Terms accepted (v${u.termsAcceptedVersion})`
-                              : 'Terms not accepted'}
-                          </span>
-                          {u.createdAt && (
-                            <span>• Member since {new Date(u.createdAt).toLocaleDateString()}</span>
-                          )}
+                            {u.createdAt && (
+                              <span className="ml-2">
+                                Created {new Date(u.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                            {u.github && <span className="ml-2">GitHub @{u.github}</span>}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {isMe ? (
                           <button
                             onClick={() => onNavigate('settings')}
-                            className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                             title="Manage your account in Settings"
                             aria-label="Manage your account in Settings"
+                            className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                           >
                             <Icon name="settings" className="icon-sm" />
                           </button>
                         ) : (
                           <button
                             onClick={() => setActivityUser(u)}
-                            className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                             title={`Account activity for @${u.namespace}`}
+                            aria-label={`Account activity for @${u.namespace}`}
+                            className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                           >
                             <Icon name="monitoring" className="icon-sm" />
                           </button>
                         )}
                         <button
                           onClick={() => setQuotaUser(u)}
-                          className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                           title={`Storage for @${u.namespace}`}
                           aria-label={`Storage for @${u.namespace}`}
+                          className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors"
                         >
                           <Icon name="storage" className="icon-sm" />
                         </button>
@@ -920,9 +974,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                           disabled={isUpdating}
                           className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
                             isTargetAdmin
-                              ? 'text-ink-2 bg-surface dark:bg-raised border-line hover:bg-wash'
+                              ? 'text-ink-2 bg-surface dark:bg-raised border-line hover:bg-wash dark:hover:bg-wash'
                               : 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100'
-                          }`}
+                          } disabled:opacity-50`}
                         >
                           {isUpdating ? 'Saving...' : isTargetAdmin ? 'Remove admin' : 'Make admin'}
                         </button>
@@ -931,16 +985,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                           <button
                             onClick={() => handleDeleteUser(u)}
                             disabled={isUpdating}
-                            className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
                             title={`Permanently delete @${u.namespace}`}
+                            aria-label={`Permanently delete @${u.namespace}`}
+                            className="p-1.5 text-ink-3 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-wash dark:hover:bg-raised transition-colors disabled:opacity-50"
                           >
                             <Icon name="delete" className="icon-sm" />
                           </button>
                         )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -957,6 +1013,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           )}
         </div>
       )}
+
+      {/* Tab: Organizations */}
+      {activeTab === 'organizations' && <OrganizationsPanel onNavigate={onNavigate} />}
 
       {/* Tab 4: Platform Policies */}
       {activeTab === 'policies' && (
