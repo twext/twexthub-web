@@ -35,6 +35,7 @@ const versionedExtension = () =>
 
 beforeEach(() => {
   apiMock.getExtension.mockResolvedValue(versionedExtension());
+  apiMock.getExtensionOwners.mockResolvedValue([]);
   apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([]);
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue(makeAuthState());
@@ -63,6 +64,10 @@ describe('ExtensionDetailPage', () => {
     apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
       makeExtensionOwnerInvite({ namespace: 'ada', displayName: 'Ada L' }),
     ]);
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'ada' }) }));
+    apiMock.getExtensionOwners
+      .mockResolvedValueOnce([])
+      .mockResolvedValue([{ namespace: 'ada', displayName: 'Ada L' }]);
     apiMock.acceptExtensionOwner.mockResolvedValue(undefined);
     render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
 
@@ -70,18 +75,22 @@ describe('ExtensionDetailPage', () => {
     expect(row).toHaveTextContent('@ada');
     expect(row).toHaveTextContent('Ada L');
     expect(row).toHaveTextContent('invited by @mallory');
+    expect(screen.queryByText('Manage Extension')).not.toBeInTheDocument();
 
     await user.click(within(row).getByRole('button', { name: /Accept/ }));
 
     await waitFor(() =>
       expect(apiMock.acceptExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'ada'),
     );
+    expect(await screen.findByText('Manage Extension')).toBeInTheDocument();
+    expect(apiMock.getExtensionOwners).toHaveBeenCalledTimes(2);
     // Granted, not still pending.
     await waitFor(() => expect(screen.queryByTestId('pending-owner-invite')).toBeNull());
   });
 
   it('takes the account back off the list when it declines', async () => {
     const user = userEvent.setup();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'ada' }) }));
     apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
       makeExtensionOwnerInvite({ namespace: 'ada' }),
     ]);
@@ -95,6 +104,7 @@ describe('ExtensionDetailPage', () => {
       expect(apiMock.removeExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'ada'),
     );
     expect(apiMock.acceptExtensionOwner).not.toHaveBeenCalled();
+    expect(screen.queryByText('Manage Extension')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByTestId('pending-owner-invite')).toBeNull());
   });
 
@@ -145,6 +155,7 @@ describe('ExtensionDetailPage', () => {
 
   it('keeps the invitation and the answer when accepting fails', async () => {
     const user = userEvent.setup();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'ada' }) }));
     apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
       makeExtensionOwnerInvite({ namespace: 'ada' }),
     ]);
@@ -156,6 +167,7 @@ describe('ExtensionDetailPage', () => {
 
     expect(await screen.findByText('invitation expired')).toBeInTheDocument();
     expect(screen.getByTestId('pending-owner-invite')).toBeInTheDocument();
+    expect(screen.queryByText('Manage Extension')).not.toBeInTheDocument();
   });
 
   it('links to the owner namespace when the manifest author is a display name', async () => {
@@ -226,6 +238,22 @@ describe('ExtensionDetailPage', () => {
     await user.click(screen.getByRole('button', { name: 'Permanently delete' }));
     expect(apiMock.deleteExtension).toHaveBeenCalledWith('kane', 'demo');
     expect(onNavigate).toHaveBeenCalledWith('dashboard');
+  });
+
+  it('shows management controls to an accepted co-owner on load', async () => {
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'ada' }) }));
+    apiMock.getExtensionOwners.mockResolvedValue([{ namespace: 'ada', displayName: 'Ada' }]);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    expect(await screen.findByText('Manage Extension')).toBeInTheDocument();
+    expect(apiMock.getExtensionOwners).toHaveBeenCalledWith('kane', 'demo');
+  });
+
+  it('keeps namespace owner controls when the owner list cannot be read', async () => {
+    apiMock.getExtensionOwners.mockRejectedValue(new ApiError('gateway timeout', 504));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    expect(await screen.findByText('Manage Extension')).toBeInTheDocument();
   });
 
   it('hides management controls from non-owners and non-admins', async () => {

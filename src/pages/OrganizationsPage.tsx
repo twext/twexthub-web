@@ -184,7 +184,7 @@ export const OrganizationsPage: React.FC<OrganizationsPageProps> = ({ onNavigate
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="What this organization works on."
-                  maxLength={1000}
+                  maxLength={280}
                 />
               </div>
               {termsOutstanding && (

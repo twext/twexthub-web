@@ -241,7 +241,11 @@ export const OrganizationSettingsPage: React.FC<OrganizationSettingsPageProps> =
     setOwnerError(null);
     try {
       await api.removeOrganizationOwner(namespace, owner.namespace);
-      await loadOwners();
+      if (owner.namespace === user?.namespace && !isAdmin) {
+        onNavigate(`org/${namespace}`);
+      } else {
+        await loadOwners();
+      }
       toastSuccess(`Removed @${owner.namespace} from @${namespace}.`);
     } catch (err: unknown) {
       setOwnerError(err instanceof ApiError ? err.message : 'Could not remove that owner.');

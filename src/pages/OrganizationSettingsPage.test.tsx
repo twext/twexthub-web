@@ -181,6 +181,41 @@ describe('OrganizationSettingsPage', () => {
     await waitFor(() =>
       expect(apiMock.removeOrganizationOwner).toHaveBeenCalledWith('acme', 'ada'),
     );
+    expect(apiMock.getOrganizationOwners).toHaveBeenCalledTimes(2);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('handles self-removal with admin access %s', async (isAdmin) => {
+    const user = userEvent.setup();
+    asOwner({ isAdmin });
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Remove @kane as an owner' }));
+    await user.click(await screen.findByRole('button', { name: 'Remove owner' }));
+
+    await waitFor(() =>
+      expect(apiMock.removeOrganizationOwner).toHaveBeenCalledWith('acme', 'kane'),
+    );
+    if (isAdmin) {
+      expect(apiMock.getOrganizationOwners).toHaveBeenCalledTimes(2);
+      expect(onNavigate).not.toHaveBeenCalled();
+    } else {
+      expect(onNavigate).toHaveBeenCalledWith('org/acme');
+      expect(apiMock.getOrganizationOwners).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('stays on settings when self-removal fails', async () => {
+    const user = userEvent.setup();
+    apiMock.removeOrganizationOwner.mockRejectedValueOnce(new ApiError('Could not remove', 500));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Remove @kane as an owner' }));
+    await user.click(await screen.findByRole('button', { name: 'Remove owner' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not remove');
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(apiMock.getOrganizationOwners).toHaveBeenCalledTimes(1);
   });
 
   it('offers no removal for the last owner, which the registry would refuse', async () => {

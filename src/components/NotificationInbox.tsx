@@ -261,7 +261,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                       <button
                         onClick={() => openTarget(notification)}
                         title="Open"
-                        aria-label="Open"
+                        aria-label={`Open ${KIND_LABELS[notification.kind] ?? route}`}
                         className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash transition-colors"
                       >
                         <Icon name="open_in_new" className="icon-sm" />

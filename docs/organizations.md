@@ -30,7 +30,7 @@ An organization is a namespace shared by several accounts. It has a profile of i
 - **Display name** — the human name shown next to the namespace.
 - **Bio, website, GitHub** — the same fields an account has.
 
-The first account to create an organization goes on its owner list: without one, nobody could change it. Creation needs the current Terms accepted and is rate limited like a signup.
+The first account to create an organization goes on its owner list: without one, nobody could change it. Creation needs the current Terms accepted and is rate-limited like a signup.
 
 The namespace is shared with accounts, so a name an account already holds is refused too. It is fixed from that point on — the registry does not rename organizations, and the settings form has no field for it.
 

@@ -5,6 +5,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { useRecentExtensions, useSavedExtensions } from '../hooks/useCollections';
 import {
   Extension,
+  ExtensionOwner,
   ExtensionOwnerInvite,
   ExtensionVersion,
   ModerationStatus,
@@ -51,6 +52,7 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [badgesOpen, setBadgesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [ownersOpen, setOwnersOpen] = useState(false);
+  const [owners, setOwners] = useState<ExtensionOwner[]>([]);
   const [pendingInvites, setPendingInvites] = useState<ExtensionOwnerInvite[]>([]);
   const [answeringInvite, setAnsweringInvite] = useState<string | null>(null);
   const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
@@ -80,12 +82,29 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     };
   }, [namespace, id, isAuthenticated]);
 
+  useEffect(() => {
+    let isMounted = true;
+    setOwners([]);
+    api
+      .getExtensionOwners(namespace, id)
+      .then((rows) => {
+        if (isMounted) setOwners(rows || []);
+      })
+      .catch(() => {
+        if (isMounted) setOwners([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [namespace, id]);
+
   const answerInvite = async (invite: ExtensionOwnerInvite, accept: boolean) => {
     setAnsweringInvite(invite.namespace);
     setActionError(null);
     try {
       if (accept) {
         await api.acceptExtensionOwner(namespace, id, invite.namespace);
+        setOwners((await api.getExtensionOwners(namespace, id)) || []);
         setActionSuccess(
           `${invite.kind === 'organization' ? 'The organization' : 'The account'} @${invite.namespace} can now manage this extension.`,
         );
@@ -350,7 +369,12 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     );
   }
 
-  const isOwner = Boolean(isAuthenticated && user && user.namespace === extension.namespace);
+  const isOwner = Boolean(
+    isAuthenticated &&
+    user &&
+    (user.namespace === extension.namespace ||
+      owners.some((owner) => owner.namespace === user.namespace)),
+  );
   const canManage = isOwner || isAdmin;
 
   return (

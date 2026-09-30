@@ -122,7 +122,7 @@ describe('NotificationInbox', () => {
       <NotificationInbox onClose={onClose} onNavigate={onNavigate} onUnreadChange={vi.fn()} />,
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Open' }));
+    await user.click(await screen.findByRole('button', { name: 'Open Approved' }));
 
     expect(onNavigate).toHaveBeenCalledWith('ext/kane/demo');
     expect(onClose).toHaveBeenCalled();
@@ -172,7 +172,9 @@ describe('NotificationInbox', () => {
       <NotificationInbox onClose={vi.fn()} onNavigate={onNavigate} onUnreadChange={vi.fn()} />,
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Open' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Open Removed as organization owner' }),
+    );
 
     // The owner list is managed at the organization's own settings page, and the
     // payload names no extension to fall back to.
@@ -186,7 +188,7 @@ describe('NotificationInbox', () => {
     renderInbox();
 
     expect(await screen.findByText('Downtime.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Open / })).not.toBeInTheDocument();
   });
 
   it('surfaces a load failure', async () => {
