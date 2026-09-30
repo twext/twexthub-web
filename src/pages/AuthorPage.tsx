@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ExtensionSummary, Pagination, User } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { Icon } from '../components/Icon';
+import { OrganizationPage } from './OrganizationPage';
 import { toSameOriginImageUrl } from '../lib/profile-image';
 
 interface AuthorPageProps {
@@ -21,6 +22,9 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extensionsError, setExtensionsError] = useState<string | null>(null);
+  // A namespace can belong to an organization rather than an account, and the
+  // account view says so with `kind` while stripping what does not apply to it.
+  const [isOrganization, setIsOrganization] = useState(false);
 
   // Superseded requests (stale namespace, rapid refresh) must not commit state.
   const loadExtensionsSeqRef = useRef(0);
@@ -65,9 +69,19 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     const load = async () => {
       setLoading(true);
       setError(null);
+      setIsOrganization(false);
       try {
         const profile = await api.getUser(namespace);
-        if (isMounted) setAuthor(profile);
+        if (!isMounted) return;
+        // An organization has its own listing, which also answers for an owner
+        // and so reaches private extensions this search cannot. The page below
+        // fetches it, so the search is not run and nothing is asked for twice.
+        if (profile.kind === 'organization') {
+          setAuthor(profile);
+          setIsOrganization(true);
+          return;
+        }
+        setAuthor(profile);
       } catch (err: unknown) {
         if (isMounted) {
           setError(err instanceof ApiError ? err.message : 'Failed to load author profile');
@@ -122,6 +136,10 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         </div>
       </div>
     );
+  }
+
+  if (isOrganization) {
+    return <OrganizationPage namespace={namespace} onNavigate={onNavigate} />;
   }
 
   return (

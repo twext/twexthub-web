@@ -3,7 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthorPage } from './AuthorPage';
 import { ApiError, api } from '../services/api';
-import { makeExtension, makeUser, makeAuthState, paginated, noop } from '../test/testUtils';
+import {
+  makeAuthState,
+  makeExtension,
+  makeOrganization,
+  makeOrganizationOwner,
+  makeUser,
+  noop,
+  paginated,
+} from '../test/testUtils';
 import { useAuth } from '../context/AuthContext';
 
 vi.mock('../services/api');
@@ -93,6 +101,24 @@ describe('AuthorPage', () => {
 
     expect(await screen.findByText('Author Not Found')).toBeInTheDocument();
     expect(screen.getByText('Account not found')).toBeInTheDocument();
+  });
+
+  it('hands a namespace that is an organization to the organization page', async () => {
+    // The account view answers for an organization too, with `kind` set and the
+    // account-only fields stripped, so the two are told apart there.
+    apiMock.getUser.mockResolvedValue(
+      makeUser({ namespace: 'acme', displayName: 'Acme Inc', kind: 'organization' }),
+    );
+    apiMock.getOrganization.mockResolvedValue(makeOrganization());
+    apiMock.getOrganizationOwners.mockResolvedValue([makeOrganizationOwner()]);
+    apiMock.getOrganizationExtensions.mockResolvedValue(paginated([]));
+    render(<AuthorPage namespace="acme" onNavigate={noop} />);
+
+    expect(await screen.findByText('Organization')).toBeInTheDocument();
+    expect(apiMock.getOrganization).toHaveBeenCalledWith('acme');
+    // The organization listing reaches private extensions for an owner, which a
+    // public search cannot, so it is the one that is asked.
+    expect(apiMock.searchExtensions).not.toHaveBeenCalled();
   });
 
   it('navigates back to explore', async () => {

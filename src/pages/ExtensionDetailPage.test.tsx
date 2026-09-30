@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExtensionDetailPage } from './ExtensionDetailPage';
 import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { makeAuthState, makeExtension, makeUser, noop } from '../test/testUtils';
+import {
+  makeAuthState,
+  makeExtension,
+  makeExtensionOwnerInvite,
+  makeUser,
+  noop,
+} from '../test/testUtils';
 
 vi.mock('../services/api');
 vi.mock('../context/AuthContext');
@@ -29,6 +35,7 @@ const versionedExtension = () =>
 
 beforeEach(() => {
   apiMock.getExtension.mockResolvedValue(versionedExtension());
+  apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([]);
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue(makeAuthState());
 });
@@ -42,6 +49,113 @@ describe('ExtensionDetailPage', () => {
     expect(screen.getByRole('button', { name: /Back to search results/ })).toBeInTheDocument();
     expect(screen.getByDisplayValue(loadUrl)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Version History' })).toBeInTheDocument();
+  });
+
+  it('shows nothing about invitations when none are pending', async () => {
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+    expect(screen.queryByTestId('pending-owner-invite')).toBeNull();
+  });
+
+  it('offers the invited account the chance to take the co-ownership', async () => {
+    const user = userEvent.setup();
+    apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
+      makeExtensionOwnerInvite({ namespace: 'ada', displayName: 'Ada L' }),
+    ]);
+    apiMock.acceptExtensionOwner.mockResolvedValue(undefined);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-owner-invite');
+    expect(row).toHaveTextContent('@ada');
+    expect(row).toHaveTextContent('Ada L');
+    expect(row).toHaveTextContent('invited by @mallory');
+
+    await user.click(within(row).getByRole('button', { name: /Accept/ }));
+
+    await waitFor(() =>
+      expect(apiMock.acceptExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'ada'),
+    );
+    // Granted, not still pending.
+    await waitFor(() => expect(screen.queryByTestId('pending-owner-invite')).toBeNull());
+  });
+
+  it('takes the account back off the list when it declines', async () => {
+    const user = userEvent.setup();
+    apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
+      makeExtensionOwnerInvite({ namespace: 'ada' }),
+    ]);
+    apiMock.removeExtensionOwner.mockResolvedValue(undefined);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-owner-invite');
+    await user.click(within(row).getByRole('button', { name: /Decline/ }));
+
+    await waitFor(() =>
+      expect(apiMock.removeExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'ada'),
+    );
+    expect(apiMock.acceptExtensionOwner).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByTestId('pending-owner-invite')).toBeNull());
+  });
+
+  it('says who is being let in when the invitation is an organization', async () => {
+    apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
+      makeExtensionOwnerInvite({
+        namespace: 'acme',
+        displayName: 'Acme Inc',
+        kind: 'organization',
+      }),
+    ]);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-owner-invite');
+    expect(row).toHaveTextContent('@acme');
+    expect(row).toHaveTextContent('organization');
+  });
+
+  it('asks the registry whether this account is holding an invitation', async () => {
+    useAuthMock.mockReturnValue(
+      makeAuthState({ user: makeUser({ namespace: 'ada' }), isAuthenticated: true }),
+    );
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    await waitFor(() =>
+      expect(apiMock.getPendingExtensionOwnerInvites).toHaveBeenCalledWith('kane', 'demo'),
+    );
+  });
+
+  it('shows no invitation to a visitor who cannot be sent one', async () => {
+    useAuthMock.mockReturnValue(makeAuthState({ user: null, token: null, isAuthenticated: false }));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+    expect(apiMock.getPendingExtensionOwnerInvites).not.toHaveBeenCalled();
+  });
+
+  it('still shows the extension when the invitation inbox cannot be read', async () => {
+    apiMock.getPendingExtensionOwnerInvites.mockRejectedValue(new ApiError('not authorized', 403));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    // A viewer who may not read the inbox simply has no invitations to answer.
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Demo Extension' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('pending-owner-invite')).toBeNull();
+  });
+
+  it('keeps the invitation and the answer when accepting fails', async () => {
+    const user = userEvent.setup();
+    apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([
+      makeExtensionOwnerInvite({ namespace: 'ada' }),
+    ]);
+    apiMock.acceptExtensionOwner.mockRejectedValue(new ApiError('invitation expired', 410));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-owner-invite');
+    await user.click(within(row).getByRole('button', { name: /Accept/ }));
+
+    expect(await screen.findByText('invitation expired')).toBeInTheDocument();
+    expect(screen.getByTestId('pending-owner-invite')).toBeInTheDocument();
   });
 
   it('links to the owner namespace when the manifest author is a display name', async () => {
