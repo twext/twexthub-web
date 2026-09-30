@@ -3,7 +3,14 @@ import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import { useRecentExtensions, useSavedExtensions } from '../hooks/useCollections';
-import { Extension, ExtensionVersion, ModerationStatus, VersionInfo } from '../types/api';
+import {
+  Extension,
+  ExtensionOwner,
+  ExtensionOwnerInvite,
+  ExtensionVersion,
+  ModerationStatus,
+  VersionInfo,
+} from '../types/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { VersionCompareModal } from '../components/VersionCompareModal';
 import { WebhookPanel } from '../components/WebhookPanel';
@@ -45,8 +52,73 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [badgesOpen, setBadgesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [ownersOpen, setOwnersOpen] = useState(false);
+  const [owners, setOwners] = useState<ExtensionOwner[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<ExtensionOwnerInvite[]>([]);
+  const [answeringInvite, setAnsweringInvite] = useState<string | null>(null);
   const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
   const versionRequestRef = useRef<string | null>(null);
+
+  // An invitation is worth nothing until it is accepted, and the only place a
+  // caller can accept one is here, so a pending one is announced on the page it
+  // was sent for rather than left in the notification alone. An organization
+  // holds no inbox of its own, so an account acting for one finds it this way.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setPendingInvites([]);
+      return;
+    }
+    let isMounted = true;
+    api
+      .getPendingExtensionOwnerInvites(namespace, id)
+      .then((rows) => {
+        if (isMounted) setPendingInvites(rows || []);
+      })
+      .catch(() => {
+        // A caller who may not read the inbox simply has no invitations here.
+        if (isMounted) setPendingInvites([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [namespace, id, isAuthenticated]);
+
+  useEffect(() => {
+    let isMounted = true;
+    setOwners([]);
+    api
+      .getExtensionOwners(namespace, id)
+      .then((rows) => {
+        if (isMounted) setOwners(rows || []);
+      })
+      .catch(() => {
+        if (isMounted) setOwners([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [namespace, id]);
+
+  const answerInvite = async (invite: ExtensionOwnerInvite, accept: boolean) => {
+    setAnsweringInvite(invite.namespace);
+    setActionError(null);
+    try {
+      if (accept) {
+        await api.acceptExtensionOwner(namespace, id, invite.namespace);
+        setOwners((await api.getExtensionOwners(namespace, id)) || []);
+        setActionSuccess(
+          `${invite.kind === 'organization' ? 'The organization' : 'The account'} @${invite.namespace} can now manage this extension.`,
+        );
+      } else {
+        await api.removeExtensionOwner(namespace, id, invite.namespace);
+        setActionSuccess(`Invitation to @${invite.namespace} withdrawn.`);
+      }
+      setPendingInvites((prev) => prev.filter((row) => row.namespace !== invite.namespace));
+    } catch (err: unknown) {
+      setActionError(err instanceof ApiError ? err.message : 'Could not answer that invitation.');
+    } finally {
+      setAnsweringInvite(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -297,7 +369,12 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     );
   }
 
-  const isOwner = Boolean(isAuthenticated && user && user.namespace === extension.namespace);
+  const isOwner = Boolean(
+    isAuthenticated &&
+    user &&
+    (user.namespace === extension.namespace ||
+      owners.some((owner) => owner.namespace === user.namespace)),
+  );
   const canManage = isOwner || isAdmin;
 
   return (
@@ -327,6 +404,64 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       )}
 
       {/* Moderation Warning if Pending */}
+      {pendingInvites.length > 0 && (
+        <div data-tone="info" className="alert">
+          <Icon name="person_add" className="icon-lg shrink-0" />
+          <div className="min-w-0 flex-1">
+            <strong className="font-semibold block text-sm">
+              Waiting on a co-ownership invitation
+            </strong>
+            <ul className="mt-2 space-y-2">
+              {pendingInvites.map((invite) => (
+                <li
+                  key={invite.namespace}
+                  className="flex flex-wrap items-center gap-2 text-xs"
+                  data-testid="pending-owner-invite"
+                >
+                  <span className="text-ink-2">
+                    <span className="font-mono">@{invite.namespace}</span>
+                    {invite.displayName && (
+                      <span className="text-ink-3 ml-1.5">{invite.displayName}</span>
+                    )}
+                    {invite.kind === 'organization' && (
+                      <span className="chip bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60 ml-1.5">
+                        organization
+                      </span>
+                    )}
+                    {invite.invitedBy && (
+                      <span className="text-ink-3 ml-1.5">invited by @{invite.invitedBy}</span>
+                    )}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => answerInvite(invite, true)}
+                      disabled={answeringInvite === invite.namespace}
+                      className="btn btn-primary btn-sm"
+                    >
+                      <Icon name="check" className="icon-sm" />
+                      <span>{answeringInvite === invite.namespace ? 'Working...' : 'Accept'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => answerInvite(invite, false)}
+                      disabled={answeringInvite === invite.namespace}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      <span>Decline</span>
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-ink-3 leading-relaxed">
+              An organization has no session of its own, so accepting here speaks for every account
+              on its owner list. Nothing is granted until it is accepted.
+            </p>
+          </div>
+        </div>
+      )}
+
       {isPending && (
         <div data-tone="warn" className="alert">
           <Icon name="schedule" className="icon-lg shrink-0" />

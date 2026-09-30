@@ -7,7 +7,7 @@ import {
   toSameOriginImageUrl,
 } from '../lib/profile-image';
 import { ApiError, api } from '../services/api';
-import { User } from '../types/api';
+import { ProfileImages } from '../types/api';
 import { Icon } from './Icon';
 
 interface ImageUploadFieldProps {
@@ -25,8 +25,14 @@ interface ImageUploadFieldProps {
    */
   urlValue: string;
   onUrlValueChange: (value: string) => void;
-  onUploaded: (user: User) => void;
-  onRemoved?: (user: User) => void;
+  /**
+   * Uploads to `/orgs/{namespace}` instead of `/users/{namespace}`. Either
+   * collection answers with the whole profile, so what comes back is read for
+   * its image fields alone.
+   */
+  organization?: boolean;
+  onUploaded: (profile: ProfileImages) => void;
+  onRemoved?: (profile: ProfileImages) => void;
   round?: boolean;
 }
 
@@ -38,6 +44,10 @@ interface ImageUploadFieldProps {
  * can go away or be blocked, so it is the secondary option. The two are kept
  * side by side on the server, and the link takes over only once the upload is
  * removed, so switching between them costs one click either way.
+ *
+ * An account and an organization are served the same endpoints apart from the
+ * collection, and each answers an upload with the whole profile, so the field
+ * is shared and only the target and the reported type differ.
  */
 export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   namespace,
@@ -47,6 +57,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   fallbackUrl,
   urlValue,
   onUrlValueChange,
+  organization = false,
   onUploaded,
   onRemoved,
   round = false,
@@ -80,9 +91,11 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       const objectUrl = URL.createObjectURL(file);
       setLocalPreview(objectUrl);
       try {
-        const updated = await api.uploadProfileImage(namespace, kind, file);
+        const updated = organization
+          ? await api.uploadOrganizationImage(namespace, kind, file)
+          : await api.uploadProfileImage(namespace, kind, file);
         // Adopt the server's canonical URL so the form state and the saved
-        // profile agree even though the user never typed it. The user object
+        // profile agree even though the user never typed it. Either profile
         // carries both images, so take the one this field owns.
         onUrlValueChange((kind === 'avatar' ? updated.avatarUrl : updated.bannerUrl) ?? '');
         onUploaded(updated);
@@ -95,14 +108,16 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     },
-    [namespace, kind, onUrlValueChange, onUploaded],
+    [namespace, kind, organization, onUrlValueChange, onUploaded],
   );
 
   const remove = useCallback(async () => {
     setPending(true);
     setError(null);
     try {
-      const updated = await api.deleteProfileImage(namespace, kind);
+      const updated = organization
+        ? await api.deleteOrganizationImage(namespace, kind)
+        : await api.deleteProfileImage(namespace, kind);
       onUrlValueChange('');
       setLocalPreview(null);
       onRemoved?.(updated);
@@ -111,7 +126,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     } finally {
       setPending(false);
     }
-  }, [namespace, kind, onUrlValueChange, onRemoved]);
+  }, [namespace, kind, organization, onUrlValueChange, onRemoved]);
 
   // The server reports an upload as this account's own canonical path, carrying
   // the version of the bytes, and a link as whatever the account pointed at, so
@@ -119,7 +134,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   // an upload can be removed from here: a link is cleared in the field below it
   // and saved, which is also the only way to tell the instance to stop
   // reporting it.
-  const isUpload = isOwnImageUrl(currentUrl, namespace, kind);
+  const isUpload = isOwnImageUrl(currentUrl, namespace, kind, organization);
   const hasImage = Boolean(currentUrl || localPreview);
   // The preview is rewritten onto the same origin the API is served through,
   // so the browser fetches the picture from this site's server rather than
@@ -128,7 +143,10 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   const displayed =
     localPreview ?? toSameOriginImageUrl(currentUrl ?? fallbackUrl, api.getBaseUrl()) ?? null;
   const shape = round ? 'rounded-full' : 'rounded-lg';
-  const dimensions = round ? 'w-14 h-14' : 'w-24 h-16';
+  // The server crops and scales every uploaded banner to 3000x1000, so the
+  // preview shows that ratio rather than one invented for the field: what a
+  // banner is framed to here is what a profile page crops it to.
+  const dimensions = round ? 'w-14 h-14' : 'w-36 h-12';
 
   return (
     <div className="sm:col-span-2 space-y-2">

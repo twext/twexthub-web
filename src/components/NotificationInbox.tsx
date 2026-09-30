@@ -22,6 +22,16 @@ const KIND_STYLES: Record<NotificationKind, string> = {
     'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
   'extension.owner.removed':
     'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+  'extension.owner.invited':
+    'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
+  'extension.owner.withdrawn': 'bg-wash dark:bg-raised text-ink-2 border-line',
+  'extension.transfer.requested':
+    'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
+  'extension.transfer.completed': 'bg-wash dark:bg-raised text-ink-2 border-line',
+  'organization.owner.added':
+    'bg-emerald-50 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
+  'organization.owner.removed':
+    'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
 };
 
 /** Plain-language names for the kinds the server sends, so the list reads like words, not codes. */
@@ -34,14 +44,32 @@ const KIND_LABELS: Record<NotificationKind, string> = {
   broadcast: 'Announcement',
   'extension.owner.added': 'Added as owner',
   'extension.owner.removed': 'Removed as owner',
+  'extension.owner.invited': 'Owner invitation',
+  'extension.owner.withdrawn': 'Invitation withdrawn',
+  'extension.transfer.requested': 'Transfer offered',
+  'extension.transfer.completed': 'Transfer closed',
+  'organization.owner.added': 'Added as organization owner',
+  'organization.owner.removed': 'Removed as organization owner',
 };
 
-/** Notifications that point at a package link straight to its detail page. */
-const extensionRef = (payload: Record<string, unknown>) => {
-  const namespace = payload.namespace;
-  const id = payload.id;
-  if (typeof namespace !== 'string' || typeof id !== 'string') return null;
-  return `ext/${namespace}/${id}`;
+/**
+ * Where a notification points. Most carry an extension and go straight to its
+ * detail page. An organization's owner change names only the organization, and
+ * the owner list is managed at that organization's own settings page, so it is
+ * the destination there.
+ */
+const notificationRef = (notification: Notification) => {
+  const namespace = notification.payload.namespace;
+  if (typeof namespace !== 'string') return null;
+  const id = notification.payload.id;
+  if (typeof id === 'string') return `ext/${namespace}/${id}`;
+  if (
+    notification.kind === 'organization.owner.added' ||
+    notification.kind === 'organization.owner.removed'
+  ) {
+    return `org/${namespace}/settings`;
+  }
+  return null;
 };
 
 interface NotificationInboxProps {
@@ -136,7 +164,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
   };
 
   const openTarget = (notification: Notification) => {
-    const route = extensionRef(notification.payload);
+    const route = notificationRef(notification);
     if (!route) return;
     onNavigate(route);
     onClose();
@@ -201,7 +229,7 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
         ) : items.length > 0 ? (
           <div className="divide-y divide-line border border-line rounded-lg">
             {items.map((notification) => {
-              const route = extensionRef(notification.payload);
+              const route = notificationRef(notification);
               return (
                 <div
                   key={notification.id}
@@ -232,8 +260,8 @@ export const NotificationInbox: React.FC<NotificationInboxProps> = ({
                     {route && (
                       <button
                         onClick={() => openTarget(notification)}
-                        title="Open the extension"
-                        aria-label="Open the extension"
+                        title="Open"
+                        aria-label={`Open ${KIND_LABELS[notification.kind] ?? route}`}
                         className="p-1.5 text-ink-3 hover:text-lilac-700 dark:hover:text-lilac-300 rounded-md hover:bg-wash transition-colors"
                       >
                         <Icon name="open_in_new" className="icon-sm" />

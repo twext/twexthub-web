@@ -7,10 +7,10 @@ import { useConfirm } from '../hooks/useConfirm';
 import {
   AutomationToken,
   Pagination,
+  ProfileImages,
   Session,
   TokenScope,
   UpdateUserPayload,
-  User,
 } from '../types/api';
 import { Icon, IconName } from '../components/Icon';
 
@@ -88,7 +88,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   // An upload or removal returns the authoritative user, so resync rather than
   // guessing: the top bar and the public profile both read these fields.
   const handleImageUploaded = useCallback(
-    async (updated: User) => {
+    async (updated: ProfileImages) => {
       setAvatarUrl(updated.avatarUrl || '');
       setBannerUrl(updated.bannerUrl || '');
       await refreshUser();

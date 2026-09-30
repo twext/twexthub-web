@@ -13,7 +13,8 @@ interface OwnersPanelProps {
   onClose: () => void;
 }
 
-const NAMESPACE_RE = /^[a-z0-9](?:[a-z0-9-_]{0,38})$/;
+// The registry's namespace rule, so a bad name is refused before the round trip.
+const NAMESPACE_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
 export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canManage, onClose }) => {
   const { confirm, confirmDialog } = useConfirm();
@@ -46,7 +47,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
   const handleAdd = async () => {
     const target = candidate.trim().toLowerCase();
     if (!NAMESPACE_RE.test(target)) {
-      setCandidateError('Enter a valid username.');
+      setCandidateError('Enter a valid namespace.');
       return;
     }
     if (owners.some((owner) => owner.namespace === target)) {
@@ -56,8 +57,10 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
     setAdding(true);
     setCandidateError(null);
     try {
+      // The server records an invitation rather than granting, so the wording
+      // says so: nothing is owned until the candidate accepts it.
       await api.addExtensionOwner(namespace, id, target);
-      toastSuccess(`Added @${target} as an owner.`);
+      toastSuccess(`Invited @${target} to co-own this extension.`);
       setCandidate('');
       await load();
     } catch (err: unknown) {
@@ -116,7 +119,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
           <div className="space-y-2">
             <label htmlFor="owner-candidate" className="label text-ink-3 flex items-center gap-1.5">
               <Icon name="add" className="icon-xs" />
-              Add an owner by username
+              Invite a co-owner by namespace
             </label>
             <div className="flex gap-2">
               <input
@@ -133,7 +136,7 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                     handleAdd();
                   }
                 }}
-                placeholder="username"
+                placeholder="namespace"
                 autoComplete="off"
                 className="input flex-1"
               />
@@ -146,7 +149,9 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
               </button>
             </div>
             <p className="text-micro text-ink-3">
-              The new owner is notified. The extension's own account cannot be removed.
+              An account or an organization; whoever is on an organization's owner list answers for
+              it. The candidate is notified, and nothing is granted until the invitation is
+              accepted. The extension's own namespace cannot be invited.
             </p>
             {candidateError && (
               <p className="text-meta text-rose-600 dark:text-rose-400">{candidateError}</p>
@@ -180,6 +185,13 @@ export const OwnersPanel: React.FC<OwnersPanelProps> = ({ namespace, id, canMana
                       {isSelf && (
                         <span className="ml-1.5 chip bg-wash dark:bg-raised text-ink-3">
                           extension
+                        </span>
+                      )}
+                      {/* An organization owns extensions but has no account, so
+                          the accounts acting for it live at /orgs/{ns}/owners. */}
+                      {owner.kind === 'organization' && (
+                        <span className="ml-1.5 chip bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60">
+                          organization
                         </span>
                       )}
                     </div>

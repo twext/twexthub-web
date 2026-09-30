@@ -122,10 +122,73 @@ describe('NotificationInbox', () => {
       <NotificationInbox onClose={onClose} onNavigate={onNavigate} onUnreadChange={vi.fn()} />,
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Open the extension' }));
+    await user.click(await screen.findByRole('button', { name: 'Open Approved' }));
 
     expect(onNavigate).toHaveBeenCalledWith('ext/kane/demo');
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('names the organization kinds in words', async () => {
+    apiMock.getNotifications.mockResolvedValue(
+      makeList(
+        [
+          makeNotification({
+            id: '1',
+            kind: 'organization.owner.added',
+            message: 'You were added as an owner of @acme.',
+            payload: { namespace: 'acme' },
+          }),
+          makeNotification({
+            id: '2',
+            kind: 'extension.owner.invited',
+            message: '@acme invited you to co-own @kane/demo.',
+            payload: { namespace: 'kane', id: 'demo' },
+          }),
+        ],
+        2,
+      ),
+    );
+    renderInbox();
+
+    expect(await screen.findByText('Added as organization owner')).toBeInTheDocument();
+    expect(screen.getByText('Owner invitation')).toBeInTheDocument();
+  });
+
+  it('sends an organization owner change to that organization, which has no extension', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    apiMock.getNotifications.mockResolvedValue(
+      makeList(
+        [
+          makeNotification({
+            kind: 'organization.owner.removed',
+            payload: { namespace: 'acme' },
+          }),
+        ],
+        1,
+      ),
+    );
+    render(
+      <NotificationInbox onClose={vi.fn()} onNavigate={onNavigate} onUnreadChange={vi.fn()} />,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Open Removed as organization owner' }),
+    );
+
+    // The owner list is managed at the organization's own settings page, and the
+    // payload names no extension to fall back to.
+    expect(onNavigate).toHaveBeenCalledWith('org/acme/settings');
+  });
+
+  it('offers no destination for a notification that names nothing', async () => {
+    apiMock.getNotifications.mockResolvedValue(
+      makeList([makeNotification({ kind: 'broadcast', message: 'Downtime.', payload: {} })], 1),
+    );
+    renderInbox();
+
+    expect(await screen.findByText('Downtime.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Open / })).not.toBeInTheDocument();
   });
 
   it('surfaces a load failure', async () => {

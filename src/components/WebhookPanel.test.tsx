@@ -213,6 +213,43 @@ describe('WebhookPanel active state', () => {
     );
   });
 
+  it('reads and writes the namespace list when it is an organization', async () => {
+    const user = userEvent.setup();
+    apiMock.getOrganizationWebhooks.mockResolvedValue([
+      makeHook({ id: 12, url: 'https://ci.example.com/namespace' }),
+    ]);
+    apiMock.createOrganizationWebhook.mockResolvedValue({
+      ...makeHook({ id: 13 }),
+      secret: 'whsec_org',
+    });
+    render(<WebhookPanel namespace="acme" organization onClose={noop} />);
+
+    // The two collections do not overlap, so neither per-extension call is made.
+    expect(await screen.findByText('https://ci.example.com/namespace')).toBeInTheDocument();
+    expect(apiMock.getOrganizationWebhooks).toHaveBeenCalledWith('acme');
+    expect(apiMock.getWebhooks).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText('Webhook URL'), 'https://e.example/hook');
+    await user.click(screen.getByRole('checkbox', { name: 'Owners changed' }));
+    await user.click(screen.getByRole('button', { name: /Create webhook/ }));
+
+    await waitFor(() =>
+      expect(apiMock.createOrganizationWebhook).toHaveBeenCalledWith('acme', {
+        url: 'https://e.example/hook',
+        events: ['owners.changed'],
+        active: true,
+      }),
+    );
+    expect(apiMock.createWebhook).not.toHaveBeenCalled();
+  });
+
+  it('titles the organization panel with the namespace alone', async () => {
+    render(<WebhookPanel namespace="acme" organization onClose={noop} />);
+
+    await screen.findByRole('dialog');
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', 'Webhooks for @acme');
+  });
+
   it('can register a paused webhook', async () => {
     apiMock.createWebhook.mockResolvedValue({
       ...makeHook({ id: 11, active: false }),

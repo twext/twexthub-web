@@ -146,7 +146,11 @@ export const AuditPanel: React.FC = () => {
       const pendingTerms: AuditReport['pendingTerms'] = [];
       const dormantUsers: AuditReport['dormantUsers'] = [];
 
-      if (mountedRef.current) setProgress({ done: 0, total: users.length });
+      // Organizations come back from `/users` too, and hold neither Terms nor
+      // credentials, so every check below would report them wrongly.
+      const accounts = users.filter((u) => u.kind !== 'organization');
+
+      if (mountedRef.current) setProgress({ done: 0, total: accounts.length });
 
       const processUser = async (user: User) => {
         const accepted = user.termsAcceptedVersion ?? null;
@@ -199,21 +203,21 @@ export const AuditPanel: React.FC = () => {
       let done = 0;
       let nextIndex = 0;
       const worker = async () => {
-        while (nextIndex < users.length) {
-          const user = users[nextIndex];
+        while (nextIndex < accounts.length) {
+          const user = accounts[nextIndex];
           nextIndex += 1;
           await processUser(user);
           done += 1;
-          if (mountedRef.current) setProgress({ done, total: users.length });
+          if (mountedRef.current) setProgress({ done, total: accounts.length });
         }
       };
       await Promise.all(
-        Array.from({ length: Math.min(SCAN_CONCURRENCY, users.length) }, () => worker()),
+        Array.from({ length: Math.min(SCAN_CONCURRENCY, accounts.length) }, () => worker()),
       );
 
       if (mountedRef.current) {
         setReport({
-          scannedUsers: users.length,
+          scannedUsers: accounts.length,
           scannedAt: new Date().toISOString(),
           expiredSessions,
           idleSessions,

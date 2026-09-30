@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { looksLikeOwnUploadUrl, toSameOriginImageUrl } from './profile-image';
+import {
+  isOwnImageUrl,
+  looksLikeOwnUploadUrl,
+  profileImagePath,
+  toSameOriginImageUrl,
+} from './profile-image';
 
 describe('looksLikeOwnUploadUrl', () => {
   it('accepts an upload on either kind with its version stamp', () => {
@@ -9,10 +14,52 @@ describe('looksLikeOwnUploadUrl', () => {
     ).toBe(true);
   });
 
+  it('accepts an organization upload on either kind', () => {
+    expect(looksLikeOwnUploadUrl('/v1/orgs/acme/avatar?v=0123456789abcdef')).toBe(true);
+    expect(
+      looksLikeOwnUploadUrl('https://reg.example/api/v1/orgs/acme/banner?v=abcdef0123456789'),
+    ).toBe(true);
+  });
+
   it('rejects a link, a missing version, and a foreign path shape', () => {
     expect(looksLikeOwnUploadUrl('https://cdn.example/users/kane/avatar.png')).toBe(false);
     expect(looksLikeOwnUploadUrl('/v1/users/kane/avatar')).toBe(false);
     expect(looksLikeOwnUploadUrl(null)).toBe(false);
+  });
+});
+
+describe('isOwnImageUrl', () => {
+  it('recognises an upload of the collection being managed', () => {
+    expect(isOwnImageUrl('/v1/users/kane/avatar?v=0123456789abcdef', 'kane', 'avatar')).toBe(true);
+    expect(
+      isOwnImageUrl(
+        'https://api.test/v1/orgs/acme/banner?v=0123456789abcdef',
+        'acme',
+        'banner',
+        true,
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps the two collections apart when a namespace is both', () => {
+    // `acme` is an account and an organization, and each has its own files, so
+    // one namespace's address is not the other's.
+    const url = '/v1/users/acme/avatar?v=0123456789abcdef';
+    expect(isOwnImageUrl(url, 'acme', 'avatar', true)).toBe(false);
+    expect(isOwnImageUrl('/v1/orgs/acme/avatar?v=0123456789abcdef', 'acme', 'avatar')).toBe(false);
+  });
+
+  it('rejects another namespace, another kind, and a missing version', () => {
+    expect(isOwnImageUrl('/v1/users/kane/avatar?v=0123456789abcdef', 'ada', 'avatar')).toBe(false);
+    expect(isOwnImageUrl('/v1/users/kane/avatar?v=0123456789abcdef', 'kane', 'banner')).toBe(false);
+    expect(isOwnImageUrl('/v1/users/kane/avatar', 'kane', 'avatar')).toBe(false);
+  });
+});
+
+describe('profileImagePath', () => {
+  it('names the collection a namespace of that sort uploads into', () => {
+    expect(profileImagePath('kane', 'avatar')).toBe('users/kane/avatar');
+    expect(profileImagePath('acme', 'banner', true)).toBe('orgs/acme/banner');
   });
 });
 
@@ -72,6 +119,15 @@ describe('toSameOriginImageUrl', () => {
         '/api/v1',
       ),
     ).toBe('/api/v1/users/kane/avatar?v=0123456789abcdef');
+  });
+
+  it('reads the base back off an organization upload address too', () => {
+    expect(
+      toSameOriginImageUrl(
+        'http://localhost:3000/v1/orgs/acme/avatar?v=f2b793f29742e826',
+        '/api/v1',
+      ),
+    ).toBe('/api/v1/orgs/acme/avatar?v=f2b793f29742e826');
   });
 
   it('keeps a foreign upload address when an absolute base is set', () => {

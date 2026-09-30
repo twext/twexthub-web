@@ -11,9 +11,18 @@ export interface ProblemDetails {
 
 export type UserRole = 'admin' | 'normal';
 
+/**
+ * What sort of namespace a row is. An organization owns a namespace and a
+ * profile but has no password, no session and no role, so most account
+ * endpoints answer it with a `403` and point at `/orgs/{namespace}`.
+ */
+export type NamespaceKind = 'user' | 'organization';
+
 export interface User {
   namespace: string;
   displayName: string;
+  /** `organization` when `GET /users/{namespace}` answered for one. */
+  kind?: NamespaceKind;
   role?: UserRole;
   hasPublished: boolean;
   /** Plain text, max 280 chars. Absent when unset. */
@@ -25,6 +34,68 @@ export interface User {
   bannerUrl?: string | null;
   createdAt: string;
   termsAcceptedVersion?: number | null;
+}
+
+/**
+ * A namespace that belongs to a group of people rather than to one account: it
+ * publishes extensions, carries a profile and holds webhooks, but has no
+ * password and cannot sign in. Its owners are accounts, and every owner of it
+ * has the same rights over it.
+ */
+export interface Organization {
+  namespace: string;
+  displayName: string;
+  bio: string;
+  website?: string | null;
+  github?: string | null;
+  /** The external reference, or this organization's own `/orgs/...` path after an upload. */
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
+  createdAt: string;
+  _links: {
+    self: string;
+    extensions: string;
+    owners: string;
+    avatar: string;
+    banner: string;
+  };
+}
+
+/** One account that manages an organization, in the order they were added. */
+export interface OrganizationOwner {
+  namespace: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  addedAt: string;
+}
+
+export interface CreateOrganizationPayload {
+  namespace: string;
+  displayName?: string;
+  bio?: string | null;
+  website?: string | null;
+  github?: string | null;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
+}
+
+/** Only the profile fields: an organization has no password, role or terms. */
+export interface UpdateOrganizationPayload {
+  displayName?: string;
+  bio?: string | null;
+  website?: string | null;
+  github?: string | null;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
+}
+
+/**
+ * The parts of a profile an image upload writes back. An account and an
+ * organization both carry them and nothing else the field needs.
+ */
+export interface ProfileImages {
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
 }
 
 export interface AuthSessionResponse {
@@ -269,8 +340,14 @@ export type NotificationKind =
   | 'tokens.revoked'
   | 'role.changed'
   | 'broadcast'
+  | 'extension.owner.invited'
+  | 'extension.owner.withdrawn'
   | 'extension.owner.added'
-  | 'extension.owner.removed';
+  | 'extension.owner.removed'
+  | 'extension.transfer.requested'
+  | 'extension.transfer.completed'
+  | 'organization.owner.added'
+  | 'organization.owner.removed';
 
 export interface Notification {
   id: string;
@@ -306,9 +383,22 @@ export interface AuditEntry {
   createdAt: string;
 }
 
+/** A co-ownership invitation this caller can still answer, oldest first. */
+export interface ExtensionOwnerInvite {
+  namespace: string;
+  displayName: string;
+  /** `organization` when the invitation was addressed to one. */
+  kind?: NamespaceKind;
+  createdAt?: string;
+  /** The namespace that sent it, or null if that account has since been deleted. */
+  invitedBy?: string | null;
+}
+
 export interface ExtensionOwner {
   namespace: string;
   displayName: string;
+  /** An organization may co-own an extension; the accounts that act for it are its own owners. */
+  kind?: NamespaceKind;
   role?: UserRole;
   addedAt?: string;
 }

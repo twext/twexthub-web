@@ -1,20 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { ExtensionSummary, Pagination, User } from '../types/api';
+import { ExtensionSummary, Organization, OrganizationOwner, Pagination } from '../types/api';
 import { ExtensionCard } from '../components/ExtensionCard';
 import { Icon } from '../components/Icon';
-import { OrganizationPage } from './OrganizationPage';
 import { toSameOriginImageUrl } from '../lib/profile-image';
 
-interface AuthorPageProps {
+interface OrganizationPageProps {
   namespace: string;
   onNavigate: (route: string) => void;
 }
 
-export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate }) => {
-  const { user, latestTermsVersion } = useAuth();
-  const [author, setAuthor] = useState<User | null>(null);
+/**
+ * The public profile of an organization.
+ *
+ * An organization shares its namespace with accounts, so it gets its own
+ * collection of endpoints rather than the `/users` ones: the same profile
+ * fields and images, its own extension listing, and an owner list. An owner
+ * sees private extensions here too, because the listing answers for whoever is
+ * asking rather than for the public.
+ */
+export const OrganizationPage: React.FC<OrganizationPageProps> = ({ namespace, onNavigate }) => {
+  const { user, isAdmin } = useAuth();
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [owners, setOwners] = useState<OrganizationOwner[]>([]);
   const [extensions, setExtensions] = useState<ExtensionSummary[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ nextCursor: null, hasMore: false });
   const [loading, setLoading] = useState(true);
@@ -22,9 +31,6 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extensionsError, setExtensionsError] = useState<string | null>(null);
-  // A namespace can belong to an organization rather than an account, and the
-  // account view says so with `kind` while stripping what does not apply to it.
-  const [isOrganization, setIsOrganization] = useState(false);
 
   // Superseded requests (stale namespace, rapid refresh) must not commit state.
   const loadExtensionsSeqRef = useRef(0);
@@ -38,12 +44,9 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         setExtensionsError(null);
       }
       try {
-        const res = await api.searchExtensions(namespace, cursor ? { cursor } : undefined);
+        const res = await api.getOrganizationExtensions(namespace, cursor ? { cursor } : undefined);
         if (requestId !== loadExtensionsSeqRef.current) return;
-        // List rows are addressed by their namespace; the spec's summary rows
-        // carry no author field to match against.
-        const own = (res.data || []).filter((ext) => ext.namespace === namespace);
-        setExtensions((prev) => (cursor ? [...prev, ...own] : own));
+        setExtensions((prev) => (cursor ? [...prev, ...(res.data || [])] : res.data || []));
         setPagination(res.pagination || { nextCursor: null, hasMore: false });
       } catch (err: unknown) {
         if (requestId !== loadExtensionsSeqRef.current) return;
@@ -69,26 +72,24 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     const load = async () => {
       setLoading(true);
       setError(null);
-      setIsOrganization(false);
       try {
-        const profile = await api.getUser(namespace);
-        if (!isMounted) return;
-        // An organization has its own listing, which also answers for an owner
-        // and so reaches private extensions this search cannot. The page below
-        // fetches it, so the search is not run and nothing is asked for twice.
-        if (profile.kind === 'organization') {
-          setAuthor(profile);
-          setIsOrganization(true);
-          return;
-        }
-        setAuthor(profile);
+        const profile = await api.getOrganization(namespace);
+        if (isMounted) setOrganization(profile);
       } catch (err: unknown) {
         if (isMounted) {
-          setError(err instanceof ApiError ? err.message : 'Failed to load author profile');
+          setError(err instanceof ApiError ? err.message : 'Failed to load organization');
         }
         return;
       } finally {
         if (isMounted) setLoading(false);
+      }
+      // The owner list is public, so a failure here only costs the owner block
+      // and must not take the profile down with it.
+      try {
+        const rows = await api.getOrganizationOwners(namespace);
+        if (isMounted) setOwners(rows || []);
+      } catch {
+        if (isMounted) setOwners([]);
       }
       if (isMounted) await loadExtensions();
     };
@@ -98,12 +99,11 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     };
   }, [namespace, loadExtensions]);
 
-  // `termsAcceptedVersion` arrives only for self/admin viewers, so treat its
-  // absence as "hidden from you" rather than "never accepted".
-  const termsAccepted = author?.termsAcceptedVersion ?? null;
-  const isSelf = author !== null && user?.namespace === author.namespace;
-  const termsOutdated =
-    termsAccepted !== null && latestTermsVersion !== null && termsAccepted < latestTermsVersion;
+  // Only an owner may change the profile, the owner list or the webhooks, so
+  // the way in is shown to those the list already names. An admin is let in by
+  // the settings screen without being on it, so it is offered to them too.
+  const canManage =
+    isAdmin || (user !== null && owners.some((owner) => owner.namespace === user.namespace));
 
   if (loading) {
     return (
@@ -121,42 +121,38 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
     );
   }
 
-  if (error || !author) {
+  if (error || !organization) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
         <Icon name="warning" className="icon-3xl text-rose-600 dark:text-rose-400 mx-auto" />
-        <h2 className="text-xl font-display font-semibold text-ink">Author Not Found</h2>
+        <h2 className="text-xl font-display font-semibold text-ink">Organization Not Found</h2>
         <p className="text-xs text-ink-3 max-w-md mx-auto">
-          {error || `No account named @${namespace} exists here.`}
+          {error || `No organization named @${namespace} exists here.`}
         </p>
         <div className="pt-2">
-          <button onClick={() => onNavigate('search')} className="btn btn-secondary">
-            ← Back to Explore
+          <button onClick={() => onNavigate('organizations')} className="btn btn-secondary">
+            ← Back to Organizations
           </button>
         </div>
       </div>
     );
   }
 
-  if (isOrganization) {
-    return <OrganizationPage namespace={namespace} onNavigate={onNavigate} />;
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <button
-        onClick={() => onNavigate('search')}
+        onClick={() => onNavigate('organizations')}
         className="text-xs text-ink-3 hover:text-ink flex items-center gap-1.5 transition-colors"
       >
         <Icon name="arrow_back" className="icon-sm" />
-        Back to Explore
+        Back to Organizations
       </button>
 
       <div className="card p-0 overflow-hidden">
-        {author.bannerUrl && (
+        {organization.bannerUrl && (
           <img
-            src={toSameOriginImageUrl(author.bannerUrl, api.getBaseUrl()) ?? undefined}
-            alt={`Banner for @${author.namespace}`}
+            src={toSameOriginImageUrl(organization.bannerUrl, api.getBaseUrl()) ?? undefined}
+            alt={`Banner for @${organization.namespace}`}
             className="w-full aspect-[3/1] object-cover bg-wash dark:bg-raised"
           />
         )}
@@ -165,41 +161,41 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
             <img
               src={
                 toSameOriginImageUrl(
-                  author.avatarUrl || `${api.getBaseUrl()}/users/${author.namespace}/avatar`,
+                  organization.avatarUrl ||
+                    `${api.getBaseUrl()}/orgs/${organization.namespace}/avatar`,
                   api.getBaseUrl(),
                 ) ?? undefined
               }
-              alt={`Avatar for @${author.namespace}`}
+              alt={`Avatar for @${organization.namespace}`}
               className="w-16 h-16 rounded-lg object-cover bg-wash dark:bg-raised border border-line shrink-0"
             />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-display font-semibold text-ink">
-                  {author.displayName || author.namespace}
+                  {organization.displayName || organization.namespace}
                 </h1>
                 <span className="chip bg-wash dark:bg-raised border-line text-ink-2 font-mono text-xs">
-                  @{author.namespace}
+                  @{organization.namespace}
                 </span>
-                {author.role === 'admin' && (
-                  <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded">
-                    Admin
-                  </span>
-                )}
-                {isSelf && (
+                <span className="px-1.5 py-0.2 text-micro font-bold uppercase tracking-wider bg-wash dark:bg-raised text-ink-2 border border-line rounded inline-flex items-center gap-1">
+                  <Icon name="group" className="icon-xs" />
+                  Organization
+                </span>
+                {canManage && (
                   <button
-                    onClick={() => onNavigate('settings')}
+                    onClick={() => onNavigate(`org/${organization.namespace}/settings`)}
                     className="text-xs text-lilac-700 dark:text-lilac-300 hover:underline font-medium inline-flex items-center gap-1"
                   >
                     <Icon name="settings" className="icon-sm" />
-                    Edit profile
+                    Manage
                   </button>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-ink-3 mt-1.5">
-                {author.createdAt && (
+                {organization.createdAt && (
                   <span className="flex items-center gap-1">
                     <Icon name="calendar_today" className="icon-xs" />
-                    Member since {new Date(author.createdAt).toLocaleDateString()}
+                    Since {new Date(organization.createdAt).toLocaleDateString()}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
@@ -208,56 +204,39 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
                   {pagination.hasMore ? '+' : ''} published extension
                   {extensions.length === 1 && !pagination.hasMore ? '' : 's'}
                 </span>
-                {!author.hasPublished && (
+                {owners.length > 0 && (
                   <span className="flex items-center gap-1">
                     <Icon name="person" className="icon-xs" />
-                    No published releases yet
-                  </span>
-                )}
-                {/*
-                  `termsAcceptedVersion` is serialized only for self and admin
-                  viewers, so its absence here means "not visible to you", not
-                  "never accepted".
-                */}
-                {termsAccepted !== null && (
-                  <span
-                    className="flex items-center gap-1"
-                    title={`Terms of Service version ${termsAccepted}`}
-                  >
-                    <Icon name="description" className="icon-xs" />
-                    {termsOutdated ? 'Terms update pending' : `Terms v${termsAccepted} accepted`}
-                    {termsOutdated && latestTermsVersion !== null && (
-                      <span className="font-mono">({latestTermsVersion} available)</span>
-                    )}
+                    {owners.length} owner{owners.length === 1 ? '' : 's'}
                   </span>
                 )}
               </div>
-              {author.bio && (
+              {organization.bio && (
                 <p className="text-sm text-ink-2 leading-relaxed mt-3 whitespace-pre-wrap break-words">
-                  {author.bio}
+                  {organization.bio}
                 </p>
               )}
-              {(author.website || author.github) && (
+              {(organization.website || organization.github) && (
                 <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
-                  {author.website && (
+                  {organization.website && (
                     <a
-                      href={author.website}
+                      href={organization.website}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
                       className="text-lilac-700 dark:text-lilac-300 hover:underline inline-flex items-center gap-1 break-all"
                     >
                       <Icon name="link" className="icon-xs shrink-0" />
-                      {author.website.replace(/^https?:\/\//, '')}
+                      {organization.website.replace(/^https?:\/\//, '')}
                     </a>
                   )}
-                  {author.github && (
+                  {organization.github && (
                     <a
-                      href={`https://github.com/${author.github}`}
+                      href={`https://github.com/${organization.github}`}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
                       className="text-ink-2 hover:text-ink inline-flex items-center gap-1 font-mono"
                     >
-                      @{author.github}
+                      @{organization.github}
                     </a>
                   )}
                 </div>
@@ -267,10 +246,45 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
         </div>
       </div>
 
+      {owners.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-ink">Owners</h2>
+          <p className="text-meta text-ink-3">
+            Every owner can publish to this namespace, change the profile and manage the owner list,
+            so anyone listed here can act for the organization.
+          </p>
+          <ul className="flex flex-wrap gap-2 pt-1">
+            {owners.map((owner) => (
+              <li key={owner.namespace}>
+                <button
+                  onClick={() => onNavigate(`author/${owner.namespace}`)}
+                  className="flex items-center gap-2 px-2 py-1.5 border border-line rounded-lg hover:border-lilac-400 dark:hover:border-lilac-600 transition-colors"
+                >
+                  <img
+                    src={
+                      toSameOriginImageUrl(
+                        owner.avatarUrl || `${api.getBaseUrl()}/users/${owner.namespace}/avatar`,
+                        api.getBaseUrl(),
+                      ) ?? undefined
+                    }
+                    alt={`Avatar for @${owner.namespace}`}
+                    className="w-6 h-6 rounded-full object-cover bg-wash dark:bg-raised border border-line"
+                  />
+                  <span className="text-xs text-ink-2">
+                    {owner.displayName || owner.namespace}
+                    <span className="text-ink-3 font-mono ml-1.5">@{owner.namespace}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-line">
           <h2 className="text-xl font-display font-semibold text-ink">
-            Extensions by @{author.namespace}
+            Extensions by @{organization.namespace}
           </h2>
           <button
             onClick={() => loadExtensions()}
@@ -309,7 +323,7 @@ export const AuthorPage: React.FC<AuthorPageProps> = ({ namespace, onNavigate })
           <div className="border border-line rounded-lg bg-surface p-5 space-y-2">
             <p className="text-sm font-semibold text-ink">No published extensions</p>
             <p className="text-xs text-ink-3 max-w-lg leading-relaxed">
-              @{author.namespace} hasn't published any extensions to this site yet.
+              @{organization.namespace} hasn't published any extensions to this site yet.
             </p>
           </div>
         )}

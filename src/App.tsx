@@ -16,6 +16,9 @@ import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuthorPage } from './pages/AuthorPage';
+import { OrganizationPage } from './pages/OrganizationPage';
+import { OrganizationSettingsPage } from './pages/OrganizationSettingsPage';
+import { OrganizationsPage } from './pages/OrganizationsPage';
 import { SavedPage } from './pages/SavedPage';
 import { TermsPage } from './pages/TermsPage';
 import { PrivacyPage } from './pages/PrivacyPage';
@@ -84,6 +87,33 @@ export const App: React.FC = () => {
       }
     }
 
+    // Organization routes: "organizations" is the directory, "org/:namespace"
+    // the public profile and "org/:namespace/settings" what an owner may change.
+    // An organization shares its namespace with accounts, so the two are
+    // addressed separately and "org/" never collides with "author/".
+    if (route.startsWith('org/')) {
+      const parts = route.split('/');
+      const namespace = parts[1] || '';
+      if (namespace && parts[2] === 'settings') {
+        return (
+          <OrganizationSettingsPage
+            key={`${namespace}-${configRefreshKey}`}
+            namespace={namespace}
+            onNavigate={navigate}
+          />
+        );
+      }
+      if (namespace && !parts[2]) {
+        return (
+          <OrganizationPage
+            key={`${namespace}-${configRefreshKey}`}
+            namespace={namespace}
+            onNavigate={navigate}
+          />
+        );
+      }
+    }
+
     // Extension detail route e.g. "ext/:namespace/:id"
     if (route.startsWith('ext/')) {
       const parts = route.split('/');
@@ -113,6 +143,8 @@ export const App: React.FC = () => {
       case 'settings':
       case 'sessions-tokens':
         return <SettingsPage key={configRefreshKey} onNavigate={navigate} />;
+      case 'organizations':
+        return <OrganizationsPage key={configRefreshKey} onNavigate={navigate} />;
       case 'saved':
         return <SavedPage key={configRefreshKey} onNavigate={navigate} />;
       case 'admin':

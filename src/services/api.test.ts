@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
 import { DEFAULT_API_BASE_URL } from '../config/settings';
-import { paginated, makeExtension, makeUser } from '../test/testUtils';
+import { paginated, makeExtension, makeOrganization, makeUser } from '../test/testUtils';
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
@@ -389,6 +389,177 @@ describe('ApiService', () => {
     await api.deleteWebhook('kane', 'demo', 7);
     expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/webhooks/7`);
     expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('createOrganization POSTs the namespace to the org collection', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(makeOrganization(), 201));
+    const org = await api.createOrganization({ namespace: 'acme', displayName: 'Acme Inc' });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ namespace: 'acme', displayName: 'Acme Inc' }),
+      }),
+    );
+    expect(org.namespace).toBe('acme');
+  });
+
+  it('getOrganizations serializes cursor and limit', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(paginated([])));
+    await api.getOrganizations({ cursor: 'c1', limit: 24 });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs?cursor=c1&limit=24`);
+  });
+
+  it('getOrganization URL-encodes the namespace', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(makeOrganization()));
+    await api.getOrganization('a/b');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/a%2Fb`);
+  });
+
+  it('updateOrganization PATCHes the profile, and deleteOrganization removes it', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(makeOrganization()));
+    await api.updateOrganization('acme', { displayName: 'Acme', bio: null });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ displayName: 'Acme', bio: null }),
+      }),
+    );
+
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.deleteOrganization('acme');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/orgs/acme`);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('getOrganizationOwners unwraps the data array', async () => {
+    // The server writes this collection in camelCase, unlike the extension
+    // owner rows, so the row is handed back as it arrived.
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          {
+            namespace: 'kane',
+            displayName: 'Kane',
+            avatarUrl: null,
+            addedAt: '2026-01-05T00:00:00Z',
+          },
+        ],
+      }),
+    );
+    const owners = await api.getOrganizationOwners('acme');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme/owners`);
+    expect(owners[0]).toEqual({
+      namespace: 'kane',
+      displayName: 'Kane',
+      avatarUrl: null,
+      addedAt: '2026-01-05T00:00:00Z',
+    });
+  });
+
+  it('adds and removes an owner with PUT and DELETE on the owner path', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.addOrganizationOwner('acme', 'ada');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme/owners/ada`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'PUT' }));
+
+    await api.removeOrganizationOwner('acme', 'ada');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/orgs/acme/owners/ada`);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('getOrganizationExtensions uses the organization listing, with paging', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(paginated([])));
+    await api.getOrganizationExtensions('acme', { cursor: 'c2' });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme/extensions?cursor=c2`);
+  });
+
+  it('organization webhooks live beside the namespace rather than under an id', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          { id: 3, url: 'https://ci.example.com/hook', events: ['owners.changed'], active: true },
+        ],
+      }),
+    );
+    const hooks = await api.getOrganizationWebhooks('acme');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme/webhooks`);
+    expect(hooks[0].id).toBe(3);
+
+    fetchMock.mockResolvedValue(
+      jsonResponse(
+        {
+          id: 4,
+          url: 'https://ci.example.com/hook',
+          events: ['version.published'],
+          active: true,
+          secret: 'whsec_org',
+        },
+        201,
+      ),
+    );
+    const created = await api.createOrganizationWebhook('acme', {
+      url: 'https://ci.example.com/hook',
+      events: ['version.published'],
+    });
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/orgs/acme/webhooks`);
+    expect(created.secret).toBe('whsec_org');
+
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await api.deleteOrganizationWebhook('acme', 4);
+    expect(fetchMock.mock.calls[2][0]).toBe(`${baseUrl}/orgs/acme/webhooks/4`);
+    expect(fetchMock.mock.calls[2][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+  });
+
+  it('organization image uploads send the raw bytes and answer with the profile', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(makeOrganization({ avatarUrl: '/orgs/acme/avatar?v=0123456789abcdef' })),
+    );
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    const updated = await api.uploadOrganizationImage('acme', 'avatar', file);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/orgs/acme/avatar`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        method: 'PUT',
+        body: file,
+        headers: expect.objectContaining({ 'Content-Type': 'image/png' }),
+      }),
+    );
+    expect(updated.avatarUrl).toBe('/orgs/acme/avatar?v=0123456789abcdef');
+
+    fetchMock.mockResolvedValue(jsonResponse(makeOrganization({ avatarUrl: null })));
+    const cleared = await api.deleteOrganizationImage('acme', 'avatar');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${baseUrl}/orgs/acme/avatar`);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({ method: 'DELETE' }));
+    expect(cleared.avatarUrl).toBeNull();
+  });
+
+  it("getPendingExtensionOwnerInvites reads the caller's own inbox", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          {
+            namespace: 'acme',
+            display_name: 'Acme Inc',
+            kind: 'organization',
+            created_at: '2026-02-01T00:00:00Z',
+            invited_by: 'kane',
+          },
+        ],
+      }),
+    );
+    const invites = await api.getPendingExtensionOwnerInvites('kane', 'demo');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/owners/pending`);
+    expect(invites[0].kind).toBe('organization');
+    expect(invites[0].invitedBy).toBe('kane');
+  });
+
+  it('acceptExtensionOwner POSTs to the accept half of the grant', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    await api.acceptExtensionOwner('kane', 'demo', 'acme');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/owners/acme/accept`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'POST' }));
   });
 
   it('deprecateVersion PATCHes a message, and sends null to clear', async () => {

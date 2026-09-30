@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminPage } from './AdminPage';
 import { api, ApiError } from '../services/api';
@@ -8,6 +8,7 @@ import {
   makeAdminUser,
   makeAuthState,
   makeExtension,
+  makeOrganization,
   makePendingVersion,
   makeSession,
   makeStats,
@@ -34,6 +35,7 @@ beforeEach(() => {
   apiMock.listVersionsForReview.mockResolvedValue(paginated([makePendingVersion()]));
   apiMock.getExtensions.mockResolvedValue(paginated([makeExtension()]));
   apiMock.getUsers.mockResolvedValue(paginated([makeUser({ role: 'normal' })]));
+  apiMock.getOrganizations.mockResolvedValue(paginated([]));
   apiMock.getTerms.mockResolvedValue(termsDoc);
   apiMock.getPrivacy.mockResolvedValue({
     version: 2,
@@ -59,8 +61,82 @@ describe('AdminPage', () => {
     expect(screen.getByRole('button', { name: /Awaiting review/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Extensions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accounts' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Organizations' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Policies' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Maintenance' })).toBeInTheDocument();
+  });
+
+  it('keeps organizations off the accounts tab', async () => {
+    const user = userEvent.setup();
+    apiMock.getUsers.mockResolvedValue(
+      paginated([
+        makeUser({ namespace: 'kane', displayName: 'Kane' }),
+        // A namespace is either, and the registry lists both through /users.
+        makeUser({ namespace: 'acme', displayName: 'Acme Inc', kind: 'organization' }),
+      ]),
+    );
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
+
+    // Scoped to the tab, since the moderation queue names @kane too.
+    const tab = (await screen.findByPlaceholderText('Search accounts...')).closest(
+      'div.space-y-4',
+    ) as HTMLElement;
+    expect(within(tab).getByText('@kane')).toBeInTheDocument();
+    // The account row offers a role, a quota and Terms, none of which apply.
+    expect(within(tab).queryByText('@acme')).not.toBeInTheDocument();
+  });
+
+  it('lists accounts in the same shape as the organizations tab', async () => {
+    const user = userEvent.setup();
+    apiMock.getUsers.mockResolvedValue(
+      paginated([makeUser({ namespace: 'kane', displayName: 'Kane', github: 'kane' })]),
+    );
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
+
+    // Avatar, the wrapped @namespace (display name) line and the muted meta
+    // line are what the organizations tab shows, so the two read as one list.
+    const avatar = await screen.findByAltText('Avatar for @kane');
+    expect(avatar).toHaveAttribute('src', expect.stringContaining('/users/kane/avatar'));
+    const tab = (await screen.findByPlaceholderText('Search accounts...')).closest(
+      'div.space-y-4',
+    ) as HTMLElement;
+    expect(within(tab).getByText('(Kane)')).toBeInTheDocument();
+    expect(within(tab).getByText('GitHub @kane')).toBeInTheDocument();
+    expect(within(tab).getByText('Terms accepted (v2)')).toBeInTheDocument();
+  });
+
+  it('says so when a search on the accounts tab matches nobody', async () => {
+    const user = userEvent.setup();
+    apiMock.getUsers.mockResolvedValue(paginated([makeUser({ namespace: 'kane' })]));
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+    await user.click(screen.getByRole('button', { name: 'Accounts' }));
+    await screen.findByPlaceholderText('Search accounts...');
+    await user.type(screen.getByPlaceholderText('Search accounts...'), 'zzz');
+
+    expect(await screen.findByText('No account here is called zzz.')).toBeInTheDocument();
+  });
+
+  it('lists organizations on their own tab', async () => {
+    const user = userEvent.setup();
+    apiMock.getOrganizations.mockResolvedValue(
+      paginated([makeOrganization({ namespace: 'acme', displayName: 'Acme Inc' })]),
+    );
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+
+    await user.click(screen.getByRole('button', { name: 'Organizations' }));
+
+    expect(await screen.findByText('@acme')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search organizations...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Permanently delete @acme' })).toBeInTheDocument();
+  });
+
+  it('does not load organizations until their tab is opened', async () => {
+    renderWithProviders(<AdminPage onNavigate={noop} />);
+
+    expect(await screen.findByText('Administration')).toBeInTheDocument();
+    expect(apiMock.getOrganizations).not.toHaveBeenCalled();
   });
 
   it('opens the maintenance tab with the prune tool', async () => {
