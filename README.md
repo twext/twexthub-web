@@ -14,6 +14,7 @@
   - [Publish](#publish)
   - [Install](#install)
   - [Manage your account](#manage-your-account)
+  - [Manage an organization](#manage-an-organization)
 - [Installation](#installation)
   - [Prerequisites](#prerequisites)
   - [Local development](#local-development)
@@ -30,6 +31,7 @@
 - Per-version extension pages with TurboWarp install URLs, source review, version diffing, and yanking.
 - Save extensions locally (bookmarks) and recently-viewed history.
 - Accounts with 7-day logins and scoped automation tokens (`publish` / `yank`) meant for CI use.
+- Organizations: a namespace several accounts share, with its own profile, owner list, extensions, and namespace-wide webhooks.
 - Admin surface for moderating submissions, managing users and roles, editing the Terms and Privacy docs, and maintenance tasks.
 - The API is same-origin by default: the page calls `/api/v1`, and the bundled server forwards it to the registry you configure. On a static host a URL can be pinned at build time instead.
 
@@ -37,7 +39,7 @@
 
 TwextHub is the registry of Twext-compiled TurboWarp extensions. This repo is its official web frontend: a React + TypeScript single-page app bundled with Vite and styled with Tailwind CSS. It talks to the TwextHub API and uses path-based routing, so the host must serve `index.html` as the fallback for unknown paths.
 
-Packages are namespaced to their publishing account (`@namespace/id`) and versioned with SemVer. Publishing happens with the Twext CLI, not the UI; the first version from a new publisher sits in a moderation queue until an administrator approves or rejects it.
+Packages are namespaced to their publishing account (`@namespace/id`) and versioned with SemVer. The namespace may be an account or an [organization](docs/organizations.md) — a name a group shares, owned by whoever is on its owner list. Publishing happens with the Twext CLI, not the UI; the first version from a new publisher sits in a moderation queue until an administrator approves or rejects it.
 
 ### Authors
 
@@ -69,6 +71,12 @@ ${apiBaseUrl}/@${namespace}/${id}/versions/${version}/download
 ### Manage your account
 
 `/settings` holds your profile, open sessions, and automation tokens. Sessions expire after 7 days; automation tokens never expire unless you set a lifetime when creating them. Tokens are scoped to `publish` and/or `yank`, for CI workflows (for example a `twext publish` GitHub Action) rather than interactive use.
+
+### Manage an organization
+
+`/organizations` lists the organizations on the registry and takes new ones. An organization is a namespace a group shares: it has its own profile, banner and avatar, publishes extensions under `@namespace/id` like an account, and keeps a public owner list that anyone on it can change. Owners manage it at `/org/:namespace/settings` — profile, images, owners, webhooks that fire for every extension in the namespace, and deletion.
+
+Accounts on an organization's owner list are notified when an extension invites the organization to co-own it, and answer on that extension's page. See [docs/organizations.md](docs/organizations.md).
 
 ## Installation
 
