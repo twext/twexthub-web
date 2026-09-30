@@ -5,7 +5,7 @@ import { ImageUploadField } from './ImageUploadField';
 import { formatBytes, MAX_IMAGE_BYTES } from '../lib/profile-image';
 import { api, ApiError } from '../services/api';
 import { User } from '../types/api';
-import { makeUser } from '../test/testUtils';
+import { makeOrganization, makeUser } from '../test/testUtils';
 
 vi.mock('../services/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../services/api')>();
@@ -16,6 +16,8 @@ vi.mock('../services/api', async (importOriginal) => {
       getBaseUrl: vi.fn(),
       uploadProfileImage: vi.fn(),
       deleteProfileImage: vi.fn(),
+      uploadOrganizationImage: vi.fn(),
+      deleteOrganizationImage: vi.fn(),
     },
   };
 });
@@ -81,6 +83,69 @@ describe('formatBytes', () => {
 });
 
 describe('ImageUploadField', () => {
+  it('uploads to the organization collection when the target is one', async () => {
+    const user = userEvent.setup();
+    // The organization endpoints answer with the whole profile, not just the
+    // two image fields, so the field reads it and hands the rest on.
+    apiMock.uploadOrganizationImage.mockResolvedValue(
+      makeOrganization({ avatarUrl: '/v1/orgs/acme/avatar?v=0123456789abcdef', bannerUrl: null }),
+    );
+    const { onUploaded, onUrlValueChange } = renderField({ organization: true, namespace: 'acme' });
+    const input = screen.getByTestId('avatar-choose');
+    const fileInput = document.getElementById(input.getAttribute('for')!) as HTMLInputElement;
+
+    await user.upload(fileInput, imageFile());
+
+    await waitFor(() => expect(apiMock.uploadOrganizationImage).toHaveBeenCalledTimes(1));
+    expect(apiMock.uploadOrganizationImage.mock.calls[0][0]).toBe('acme');
+    expect(apiMock.uploadOrganizationImage.mock.calls[0][1]).toBe('avatar');
+    expect(onUploaded).toHaveBeenCalled();
+    expect(onUrlValueChange).toHaveBeenCalledWith('/v1/orgs/acme/avatar?v=0123456789abcdef');
+    // An account's endpoints are not touched for an organization.
+    expect(apiMock.uploadProfileImage).not.toHaveBeenCalled();
+  });
+
+  it('removes an organization image through the organization endpoint', async () => {
+    const user = userEvent.setup();
+    apiMock.deleteOrganizationImage.mockResolvedValue(
+      makeOrganization({ avatarUrl: null, bannerUrl: null }),
+    );
+    renderField({
+      organization: true,
+      namespace: 'acme',
+      currentUrl: '/v1/orgs/acme/avatar?v=0123456789abcdef',
+    });
+
+    await user.click(screen.getByTestId('avatar-remove'));
+
+    await waitFor(() =>
+      expect(apiMock.deleteOrganizationImage).toHaveBeenCalledWith('acme', 'avatar'),
+    );
+    expect(apiMock.deleteProfileImage).not.toHaveBeenCalled();
+  });
+
+  it('offers removal for an organization upload published under /orgs', () => {
+    renderField({
+      organization: true,
+      namespace: 'acme',
+      currentUrl: 'https://api.example/api/v1/orgs/acme/avatar?v=0123456789abcdef',
+    });
+
+    expect(screen.getByTestId('avatar-remove')).toBeInTheDocument();
+  });
+
+  it('offers no removal for an organization image held under another collection', () => {
+    renderField({
+      organization: true,
+      namespace: 'acme',
+      currentUrl: '/v1/users/acme/avatar?v=0123456789abcdef',
+    });
+
+    // A file under /users is not this organization's, however well the version
+    // happens to fit.
+    expect(screen.queryByTestId('avatar-remove')).toBeNull();
+  });
+
   it('offers a file picker rather than demanding a URL', () => {
     renderField();
     const input = screen.getByTestId('avatar-choose');

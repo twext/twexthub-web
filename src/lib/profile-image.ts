@@ -22,23 +22,45 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * Whether a reported image URL is this instance serving one of its own files,
- * as opposed to an address the account linked to.
- *
- * The server publishes an upload as `/users/{namespace}/{kind}` with a prefix
- * of the content digest as a `v` parameter, because the URL has to name the
- * bytes it serves: a re-upload changes them. Both the path and the version are
- * checked, since only the server's own serializer pairs that exact path with
- * that parameter. The origin is deliberately not compared: the address a
- * browser uses to reach the API can differ from the one the server considers
- * public, and refusing to recognise an upload over that difference would hide
- * the remove control.
- */
 /** The digest prefix the server stamps on the uploads it publishes. */
 const VERSION = /^[0-9a-f]{16}$/;
 
-export function isOwnImageUrl(url: string | null | undefined, namespace: string, kind: string) {
+/**
+ * An upload path, for either sort of namespace: the server publishes profile
+ * images of an organization under `/orgs` and those of an account under
+ * `/users`, and stamps the same version query on both. The two namespaces can
+ * be the same name, so the collection is what tells the files apart.
+ */
+const OWN_UPLOAD_PATH = /\/(?:users|orgs)\/[^/]+\/(?:avatar|banner)$/;
+
+/** The collection a namespace's images live under, by what sort of namespace it is. */
+export function profileImagePath(
+  namespace: string,
+  kind: 'avatar' | 'banner',
+  organization = false,
+): string {
+  return `${organization ? 'orgs' : 'users'}/${namespace}/${kind}`;
+}
+
+/**
+ * Whether a reported image URL is this instance serving one of its own files,
+ * as opposed to an address the profile linked to.
+ *
+ * The server publishes an upload as `/{collection}/{namespace}/{kind}` with a
+ * prefix of the content digest as a `v` parameter, because the URL has to name
+ * the bytes it serves: a re-upload changes them. The path, the collection and
+ * the version are all checked, since only the server's own serializer pairs
+ * that exact shape together. The origin is deliberately not compared: the
+ * address a browser uses to reach the API can differ from the one the server
+ * considers public, and refusing to recognise an upload over that difference
+ * would hide the remove control.
+ */
+export function isOwnImageUrl(
+  url: string | null | undefined,
+  namespace: string,
+  kind: 'avatar' | 'banner',
+  organization = false,
+) {
   if (!url) return false;
   // The server publishes an absolute URL, but a root-relative one still names
   // the same file, so it is parsed against a placeholder base rather than
@@ -47,27 +69,25 @@ export function isOwnImageUrl(url: string | null | undefined, namespace: string,
   const parsed = parseUrl(url);
   if (!parsed) return false;
   return (
-    parsed.pathname.endsWith(`/users/${namespace}/${kind}`) &&
+    OWN_UPLOAD_PATH.test(parsed.pathname) &&
+    parsed.pathname.endsWith(`/${profileImagePath(namespace, kind, organization)}`) &&
     VERSION.test(parsed.searchParams.get('v') ?? '')
   );
 }
 
 /**
- * Whether a URL names one of this instance's own uploads for any author,
- * rather than an address the account linked to.
+ * Whether a URL names one of this instance's own uploads for any namespace,
+ * rather than an address the profile linked to.
  *
- * The same shape `isOwnImageUrl` checks, minus the namespace and kind. That is
- * what the image elements need when choosing whether an address is safe to
- * rewrite onto this site's own origin.
+ * The same shape `isOwnImageUrl` checks, minus the namespace, the kind and the
+ * collection. That is what the image elements need when choosing whether an
+ * address is safe to rewrite onto this site's own origin.
  */
 export function looksLikeOwnUploadUrl(url: string | null | undefined) {
   if (!url) return false;
   const parsed = parseUrl(url);
   if (!parsed) return false;
-  return (
-    /\/users\/[^/]+\/(?:avatar|banner)$/.test(parsed.pathname) &&
-    VERSION.test(parsed.searchParams.get('v') ?? '')
-  );
+  return OWN_UPLOAD_PATH.test(parsed.pathname) && VERSION.test(parsed.searchParams.get('v') ?? '');
 }
 
 /**
@@ -109,7 +129,9 @@ export function toSameOriginImageUrl(value: string | null | undefined, apiBaseUr
   }
   if (looksLikeOwnUploadUrl(value)) {
     const parsed = parseUrl(value);
-    const addressBase = parsed!.pathname.replace(/\/users\/[^/]+\/(?:avatar|banner)$/, '');
+    // The path ahead of `/users/...` or `/orgs/...` is the API base the registry
+    // published against, not part of the image address.
+    const addressBase = parsed!.pathname.replace(OWN_UPLOAD_PATH, '');
     return '/api/v1' + parsed!.pathname.slice(addressBase.length) + parsed!.search;
   }
   return value;
