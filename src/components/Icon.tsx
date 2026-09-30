@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   Ban,
   Bell,
+  Building2,
   Bookmark,
   Boxes,
   Braces,
@@ -86,6 +87,7 @@ import type { LucideIcon } from 'lucide-react';
  */
 export type IconName =
   | 'add'
+  | 'business'
   | 'add_photo_alternate'
   | 'arrow_back'
   | 'arrow_forward'
@@ -165,6 +167,7 @@ export type IconName =
 
 const ICONS: Record<IconName, LucideIcon> = {
   add: Plus,
+  business: Building2,
   add_photo_alternate: ImagePlus,
   arrow_back: ArrowLeft,
   arrow_forward: ArrowRight,

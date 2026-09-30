@@ -110,7 +110,12 @@ export const PrunePanel: React.FC<PrunePanelProps> = ({ currentUserNamespace, on
     setSelected(new Set());
     try {
       const users = await fetchAllUsers();
-      const eligible = users.filter((u) => u.namespace !== currentUserNamespace);
+      // The registry lists organizations through `/users` as well. One holds no
+      // credentials of its own, so it would look permanently dormant here and
+      // there is nothing this tool could do about it either way.
+      const eligible = users.filter(
+        (u) => u.kind !== 'organization' && u.namespace !== currentUserNamespace,
+      );
       setScanProgress({ done: 0, total: eligible.length });
 
       const found: PruneCandidate[] = [];

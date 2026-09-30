@@ -70,4 +70,32 @@ describe('AuditPanel', () => {
     expect(screen.getByText('Dormant accounts')).toBeInTheDocument();
     expect(screen.getAllByText('@newbie').length).toBeGreaterThan(0);
   });
+
+  it('does not audit organizations, which hold no Terms or credentials', async () => {
+    apiMock.getUsers.mockResolvedValue(
+      paginated([
+        makeUser({ namespace: 'kane', termsAcceptedVersion: 2 }),
+        makeUser({ namespace: 'acme', kind: 'organization' }),
+      ]),
+    );
+    // Kane holds a live session, so the only thing that could be reported is
+    // the organization.
+    apiMock.getSessions.mockImplementation(async (params) =>
+      params?.namespace === 'kane'
+        ? paginated([makeSession({ id: 'sess-live', expiresAt: '2099-01-01T00:00:00Z' })])
+        : paginated([]),
+    );
+    apiMock.getTokens.mockResolvedValue(paginated([]));
+
+    const user = userEvent.setup();
+    renderWithProviders(<AuditPanel />);
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
+
+    // The registry answers for an organization without a Terms version, so
+    // scanning it would report every organization as out of date forever. One
+    // account, not two: the organization is neither counted nor inspected.
+    expect(await screen.findByText(/Audited 1 account\(s\)/)).toBeInTheDocument();
+    expect(screen.queryByText('@acme')).not.toBeInTheDocument();
+    expect(apiMock.getSessions).not.toHaveBeenCalledWith({ namespace: 'acme' });
+  });
 });

@@ -83,6 +83,25 @@ describe('PrunePanel', () => {
     expect(await screen.findByText('@root')).toBeInTheDocument();
   });
 
+  it('never offers an organization, which holds no credentials of its own', async () => {
+    const user = userEvent.setup();
+    apiMock.getUsers.mockResolvedValue(
+      paginated([
+        makeUser({ namespace: 'ghost' }),
+        // The registry lists organizations through /users, and DELETE
+        // /users/{namespace} is a 403 for one, so there is nothing to prune.
+        makeUser({ namespace: 'acme', kind: 'organization' }),
+      ]),
+    );
+
+    render(<PrunePanel currentUserNamespace="me" onPruned={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: /Scan for Dormant Accounts/ }));
+
+    expect(await screen.findByText('@ghost')).toBeInTheDocument();
+    expect(screen.queryByText('@acme')).not.toBeInTheDocument();
+    expect(screen.getByText('1 dormant account matched')).toBeInTheDocument();
+  });
+
   it('deletes selected accounts after typed confirmation', async () => {
     const user = userEvent.setup();
     const onPruned = vi.fn();

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api, ApiError } from '../services/api';
 import { downloadFile, timestampedFilename, toCsv } from '../lib/csv';
 import { useToast } from '../context/ToastContext';
-import { ExtensionSummary, PaginatedList, PendingVersion, User } from '../types/api';
+import { ExtensionSummary, Organization, PaginatedList, PendingVersion, User } from '../types/api';
 import { Icon, IconName } from './Icon';
 
 async function collectAll<T>(
@@ -42,6 +42,15 @@ const userRows = (items: User[]) =>
     createdAt: user.createdAt || '',
   }));
 
+const organizationRows = (items: Organization[]) =>
+  items.map((org) => ({
+    namespace: org.namespace,
+    displayName: org.displayName || '',
+    website: org.website || '',
+    github: org.github || '',
+    createdAt: org.createdAt || '',
+  }));
+
 const queueRows = (items: PendingVersion[]) =>
   items.map((item) => ({
     namespace: item.ownerNamespace || item.namespace,
@@ -53,7 +62,7 @@ const queueRows = (items: PendingVersion[]) =>
     createdAt: item.createdAt || '',
   }));
 
-type DatasetKey = 'extensions' | 'users' | 'queue';
+type DatasetKey = 'extensions' | 'users' | 'organizations' | 'queue';
 
 export const ExportPanel: React.FC = () => {
   const toast = useToast();
@@ -79,7 +88,20 @@ export const ExportPanel: React.FC = () => {
       label: 'Accounts',
       description: 'All registered accounts.',
       icon: 'group',
-      load: async () => userRows(await collectAll<User>((p) => api.getUsers(p))),
+      // `/users` carries the organizations too, and an account row has no place
+      // for a display name with no role or Terms behind it.
+      load: async () =>
+        userRows(
+          (await collectAll<User>((p) => api.getUsers(p))).filter((u) => u.kind !== 'organization'),
+        ),
+    },
+    {
+      key: 'organizations',
+      label: 'Organizations',
+      description: 'Every organization, with its profile.',
+      icon: 'business',
+      load: async () =>
+        organizationRows(await collectAll<Organization>((p) => api.getOrganizations(p))),
     },
     {
       key: 'queue',
