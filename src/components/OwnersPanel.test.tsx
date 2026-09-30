@@ -15,6 +15,7 @@ const makeOwner = (overrides: Partial<ExtensionOwner> = {}): ExtensionOwner => (
   displayName: 'Kane',
   role: 'normal',
   addedAt: '2026-01-01T00:00:00Z',
+  kind: 'user',
   ...overrides,
 });
 
@@ -48,10 +49,29 @@ describe('OwnersPanel', () => {
     expect(screen.queryByText('admin')).toBeNull();
   });
 
+  it('marks an organization owner, whose account the registry keeps in the same list', async () => {
+    apiMock.getExtensionOwners.mockResolvedValue([
+      makeOwner(),
+      makeOwner({
+        namespace: 'acme',
+        displayName: 'Acme Inc',
+        kind: 'organization',
+      }),
+    ]);
+    renderPanel();
+
+    expect(await screen.findByText('Acme Inc')).toBeInTheDocument();
+    // The registry keeps an organization and the accounts answering for it in
+    // one list, so the entry says which of the two this is.
+    expect(screen.getByText('organization')).toBeInTheDocument();
+    // The chip is separate from the role, which is still never shown.
+    expect(screen.queryByText('admin')).toBeNull();
+  });
+
   it('hides management controls from non-managers', async () => {
     renderPanel(false);
     await screen.findByText('@ada');
-    expect(screen.queryByLabelText('Add an owner by username')).toBeNull();
+    expect(screen.queryByLabelText('Invite a co-owner by namespace')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Remove @ada' })).toBeNull();
   });
 
@@ -72,7 +92,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@kane');
 
-    await user.type(screen.getByLabelText('Add an owner by username'), 'bob');
+    await user.type(screen.getByLabelText('Invite a co-owner by namespace'), 'bob');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(apiMock.addExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'bob');
@@ -84,7 +104,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@kane');
 
-    await user.type(screen.getByLabelText('Add an owner by username'), '  Grace  {Enter}');
+    await user.type(screen.getByLabelText('Invite a co-owner by namespace'), '  Grace  {Enter}');
 
     expect(apiMock.addExtensionOwner).toHaveBeenCalledWith('kane', 'demo', 'grace');
   });
@@ -94,7 +114,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by username'), 'ada');
+    await user.type(screen.getByLabelText('Invite a co-owner by namespace'), 'ada');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(await screen.findByText('ada is already an owner.')).toBeInTheDocument();
@@ -106,10 +126,10 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by username'), 'Not Valid!');
+    await user.type(screen.getByLabelText('Invite a co-owner by namespace'), 'Not Valid!');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(await screen.findByText('Enter a valid username.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a valid namespace.')).toBeInTheDocument();
     expect(apiMock.addExtensionOwner).not.toHaveBeenCalled();
   });
 
@@ -119,7 +139,7 @@ describe('OwnersPanel', () => {
     renderPanel();
     await screen.findByText('@ada');
 
-    await user.type(screen.getByLabelText('Add an owner by username'), 'ghost');
+    await user.type(screen.getByLabelText('Invite a co-owner by namespace'), 'ghost');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
     expect((await screen.findAllByText('account does not exist')).length).toBeGreaterThan(0);
@@ -160,6 +180,19 @@ describe('OwnersPanel', () => {
     await user.click(await screen.findByRole('button', { name: 'Remove' }));
 
     expect((await screen.findAllByText('transfer ownership first')).length).toBeGreaterThan(0);
+  });
+
+  it('never offers removal for the namespace holding the extension, organization or not', async () => {
+    apiMock.getExtensionOwners.mockResolvedValue([
+      makeOwner({ namespace: 'acme', displayName: 'Acme Inc', kind: 'organization' }),
+    ]);
+    renderWithProviders(<OwnersPanel namespace="acme" id="demo" canManage onClose={vi.fn()} />);
+
+    // An organization publishes extensions of its own, and is its own owner, so
+    // it is listed but cannot be removed from the list.
+    await screen.findByText('Acme Inc');
+    expect(screen.getByText('extension')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove @acme' })).toBeNull();
   });
 
   it('surfaces a load failure', async () => {

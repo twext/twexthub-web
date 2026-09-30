@@ -15,12 +15,24 @@ const EVENT_LABELS: Record<WebhookEvent, string> = {
 
 interface WebhookPanelProps {
   namespace: string;
-  id: string;
+  /**
+   * The extension these webhooks belong to. Left out, the panel edits the
+   * organization's own list, which watches the whole namespace instead of one
+   * extension and lives under a different collection of endpoints.
+   */
+  id?: string;
+  organization?: boolean;
   onClose: () => void;
 }
 
-export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClose }) => {
+export const WebhookPanel: React.FC<WebhookPanelProps> = ({
+  namespace,
+  id,
+  organization = false,
+  onClose,
+}) => {
   const { confirm, confirmDialog } = useConfirm();
+  const label = id ? `@${namespace}/${id}` : `@${namespace}`;
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,13 +49,17 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
     setLoading(true);
     setError(null);
     try {
-      setWebhooks(await api.getWebhooks(namespace, id));
+      setWebhooks(
+        organization
+          ? await api.getOrganizationWebhooks(namespace)
+          : await api.getWebhooks(namespace, id as string),
+      );
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : 'Failed to load webhooks');
     } finally {
       setLoading(false);
     }
-  }, [namespace, id]);
+  }, [namespace, id, organization]);
 
   useEffect(() => {
     load();
@@ -64,11 +80,13 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
     setCreating(true);
     setCreateError(null);
     try {
-      const created = await api.createWebhook(namespace, id, {
-        url: url.trim(),
-        events,
-        active,
-      });
+      const created = organization
+        ? await api.createOrganizationWebhook(namespace, { url: url.trim(), events, active })
+        : await api.createWebhook(namespace, id as string, {
+            url: url.trim(),
+            events,
+            active,
+          });
       setUrl('');
       setEvents([]);
       setActive(true);
@@ -104,7 +122,8 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
     setDeletingId(hook.id);
     setError(null);
     try {
-      await api.deleteWebhook(namespace, id, hook.id);
+      if (organization) await api.deleteOrganizationWebhook(namespace, hook.id);
+      else await api.deleteWebhook(namespace, id as string, hook.id);
       setWebhooks((prev) => prev.filter((h) => h.id !== hook.id));
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : 'Failed to delete webhook');
@@ -145,16 +164,13 @@ export const WebhookPanel: React.FC<WebhookPanelProps> = ({ namespace, id, onClo
     <Modal
       onClose={onClose}
       size="2xl"
-      ariaLabel={`Webhooks for @${namespace}/${id}`}
+      ariaLabel={`Webhooks for ${label}`}
       className="p-5 space-y-4"
     >
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
           <Icon name="webhook" className="text-lilac-500 dark:text-lilac-300" />
-          Webhooks —{' '}
-          <span className="font-mono text-ink-2">
-            @{namespace}/{id}
-          </span>
+          Webhooks — <span className="font-mono text-ink-2">{label}</span>
         </h2>
         <button
           onClick={onClose}
