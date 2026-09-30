@@ -143,7 +143,10 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   const displayed =
     localPreview ?? toSameOriginImageUrl(currentUrl ?? fallbackUrl, api.getBaseUrl()) ?? null;
   const shape = round ? 'rounded-full' : 'rounded-lg';
-  const dimensions = round ? 'w-14 h-14' : 'w-24 h-16';
+  // The server crops and scales every uploaded banner to 3000x1000, so the
+  // preview shows that ratio rather than one invented for the field: what a
+  // banner is framed to here is what a profile page crops it to.
+  const dimensions = round ? 'w-14 h-14' : 'w-36 h-12';
 
   return (
     <div className="sm:col-span-2 space-y-2">

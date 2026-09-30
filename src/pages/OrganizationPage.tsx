@@ -153,7 +153,7 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ namespace, o
           <img
             src={toSameOriginImageUrl(organization.bannerUrl, api.getBaseUrl()) ?? undefined}
             alt={`Banner for @${organization.namespace}`}
-            className="w-full h-28 sm:h-36 object-cover bg-wash dark:bg-raised"
+            className="w-full aspect-[3/1] object-cover bg-wash dark:bg-raised"
           />
         )}
         <div className="p-6">
